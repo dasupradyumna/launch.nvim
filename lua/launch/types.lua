@@ -1,17 +1,21 @@
 --------------------------------------- TYPE SPECIFICATIONS ----------------------------------------
 ---@meta
 
----@class RunConfig
----@field name string
+------------------ CONFIG TYPES ------------------
 
----@class TaskConfig : RunConfig
+---@alias RunConfig TaskConfig | DebugConfig
+
+---@class TaskConfig
+---@field name string display name of the task
 ---@field command string command to be executed: can be an executable or a shell command
 ---@field args string[]? command-line arguments that follow the command
----@field display 'tabpage' | 'float'
+---@field display DisplayType whether to render the task output in a tabpage or a floating window
 ---@field options TaskOptions? additional options configuring how the task is run
 
+---@alias DisplayType 'float' | 'tab' | nil
+
 ---@class TaskConfigFromUser : TaskConfig
----@field type string specific filetype of the programming language for the task
+---@field type string? filetype of the programming language for the task ('none', by default)
 
 ---@class TaskOptions
 ---@field cwd string? current working directory of the shell which runs the task
@@ -22,3 +26,16 @@
 ---@class ShellOptions
 ---@field exec string path to the binary shell executable
 ---@field args string[]? command-line arguments to the shell executable
+
+---@class DebugConfig
+
+----------------- VARIABLE TYPES -----------------
+
+---@class UserVariable
+---@field type UserVarType user input method; either entered at a prompt or selected from a list
+---@field desc string a description for the input variable which is displayed in user input prompt
+---@field default UserVarValue a default value for an 'input' type variable (ignored for 'select')
+---@field items UserVarValue[] a list of choices for a 'select' type variable (ignored for 'input')
+
+---@alias UserVarType 'input' | 'select'
+---@alias UserVarValue boolean | string | number
