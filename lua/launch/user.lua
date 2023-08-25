@@ -1,5 +1,7 @@
 ---------------------------------------- USER INPUT HANDLER ----------------------------------------
 
+local util = require 'launch.util'
+
 local M = {}
 
 ---@type table<string, UserVariable> mapping of user-defined variable names to their specifications
@@ -26,7 +28,7 @@ local function gsub_callback(name)
     if not choice then
       substitution_stopped = true
       vim.cmd.redraw()
-      vim.notify('[launch.nvim] Task runner launch cancelled', vim.log.levels.WARN)
+      util.notify('Task runner launch cancelled', 'warn')
     end
     replacement = choice
   end
@@ -40,9 +42,9 @@ local function gsub_callback(name)
     return replacement
   else
     -- if user variable 'type' value is invalid, stop the substitution process
-    vim.notify(
-      ('[launch.nvim] User variable "%s" type attribute must be "input" or "select"'):format(name),
-      vim.log.levels.ERROR
+    util.notify(
+      ('User variable "%s" type attribute must be "input" or "select"'):format(name),
+      'error'
     )
     substitution_stopped = true
   end

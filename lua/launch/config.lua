@@ -2,6 +2,7 @@
 
 local task = require 'launch.task'
 local user = require 'launch.user'
+local util = require 'launch.util'
 
 local M = {}
 
@@ -16,10 +17,10 @@ function M.update_config_list()
   local success, configs = pcall(dofile, user_tasks)
   if not success then
     -- FIX: add a link to the tasks schema in the repo (to-be-added)
-    vim.notify('[launch.nvim] "launch.lua" could not be compiled', vim.log.levels.ERROR)
+    util.notify('"launch.lua" could not be compiled', 'error')
     return
   elseif not configs then
-    vim.notify('[launch.nvim] "launch.lua" does not return any configs', vim.log.levels.ERROR)
+    util.notify('"launch.lua" does not return any configs', 'error')
     return
   end
 
@@ -37,7 +38,7 @@ function M.update_config_list()
   user.variables = configs.input -- load all user-defined variables
 
   vim.cmd.redraw()
-  vim.notify '[launch.nvim] Configurations updated'
+  util.notify 'Configurations updated'
 end
 
 return M

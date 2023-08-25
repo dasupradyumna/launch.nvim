@@ -1,6 +1,7 @@
 ---------------------------------------- CORE FUNCTIONALITY ----------------------------------------
 
 local user = require 'launch.user'
+local util = require 'launch.util'
 
 local M = {}
 
@@ -11,7 +12,7 @@ local M = {}
 local function check_and_substitute_vars(config)
   if not config then
     vim.cmd.redraw()
-    vim.notify '[launch.nvim] No task selected'
+    util.notify 'No task selected'
     return
   elseif vim.tbl_isempty(user.variables) then
     return config
@@ -30,7 +31,7 @@ end
 ---@param run fun(config: RunConfig) target runner to process selected config
 function M.start(configs, run)
   if not configs or #configs == 0 then
-    vim.notify('[launch.nvim] No tasks found', vim.log.levels.WARN)
+    util.notify('No tasks found', 'warn')
     return
   end
 
