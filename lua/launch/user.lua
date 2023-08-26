@@ -19,35 +19,17 @@ local function gsub_callback(name)
 
   vim.cmd.redraw() -- clean up previous substitution
   local replacement
-  local var = M.variables[name]
-
-  ---callback function for neovim UI functions
-  ---@param choice UserVarValue the user entered or selected value
-  local function ui_callback(choice)
-    -- if user does not enter or select anything, stop the substitution process
+  M.variables[name]:get_user_choice(function(choice)
+    ---@cast choice UserVarValue the user entered or selected value
     if not choice then
+      -- if user does not enter or select anything, stop the substitution process
       substitution_stopped = true
       vim.cmd.redraw()
-      util.notify('Task runner launch cancelled', 'warn')
+      util.notify('warn', 'Task runner launch cancelled')
     end
     replacement = choice
-  end
-
-  -- get user choice using the specified method of input
-  if var.type == 'input' then
-    vim.ui.input({ prompt = var.desc .. ': ', default = var.default }, ui_callback)
-    return replacement
-  elseif var.type == 'select' then
-    vim.ui.select(var.items, { prompt = var.desc }, ui_callback)
-    return replacement
-  else
-    -- if user variable 'type' value is invalid, stop the substitution process
-    util.notify(
-      ('User variable "%s" type attribute must be "input" or "select"'):format(name),
-      'error'
-    )
-    substitution_stopped = true
-  end
+  end)
+  return replacement
 end
 
 ---substitution of argument strings with user input

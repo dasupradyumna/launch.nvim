@@ -6,13 +6,13 @@ local util = require 'launch.util'
 local M = {}
 
 ---check if configuration is valid and substitute any user-defined config variables
----@param config RunConfig a run configuration object
----@return RunConfig?
+---@param config LaunchConfig a run configuration object
+---@return LaunchConfig?
 ---@nodiscard
 local function check_and_substitute_vars(config)
   if not config then
     vim.cmd.redraw()
-    util.notify 'No task selected'
+    util.notify('info', 'No task selected')
     return
   elseif vim.tbl_isempty(user.variables) then
     return config
@@ -27,11 +27,11 @@ local function check_and_substitute_vars(config)
 end
 
 ---display given configs to user and execute the selection with provided runner
----@param configs RunConfig[] list of configurations which the user can select from
----@param run fun(config: RunConfig) target runner to process selected config
+---@param configs LaunchConfig[] list of configurations which the user can select from
+---@param run fun(config: LaunchConfig) target runner to process selected config
 function M.start(configs, run)
   if not configs or #configs == 0 then
-    util.notify('No tasks found', 'warn')
+    util.notify('warn', 'No tasks found')
     return
   end
 

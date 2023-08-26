@@ -3,7 +3,7 @@
 
 ------------------ CONFIG TYPES ------------------
 
----@alias RunConfig TaskConfig | DebugConfig
+---@alias LaunchConfig TaskConfig | DebugConfig
 
 ---@class TaskConfig
 ---@field name string display name of the task
@@ -28,14 +28,3 @@
 ---@field args string[]? command-line arguments to the shell executable
 
 ---@class DebugConfig
-
------------------ VARIABLE TYPES -----------------
-
----@class UserVariable
----@field type UserVarType user input method; either entered at a prompt or selected from a list
----@field desc string a description for the input variable which is displayed in user input prompt
----@field default UserVarValue a default value for an 'input' type variable (ignored for 'select')
----@field items UserVarValue[] a list of choices for a 'select' type variable (ignored for 'input')
-
----@alias UserVarType 'input' | 'select'
----@alias UserVarValue boolean | string | number
