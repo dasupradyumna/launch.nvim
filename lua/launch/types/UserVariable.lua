@@ -1,4 +1,4 @@
---------------------------------------- USER-VARIABLE CLASS ----------------------------------------
+------------------------------------------ USER-VARIABLE -------------------------------------------
 
 local util = require 'launch.util'
 
@@ -13,12 +13,16 @@ local util = require 'launch.util'
 ---@field get_user_choice fun(self:UserVariable, callback:function) user input processsing function
 local UserVariable = {}
 
+---@type function
+local validate_input -- defined at the bottom of the file
+
 ---creates a new instance of `UserVariable`
 ---@param var table argument with fields to initialize a `UserVariable`
 ---@return UserVariable
+---@nodiscard
 ---POSSIBLY THROWS ERROR
-function UserVariable:new(name, var)
-  self.__validate_input(name, var)
+function UserVariable.new(name, var)
+  validate_input(name, var)
 
   local methods = {}
   methods.get_user_choice = var.type == 'input' and UserVariable.get_user_choice_input
@@ -38,66 +42,53 @@ function UserVariable:get_user_choice_select(callback)
   vim.ui.select(self.items, { prompt = self.desc .. ':' }, callback)
 end
 
+---@type table<string, boolean> set of valid fields for `UserVariable`
+local valid_fields = { type = true, desc = true, default = true, items = true }
+
 ---checks and validates if argument `var` is a valid `UserVariable` object
 ---@param name string name of the variable
 ---@param var table variable specification under validation
 ---POSSIBLY THROWS ERROR
-function UserVariable.__validate_input(name, var)
+function validate_input(name, var)
   -- FIX: add a link to the user variables schema (to-be-added) in error message
+  local msg, invalid_fields
+  if type(var) == 'table' then
+    invalid_fields = vim.tbl_filter(function(f) return not valid_fields[f] end, vim.tbl_keys(var))
+  end
+
   if type(var) ~= 'table' then
-    util.throw_notify('err', 'User variable `%s` should be a table', name)
+    msg = { '`%s` should be a table\n    Got: %s', var }
+  elseif #invalid_fields > 0 then
+    msg = { '`%s` has the following invalid fields : %s', invalid_fields }
   elseif not vim.list_contains({ 'input', 'select' }, var.type) then
-    util.throw_notify(
-      'err',
-      'User variable `%s.type` field should be either "input" or "select"',
-      name
-    )
+    msg = { '`%s.type` field should be either "input" or "select"\n    Got: %s', var.type }
   elseif type(var.desc) ~= 'string' then
-    util.throw_notify('err', 'User variable `%s.desc` field should be a string', name)
+    msg = { '`%s.desc` field should be a string\n    Got: %s', var.desc }
   elseif var.type == 'input' then
     if type(var.items) ~= 'nil' then
-      util.throw_notify(
-        'err',
-        'User variable `%s.items` field should be defined only for "select" type variables',
-        name
-      )
+      msg = { '`%s.items` field should not be defined; it is an "input" type variable' }
     elseif not vim.list_contains({ 'boolean', 'string', 'number', 'nil' }, type(var.default)) then
-      util.throw_notify(
-        'err',
-        'User variable `%s.default` field should be a `UserVarValue`, if defined',
-        name
-      )
+      msg = { '`%s.default` (optional) field should be a `UserVarValue`\n    Got: %s', var.default }
     end
   elseif var.type == 'select' then
     if type(var.default) ~= 'nil' then
-      util.throw_notify(
-        'err',
-        'User variable `%s.default` field should be defined only for "input" type variables',
-        name
-      )
+      msg = { '`%s.default` field should not be defined; it is a "select" type variable' }
     elseif type(var.items) == 'nil' then
-      util.throw_notify(
-        'err',
-        'User variable `%s.items` field is not optional for "select" type variables',
-        name
-      )
+      msg = { '`%s.items` field is missing and should be defined; it is a "select" type variable' }
     elseif not vim.tbl_islist(var.items) or vim.tbl_isempty(var.items) then
-      util.throw_notify(
-        'err',
-        'User variable `%s.items` field should be a non-empty list-like table',
-        name
-      )
-    end
-    for _, i in ipairs(var.items) do
-      if not vim.list_contains({ 'boolean', 'string', 'number' }, type(i)) then
-        util.throw_notify(
-          'err',
-          'User variable `%s.items` field should only contain `UserVarValue` objects',
-          name
-        )
+      msg = { '`%s.items` field should be a non-empty list-like table\n    Got: %s', var.items }
+    else
+      for _, i in ipairs(var.items) do
+        if not vim.list_contains({ 'boolean', 'string', 'number' }, type(i)) then
+          msg =
+            { '`%s.items` list should only contain `UserVarValue` objects\n    Got: %s', var.items }
+          break
+        end
       end
     end
   end
+
+  if msg then util.throw_notify('err', 'User variable ' .. msg[1], name, vim.inspect(msg[2])) end
 end
 
 return UserVariable

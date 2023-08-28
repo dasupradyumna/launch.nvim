@@ -7,25 +7,22 @@ local M = {}
 ---@type table<string, UserVariable> mapping of user-defined variable names to their specifications
 M.variables = {}
 
----@type boolean helper flag to stop substitution in the event of cancellation
-local substitution_stopped = false
-
 ---callback function for global substitution of an argument
 ---@param name string matched `${input:...}` variable
 ---@return string? # replacement string
 ---@nodiscard
+---POSSIBLY THROWS ERROR
 local function gsub_callback(name)
-  if substitution_stopped then return end
-
   vim.cmd.redraw() -- clean up previous substitution
   local replacement
-  M.variables[name]:get_user_choice(function(choice)
-    ---@cast choice UserVarValue the user entered or selected value
+  local var = M.variables[name]
+  if not var then util.throw_notify('err', 'User variable "%s" not defined', name) end
+
+  var:get_user_choice(function(choice)
     if not choice then
-      -- if user does not enter or select anything, stop the substitution process
-      substitution_stopped = true
+      -- if user does not enter or select anything, stop substitution
       vim.cmd.redraw()
-      util.notify('warn', 'Task runner launch cancelled')
+      util.throw_notify('warn', 'Task runner launch cancelled')
     end
     replacement = choice
   end)
@@ -37,15 +34,13 @@ end
 ---@return boolean # whether substitution was successful or not
 ---@nodiscard
 function M.substitute_variables(args)
-  substitution_stopped = false
-
-  local i = 1
-  while i <= #args and not substitution_stopped do
-    args[i] = args[i]:gsub('%${input:([_%a][_%w]*)}', gsub_callback)
-    i = i + 1
+  local ok
+  for i = 1, #args do
+    ok, args[i] = pcall(string.gsub, args[i], '%${input:([_%a][_%w]*)}', gsub_callback)
+    if not ok then return false end
   end
 
-  return not substitution_stopped
+  return true
 end
 
 return M

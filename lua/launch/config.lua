@@ -4,7 +4,8 @@ local task = require 'launch.task'
 local user = require 'launch.user'
 local util = require 'launch.util'
 
-local UserVariable = require 'launch.class.UserVariable'
+local UserVariable = require 'launch.types.UserVariable'
+local TaskConfig = require 'launch.types.TaskConfig'
 
 local M = {}
 
@@ -26,11 +27,11 @@ function M.update_config_list()
     return
   end
 
+  -- TODO: perform validation of the `configs` table
   -- load all the configured tasks
-  for _, config in ipairs(configs) do
-    ---@cast config TaskConfigFromUser
-    local filetype = config.type or 'none'
-    config.type = nil
+  for _, cfg in ipairs(configs) do
+    local ok, filetype, config = pcall(TaskConfig.new, cfg --[[@as TaskConfigFromFile]])
+    if not ok then return end
 
     task.list[filetype] = task.list[filetype] or {}
     table.insert(task.list[filetype], config)
@@ -39,13 +40,12 @@ function M.update_config_list()
   -- load all user-defined variables
   local ok = pcall(function()
     for name, var in pairs(configs.input) do
-      configs.input[name] = UserVariable:new(name, var)
+      configs.input[name] = UserVariable.new(name, var)
     end
   end)
   if not ok then return end
   user.variables = configs.input
 
-  vim.cmd.redraw()
   util.notify('info', 'Configurations updated')
 end
 
