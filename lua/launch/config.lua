@@ -46,6 +46,7 @@ function M.update_config_list()
   if not ok then return end
   user.variables = configs.input
 
+  vim.api.nvim_command 'redraw'
   util.notify('info', 'Configurations updated')
 end
 

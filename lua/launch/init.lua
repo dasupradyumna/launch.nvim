@@ -13,6 +13,7 @@ function M.setup(config)
   -- custom task and/or debug runner functions
   -- optional DAP default template for each filetype (for smaller config files)
   -- config location: per directory OR stdpath('data')
+  -- whether to automatically enter insert mode after launching task
 end
 
 ---displays available tasks to the user and launches the selected task

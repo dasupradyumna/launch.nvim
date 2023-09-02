@@ -11,7 +11,7 @@ local M = {}
 ---@nodiscard
 local function check_and_substitute_vars(config)
   if not config then
-    vim.cmd.redraw()
+    vim.api.nvim_command 'redraw'
     util.notify('info', 'No task selected')
     return
   elseif vim.tbl_isempty(user.variables) then
