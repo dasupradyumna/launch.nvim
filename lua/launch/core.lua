@@ -5,6 +5,10 @@ local util = require 'launch.util'
 
 local M = {}
 
+-- HACK: move to appropriate files
+---@class DebugConfig
+---@alias LaunchConfig TaskConfig | DebugConfig
+
 ---check if configuration is valid and substitute any user-defined config variables
 ---@param config LaunchConfig a run configuration object
 ---@return LaunchConfig?

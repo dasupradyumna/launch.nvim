@@ -49,4 +49,11 @@ function M.get_win_pos_centered(w, h)
   return math.floor(r), math.floor(c), w, h
 end
 
+---merges the template table with a custom table, prioritizing custom keys in case of conflict
+---@generic T : boolean | string | number
+---@param template table<string, T>
+---@param custom table<string, T>
+---@return table<string, T>
+function M.merge(template, custom) return vim.tbl_extend('force', template, custom) end
+
 return M

@@ -14,7 +14,7 @@ local util = require 'launch.util'
 local UserVariable = {}
 
 ---@type function
-local validate_input -- defined at the bottom of the file
+local validate_input
 
 ---creates a new instance of `UserVariable`
 ---@param var table argument with fields to initialize a `UserVariable`
@@ -27,6 +27,7 @@ function UserVariable.new(name, var)
   local methods = {}
   methods.get_user_choice = var.type == 'input' and UserVariable.get_user_choice_input
     or UserVariable.get_user_choice_select
+
   return setmetatable(var, { __index = methods })
 end
 

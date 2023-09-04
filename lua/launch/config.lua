@@ -1,53 +1,50 @@
------------------------------------------- CONFIG HANDLER ------------------------------------------
+--------------------------------------- PLUGIN CONFIGURATION ---------------------------------------
 
-local task = require 'launch.task'
-local user = require 'launch.user'
 local util = require 'launch.util'
-
-local UserVariable = require 'launch.types.UserVariable'
-local TaskConfig = require 'launch.types.TaskConfig'
 
 local M = {}
 
----updates the runtime config list from the corresponding config file on disk
-function M.update_config_list()
-  -- reset the list of tasks and user variables
-  task.list = {}
-  user.variables = {}
+---@alias DisplayType 'float' | 'tab'
 
-  local user_tasks = '.nvim/launch.lua'
-  if vim.fn.filereadable(user_tasks) ~= 1 then return end
-  local success, configs = pcall(dofile, user_tasks)
-  if not success then
-    -- FIX: add a link to the tasks schema (to-be-added) in error message
-    util.notify('err', '"launch.lua" could not be compiled')
-    return
-  elseif not configs then
-    util.notify('err', '"launch.lua" does not return any configs')
-    return
-  end
+---@class ConfigTask
+---@field runner fun(c: TaskConfig)? custom runner used to launch a selected task
+---@field display DisplayType whether to render the task output in a tabpage or a floating window
+---@field float_config table can contain the same key-values pairs as `vim.api.nvim_open_win()`
 
-  -- TODO: perform validation of the `configs` table
-  -- load all the configured tasks
-  for _, cfg in ipairs(configs) do
-    local ok, filetype, config = pcall(TaskConfig.new, cfg --[[@as TaskConfigFromFile]])
-    if not ok then return end
+---@class ConfigDebug
+---@field runner function? custom runner used to launch a selected debug config
 
-    task.list[filetype] = task.list[filetype] or {}
-    table.insert(task.list[filetype], config)
-  end
+---@class Config
+---@field task ConfigTask?
+---@field debug ConfigDebug?
+---@field insert_on_task_launch boolean? whether to auto-enter insert mode after launching task
+M.defaults = {
+  task = {
+    runner = nil,
+    display = 'float',
+    -- rerun_replace_current = false, -- replace previous task or create unique using timestamp
+    float_config = {
+      relative = 'editor',
+      border = 'rounded',
+      title_pos = 'center',
+      style = 'minimal',
+    },
+    -- shell_options = {}
+  },
+  debug = {
+    runner = nil,
+    -- optional DAP default template for each filetype (for smaller config files)
+    -- ft_templates = {}
+  },
+  insert_on_task_launch = false,
+  -- config_type 'directory' | 'stdpath'
+}
 
-  -- load all user-defined variables
-  local ok = pcall(function()
-    for name, var in pairs(configs.input) do
-      configs.input[name] = UserVariable.new(name, var)
-    end
-  end)
-  if not ok then return end
-  user.variables = configs.input
+---@type Config runtime user configuration
+M.user = {} ---@diagnostic disable-line
 
-  vim.api.nvim_command 'redraw'
-  util.notify('info', 'Configurations updated')
-end
+---applies the argument options to the defaults and saves it as user config
+---@param opts Config?
+function M.apply(opts) M.user = util.merge(M.defaults, opts or {}) end
 
 return M

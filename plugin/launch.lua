@@ -7,7 +7,7 @@ local api = vim.api
 local function cmd(n, cb) api.nvim_create_user_command(n, cb, {}) end
 
 cmd('LaunchShowTasks', function() vim.print(require('launch.task').list) end)
-cmd('LaunchShowActiveTasks', require('launch.task').show_active)
+cmd('LaunchShowActiveTasks', function() require('launch.task').show_active() end)
 cmd('LaunchShowUserVariables', function() vim.print(require('launch.user').variables) end)
 cmd('LaunchTask', function() require('launch').task(true) end)
 cmd('LaunchOpenConfig', function() api.nvim_command 'vsplit .nvim/launch.lua' end)
@@ -18,13 +18,13 @@ api.nvim_create_augroup('launch_nvim', { clear = true })
 
 api.nvim_create_autocmd('VimEnter', {
   desc = 'Update the configurations whenever the launch file is modified',
-  callback = require('launch.config').update_config_list,
+  callback = function() require('launch.load').load_config_list() end,
   group = 'launch_nvim',
 })
 api.nvim_create_autocmd('BufWritePost', {
   desc = 'Update the configurations whenever the launch file is modified',
   pattern = vim.loop.cwd() .. '/.nvim/launch.lua',
-  callback = require('launch.config').update_config_list,
+  callback = function() require('launch.load').load_config_list() end,
   group = 'launch_nvim',
 })
 

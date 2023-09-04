@@ -1,8 +1,7 @@
 ------------------------------------------- TASK-CONFIG --------------------------------------------
 
+local config = require 'launch.config'
 local util = require 'launch.util'
-
----@alias DisplayType 'float' | 'tab'
 
 ---@class TaskConfig
 ---@field name string display name of the task
@@ -29,7 +28,7 @@ function TaskConfig.new(cfg)
   cfg.type = nil
 
   -- set defaults
-  cfg.display = cfg.display or 'tab' -- replace this literal with value from plugin setup
+  cfg.display = cfg.display or config.user.task.display
 
   return ft, setmetatable(cfg, { __index = TaskConfig })
 end
