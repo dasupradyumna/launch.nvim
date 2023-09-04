@@ -7,6 +7,7 @@ local api = vim.api
 local function cmd(n, cb) api.nvim_create_user_command(n, cb, {}) end
 
 cmd('LaunchShowTasks', function() vim.print(require('launch.task').list) end)
+cmd('LaunchShowActiveTasks', require('launch.task').show_active)
 cmd('LaunchShowUserVariables', function() vim.print(require('launch.user').variables) end)
 cmd('LaunchTask', function() require('launch').task(true) end)
 cmd('LaunchOpenConfig', function() api.nvim_command 'vsplit .nvim/launch.lua' end)
@@ -33,6 +34,14 @@ api.nvim_create_autocmd('TabClosed', {
     local tab = require('launch.types.ActiveTask').renderer.tab
     local ok, tab_num = pcall(api.nvim_tabpage_get_number, tab.handle)
     if ok and tonumber(trigger.match, 10) == tab_num then tab.handle = nil end
+  end,
+  group = 'launch_nvim',
+})
+api.nvim_create_autocmd('WinClosed', {
+  desc = 'Remove the cached plugin floating window handle when it is closed',
+  callback = function(trigger)
+    local float = require('launch.types.ActiveTask').renderer.float
+    if tonumber(trigger.match, 10) == float.handle then float.handle = nil end
   end,
   group = 'launch_nvim',
 })
