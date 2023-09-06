@@ -6,21 +6,22 @@ local M = {}
 
 ---@alias DisplayType 'float' | 'tab'
 
----@class ConfigTask
----@field runner fun(c: TaskConfig)? custom runner used to launch a selected task
+---@class PluginConfigTask
 ---@field display DisplayType whether to render the task output in a tabpage or a floating window
 ---@field float_config table can contain the same key-values pairs as `vim.api.nvim_open_win()`
+---@field options TaskOptions additional task environment options
+---@field runner fun(c: TaskConfig)? custom runner used to launch a selected task
+---@field term table can contain the same key-value pairs as `opts` argument of `jobstart()`
 
----@class ConfigDebug
+---@class PluginConfigDebug
 ---@field runner function? custom runner used to launch a selected debug config
 
----@class Config
----@field task ConfigTask?
----@field debug ConfigDebug?
+---@class PluginConfig
+---@field task PluginConfigTask?
+---@field debug PluginConfigDebug?
 ---@field insert_on_task_launch boolean? whether to auto-enter insert mode after launching task
 M.defaults = {
   task = {
-    runner = nil,
     display = 'float',
     -- rerun_replace_current = false, -- replace previous task or create unique using timestamp
     float_config = {
@@ -29,7 +30,13 @@ M.defaults = {
       title_pos = 'center',
       style = 'minimal',
     },
-    -- shell_options = {}
+    options = {
+      cwd = nil,
+      env = nil,
+      shell = nil,
+    },
+    runner = nil,
+    term = { clear_env = false },
   },
   debug = {
     runner = nil,
@@ -40,11 +47,11 @@ M.defaults = {
   -- config_type 'directory' | 'stdpath'
 }
 
----@type Config runtime user configuration
+---@type PluginConfig runtime user configuration
 M.user = {} ---@diagnostic disable-line
 
 ---applies the argument options to the defaults and saves it as user config
----@param opts Config?
-function M.apply(opts) M.user = util.merge(M.defaults, opts or {}) end
+---@param opts PluginConfig?
+function M.apply(opts) M.user = util.deep_merge(M.defaults, opts or {}) end
 
 return M

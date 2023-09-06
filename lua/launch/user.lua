@@ -16,13 +16,13 @@ local function gsub_callback(name)
   vim.api.nvim_command 'redraw' -- clean up previous substitution
   local replacement
   local var = M.variables[name]
-  if not var then util.throw_notify('err', 'User variable "%s" not defined', name) end
+  if not var then util.throw_notify('E', 'User variable "%s" not defined', name) end
 
   var:get_user_choice(function(choice)
     if not choice then
       -- if user does not enter or select anything, stop substitution
       vim.api.nvim_command 'redraw'
-      util.throw_notify('warn', 'Task runner launch cancelled')
+      util.throw_notify('W', 'Task runner launch cancelled')
     end
     replacement = choice
   end)

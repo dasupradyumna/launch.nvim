@@ -23,7 +23,7 @@ api.nvim_create_autocmd('VimEnter', {
 })
 api.nvim_create_autocmd('BufWritePost', {
   desc = 'Update the configurations whenever the launch file is modified',
-  pattern = vim.loop.cwd() .. '/.nvim/launch.lua',
+  pattern = vim.uv.cwd() .. '/.nvim/launch.lua',
   callback = function() require('launch.load').load_config_list() end,
   group = 'launch_nvim',
 })

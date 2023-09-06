@@ -4,15 +4,16 @@ local M = {}
 
 ---@type table<string, integer> mapping from simple string to `vim.log.levels`
 local log_level = {
-  info = vim.log.levels.INFO,
-  warn = vim.log.levels.WARN,
-  err = vim.log.levels.ERROR,
+  I = vim.log.levels.INFO,
+  W = vim.log.levels.WARN,
+  E = vim.log.levels.ERROR,
 }
 
 ---display message with the appropriate highlight for its notification level
 ---@param message string display message
----@param level 'err' | 'warn' | 'info' notification level
+---@param level 'E' | 'I' | 'W' notification level
 function M.notify(level, message, ...)
+  vim.api.nvim_command 'redraw'
   local msg = message:format(...)
   vim.notify('[launch.nvim] ' .. msg, log_level[level])
 end
@@ -49,11 +50,29 @@ function M.get_win_pos_centered(w, h)
   return math.floor(r), math.floor(c), w, h
 end
 
----merges the template table with a custom table, prioritizing custom keys in case of conflict
----@generic T : boolean | string | number
----@param template table<string, T>
----@param custom table<string, T>
----@return table<string, T>
+---shallow-merges the template table with a custom table, prioritizing custom keys
+---@param template table<string, any>
+---@param custom table<string, any>
+---@return table<string, any>
 function M.merge(template, custom) return vim.tbl_extend('force', template, custom) end
+
+---deep-merges the template table with a custom table, prioritizing custom keys
+---@param template table<string, any>
+---@param custom table<string, any>
+---@return table<string, any>
+function M.deep_merge(template, custom) return vim.tbl_deep_extend('force', template, custom) end
+
+---checks if the argument table can be treated as a pure dictionary
+---an empty table {} is considered a valid dictionary
+---@param t any
+function M.tbl_isdict(t)
+  if type(t) ~= 'table' then return false end
+
+  for k, _ in pairs(t) do
+    if type(k) ~= 'string' then return false end
+  end
+
+  return true
+end
 
 return M

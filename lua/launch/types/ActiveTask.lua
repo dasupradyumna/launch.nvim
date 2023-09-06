@@ -11,6 +11,7 @@ local fn = vim.fn
 ---@field buffer integer buffer ID of the terminal running the task
 ---@field command string command string of the current task
 ---@field display DisplayType whether to render the task output in a tabpage or a floating window
+---@field options TaskOptions additional options configuring how the task is run
 local ActiveTask = {}
 
 ---creates a new instance of `ActiveTask`
@@ -26,6 +27,7 @@ function ActiveTask.new(cfg)
     buffer = buffer,
     command = ('%s %s'):format(cfg.command, table.concat(cfg.args or {}, ' ')),
     display = cfg.display,
+    options = cfg.options,
   }, { __index = ActiveTask })
 end
 
@@ -47,13 +49,13 @@ ActiveTask.renderer = {
           title = (' %s '):format(title),
         })
         self.handle = api.nvim_open_win(buffer, true, self.config)
-        api.nvim_set_option_value('signcolumn', 'yes:1', { win = self.handle })
       else
         api.nvim_win_set_buf(self.handle, buffer)
         self.config.title = (' %s '):format(title)
         api.nvim_win_set_config(self.handle, self.config)
       end
 
+      api.nvim_set_option_value('signcolumn', 'yes:1', { win = self.handle })
       api.nvim_set_option_value('winbar', '', { win = self.handle })
     end,
   }),
@@ -85,7 +87,28 @@ end
 
 ---runs task in a new terminal with the appropriate title
 function ActiveTask:run()
-  fn.termopen(self.command, { clear_env = false })
+  local tmp = {}
+  if self.options.shell then
+    tmp.shell = api.nvim_get_option_value('shell', {})
+    tmp.shellcmdflag = api.nvim_get_option_value('shellcmdflag', {})
+    if self.options.shell.exec then
+      api.nvim_set_option_value('shell', self.options.shell.exec, {})
+    end
+    if self.options.shell.args then
+      api.nvim_set_option_value('shellcmdflag', table.concat(self.options.shell.args, ' '), {})
+    end
+  end
+  fn.termopen(
+    self.command,
+    util.merge(config.user.task.term, {
+      cwd = self.options.cwd,
+      env = self.options.env,
+    })
+  )
+  if self.options.shell then
+    api.nvim_set_option_value('shell', tmp.shell, {})
+    api.nvim_set_option_value('shellcmdflag', tmp.shellcmdflag, {})
+  end
 
   api.nvim_buf_set_name(self.buffer, self.title)
   pcall(api.nvim_buf_delete, fn.bufnr '#', { force = true }) -- alternate buffer may not exist

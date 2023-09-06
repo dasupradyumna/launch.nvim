@@ -20,14 +20,21 @@ function M.load_config_list()
   local success, configs = pcall(dofile, user_tasks)
   if not success then
     -- FIX: add a link to the tasks schema (to-be-added) in error message
-    util.notify('err', '"launch.lua" could not be compiled')
+    util.notify('E', '"launch.lua" could not be compiled')
     return
-  elseif not configs then
-    util.notify('err', '"launch.lua" does not return any configs')
+  elseif type(configs) ~= 'table' then
+    util.notify('E', '"launch.lua" should return a table of configurations\n    Got: %s', configs)
     return
   end
 
-  -- TODO: perform validation of the `configs` table
+  -- ensure that configs is a list of configurations
+  local input = configs.input
+  configs.input = nil
+  if not vim.tbl_islist(configs) or vim.tbl_isempty(configs) then
+    util.notify('E', '"launch.lua" should return a non-empty list-like table of configurations')
+    return
+  end
+
   -- load all the configured tasks
   for _, cfg in ipairs(configs) do
     local ok, filetype, config = pcall(TaskConfig.new, cfg --[[@as TaskConfigFromFile]])
@@ -39,15 +46,15 @@ function M.load_config_list()
 
   -- load all user-defined variables
   local ok = pcall(function()
-    for name, var in pairs(configs.input) do
-      configs.input[name] = UserVariable.new(name, var)
+    for name, var in pairs(input) do
+      input[name] = UserVariable.new(name, var)
     end
   end)
   if not ok then return end
-  user.variables = configs.input
+  user.variables = input
 
   vim.api.nvim_command 'redraw'
-  util.notify('info', 'Configurations updated')
+  util.notify('I', 'Configurations updated')
 end
 
 return M

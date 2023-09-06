@@ -7,7 +7,7 @@ local task = require 'launch.task'
 local M = {}
 
 ---plugin setup function
----@param opts Config?
+---@param opts PluginConfig?
 function M.setup(opts) config.apply(opts) end
 
 ---displays available tasks to the user and launches the selected task

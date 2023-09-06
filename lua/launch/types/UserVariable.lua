@@ -89,7 +89,7 @@ function validate_input(name, var)
     end
   end
 
-  if msg then util.throw_notify('err', 'User variable ' .. msg[1], name, vim.inspect(msg[2])) end
+  if msg then util.throw_notify('E', 'User variable ' .. msg[1], name, vim.inspect(msg[2])) end
 end
 
 return UserVariable

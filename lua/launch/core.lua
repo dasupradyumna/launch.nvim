@@ -16,7 +16,7 @@ local M = {}
 local function check_and_substitute_vars(config)
   if not config then
     vim.api.nvim_command 'redraw'
-    util.notify('info', 'No task selected')
+    util.notify('I', 'No task selected')
     return
   elseif vim.tbl_isempty(user.variables) then
     return config
@@ -35,7 +35,7 @@ end
 ---@param run fun(config: LaunchConfig) target runner to process selected config
 function M.start(configs, run)
   if not configs or #configs == 0 then
-    util.notify('warn', 'No tasks found')
+    util.notify('W', 'No tasks found')
     return
   end
 
