@@ -33,7 +33,7 @@ local TaskConfigFromFile = {}
 ---@return TaskConfig
 ---@nodiscard
 ---POSSIBLY THROWS ERROR
-function TaskConfig.new(cfg)
+function TaskConfig:new(cfg)
   TaskConfigFromFile.validate_input(cfg)
   if cfg.options then
     TaskOptions.validate_input(cfg.name, cfg.options)
@@ -49,7 +49,7 @@ function TaskConfig.new(cfg)
   cfg.options = vim.tbl_deep_extend('force', config.user.task.options, cfg.options or {})
   if cfg.options.cwd then cfg.options.cwd = vim.fs.normalize(cfg.options.cwd) end
 
-  return ft, setmetatable(cfg, { __index = TaskConfig })
+  return ft, setmetatable(cfg, { __index = self })
 end
 
 ---@type table<string, table<string, boolean>>
@@ -136,7 +136,7 @@ function TaskOptions.validate_input(name, opts)
   )
 
   if vim.tbl_isempty(opts) then
-    msg = { '"%s" should be a non-empty dictionary\n    Got: %s', opts }
+    msg = { '"%s" should be a non-empty dictionary' }
   elseif not util.tbl_isdict(opts) then
     local non_str = {}
     for k, v in pairs(opts) do
@@ -184,7 +184,7 @@ function ShellOptions.validate_input(name, opts)
   )
 
   if vim.tbl_isempty(opts) then
-    msg = { '"%s" should be a non-empty dictionary\n    Got: %s', opts }
+    msg = { '"%s" should be a non-empty dictionary' }
   elseif not util.tbl_isdict(opts) then
     local non_str = {}
     for k, v in pairs(opts) do

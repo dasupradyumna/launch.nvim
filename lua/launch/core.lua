@@ -3,6 +3,8 @@
 local user = require 'launch.user'
 local util = require 'launch.util'
 
+local ConfigFromFile = require 'launch.types.ConfigFromFile'
+
 local M = {}
 
 -- HACK: move to appropriate files
@@ -46,6 +48,25 @@ function M.start(configs, run)
     local sub_config = check_and_substitute_vars(config)
     if sub_config then run(sub_config) end
   end)
+end
+
+---updates the runtime config list from the corresponding config file on disk
+function M.load_config_file()
+  local user_tasks = '.nvim/launch.lua'
+  if vim.fn.filereadable(user_tasks) ~= 1 then return end
+
+  local ok, configs = pcall(dofile, user_tasks)
+  if not ok then
+    -- FIX: add a link to the tasks schema (to-be-added) in error message
+    util.notify('E', '"launch.lua" could not be compiled; Please check')
+    return
+  end
+
+  ok = pcall(function() ConfigFromFile:load(configs) end)
+  if not ok then return end
+
+  vim.api.nvim_command 'redraw'
+  util.notify('I', 'Configurations updated')
 end
 
 return M

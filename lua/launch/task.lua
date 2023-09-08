@@ -18,7 +18,7 @@ M.active = {}
 ---launches a task specified by the given configuration
 ---@param cfg TaskConfig
 function M.runner(cfg)
-  local task = ActiveTask.new(cfg)
+  local task = ActiveTask:new(cfg)
   task:render(cfg.display)
   task:run()
 

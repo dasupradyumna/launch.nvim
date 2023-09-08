@@ -13,20 +13,17 @@ local util = require 'launch.util'
 ---@field get_user_choice fun(self:UserVariable, callback:function) user input processsing function
 local UserVariable = {}
 
----@type function
-local validate_input
-
 ---creates a new instance of `UserVariable`
 ---@param var table argument with fields to initialize a `UserVariable`
 ---@return UserVariable
 ---@nodiscard
 ---POSSIBLY THROWS ERROR
-function UserVariable.new(name, var)
-  validate_input(name, var)
+function UserVariable:new(name, var)
+  self.validate_input(name, var)
 
   local methods = {}
-  methods.get_user_choice = var.type == 'input' and UserVariable.get_user_choice_input
-    or UserVariable.get_user_choice_select
+  methods.get_user_choice = var.type == 'input' and self.get_user_choice_input
+    or self.get_user_choice_select
 
   return setmetatable(var, { __index = methods })
 end
@@ -50,15 +47,21 @@ local valid_fields = { type = true, desc = true, default = true, items = true }
 ---@param name string name of the variable
 ---@param var table variable specification under validation
 ---POSSIBLY THROWS ERROR
-function validate_input(name, var)
+function UserVariable.validate_input(name, var)
   -- FIX: add a link to the user variables schema (to-be-added) in error message
   local msg, invalid_fields
   if type(var) == 'table' then
     invalid_fields = vim.tbl_filter(function(f) return not valid_fields[f] end, vim.tbl_keys(var))
   end
 
-  if type(var) ~= 'table' then
-    msg = { '`%s` should be a table\n    Got: %s', var }
+  if type(var) ~= 'table' or vim.tbl_isempty(var) then
+    msg = { '`%s` should be a non-empty table\n    Got: %s', var }
+  elseif not util.tbl_isdict(var) then
+    local non_str = {}
+    for k, v in pairs(var) do
+      if type(k) ~= 'string' then non_str[tostring(k)] = v end
+    end
+    msg = { '`%s` should be a dictionary\n    Got non-string key-value pairs: %s', non_str }
   elseif #invalid_fields > 0 then
     msg = { '`%s` has the following invalid fields : %s', invalid_fields }
   elseif not vim.list_contains({ 'input', 'select' }, var.type) then

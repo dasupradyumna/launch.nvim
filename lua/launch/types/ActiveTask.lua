@@ -18,7 +18,7 @@ local ActiveTask = {}
 ---@param cfg TaskConfig task configuration which needs to run
 ---@return ActiveTask
 ---@nodiscard
-function ActiveTask.new(cfg)
+function ActiveTask:new(cfg)
   local buffer = api.nvim_create_buf(false, true)
   api.nvim_set_option_value('filetype', 'launch_nvim_terminal', { buf = buffer })
 
@@ -28,7 +28,7 @@ function ActiveTask.new(cfg)
     command = ('%s %s'):format(cfg.command, table.concat(cfg.args or {}, ' ')),
     display = cfg.display,
     options = cfg.options,
-  }, { __index = ActiveTask })
+  }, { __index = self })
 end
 
 ---@type { float: table, tab: table } holds the rendering functions for floats and tabs
