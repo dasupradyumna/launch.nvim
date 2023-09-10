@@ -10,17 +10,13 @@ cmd('LaunchShowTasks', function() vim.print(require('launch.task').list) end)
 cmd('LaunchShowActiveTasks', function() require('launch.task').show_active() end)
 cmd('LaunchShowUserVariables', function() vim.print(require('launch.user').variables) end)
 cmd('LaunchTask', function() require('launch').task(true) end)
+cmd('LaunchDebugger', function() require('launch').debugger(true) end)
 cmd('LaunchOpenConfig', function() api.nvim_command 'vsplit .nvim/launch.lua' end)
 
 ------------------------------ USER AUTOCOMMANDS -------------------------------
 
 api.nvim_create_augroup('launch_nvim', { clear = true })
 
-api.nvim_create_autocmd('VimEnter', {
-  desc = 'Update the configurations whenever the launch file is modified',
-  callback = function() require('launch.core').load_config_file() end,
-  group = 'launch_nvim',
-})
 api.nvim_create_autocmd('BufWritePost', {
   desc = 'Update the configurations whenever the launch file is modified',
   pattern = vim.uv.cwd() .. '/.nvim/launch.lua',
@@ -37,6 +33,7 @@ api.nvim_create_autocmd('TabClosed', {
   end,
   group = 'launch_nvim',
 })
+
 api.nvim_create_autocmd('WinClosed', {
   desc = 'Remove the cached plugin floating window handle when it is closed',
   callback = function(trigger)

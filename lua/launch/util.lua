@@ -75,4 +75,23 @@ function M.tbl_isdict(t)
   return true
 end
 
+---@type table<string, string> error message if the plugin is missing
+local err_msg = {
+  dap = 'The plugin `mfussenegger/nvim-dap` is not installed\n'
+    .. '    Please install it to include support for launching debugger processes',
+}
+
+---load the specified plugin if it exists else notify the user
+---@param plugin string module name of the plugin
+---@return table? loaded the main plugin module if it exists
+function M.load_if_exists(plugin)
+  local ok, loaded = pcall(require, plugin)
+  if not ok then
+    M.notify('E', err_msg[plugin])
+    return
+  end
+
+  return loaded
+end
+
 return M

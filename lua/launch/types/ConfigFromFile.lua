@@ -4,11 +4,13 @@ local task = require 'launch.task'
 local user = require 'launch.user'
 local util = require 'launch.util'
 
-local UserVariable = require 'launch.types.UserVariable'
+local DebugConfig = require 'launch.types.DebugConfig'
 local TaskConfig = require 'launch.types.TaskConfig'
+local UserVariable = require 'launch.types.UserVariable'
 
 ---@class ConfigFromFile
 ---@field task TaskConfigFromFile[]?
+---@field debug DebugConfigFromFile[]?
 ---@field input table<string, UserVariable>?
 local ConfigFromFile = {}
 
@@ -18,9 +20,25 @@ local ConfigFromFile = {}
 function ConfigFromFile:load(cfg)
   self.validate_input(cfg)
 
-  -- load all tasks and user-defined variables from file
+  -- load all tasks, debug configurations and user-defined variables from file
   self.load_from_task(cfg.task)
+  self.load_from_debug(cfg.debug)
   self.load_from_input(cfg.input)
+end
+
+---build configurations using the specified config builder
+---@param configs DebugConfigFromFile[] | TaskConfigFromFile[]
+---@param Builder DebugConfig | TaskConfig
+---@return table<string, DebugConfig | TaskConfig>
+local function build_configs(configs, Builder)
+  local built = {}
+  for _, config in ipairs(configs) do
+    local ft, cfg = Builder:new(config)
+    built[ft] = built[ft] or {}
+    table.insert(built[ft], cfg)
+  end
+
+  return built
 end
 
 ---load valid task configurations from file
@@ -30,14 +48,20 @@ function ConfigFromFile.load_from_task(configs)
   task.list = {} -- reset the tasks list for reloading
   if not configs then return end -- skip function if argument is empty
 
-  local tasks = {}
-  for _, config in ipairs(configs) do
-    local filetype, cfg = TaskConfig:new(config)
-    tasks[filetype] = tasks[filetype] or {}
-    table.insert(tasks[filetype], cfg)
-  end
+  task.list = build_configs(configs, TaskConfig)
+end
 
-  task.list = tasks
+---load valid debugger configurations from file
+---@param configs DebugConfigFromFile[]?
+---POSSIBLY THROWS ERROR
+function ConfigFromFile.load_from_debug(configs)
+  local dap = util.load_if_exists 'dap'
+  if not dap then return end
+
+  dap.configurations = {} -- reset the debug configs list for reloading
+  if not configs then return end -- skip function if argument is empty
+
+  dap.configurations = build_configs(configs, DebugConfig)
 end
 
 ---load valid user-defined variables from file
@@ -55,7 +79,7 @@ function ConfigFromFile.load_from_input(variables)
 end
 
 ---@type table<string, boolean> set of valid fields for `ConfigFromFile`
-local valid_fields = { task = true, input = true }
+local valid_fields = { task = true, debug = true, input = true }
 
 ---checks and validates if argument `cfg` is a valid `ConfigFromFile` object
 ---@param cfg table configuration table from file under validation
@@ -80,6 +104,10 @@ function ConfigFromFile.validate_input(cfg)
     type(cfg.task) ~= 'nil' and (not vim.tbl_islist(cfg.task) or vim.tbl_isempty(cfg.task))
   then
     msg = { 'table `task` field should be a non-empty list-like table\n    Got: %s', cfg.task }
+  elseif
+    type(cfg.debug) ~= 'nil' and (not vim.tbl_islist(cfg.debug) or vim.tbl_isempty(cfg.debug))
+  then
+    msg = { 'table `debug` field should be a non-empty list-like table\n    Got: %s', cfg.debug }
   elseif
     type(cfg.input) ~= 'nil' and (not util.tbl_isdict(cfg.input) or vim.tbl_isempty(cfg.input))
   then

@@ -14,16 +14,24 @@ local M = {}
 ---@field term table can contain the same key-value pairs as `opts` argument of `jobstart()`
 
 ---@class PluginConfigDebug
+---@field adapters table<string, string>? mapping filetype to an adapter name (from `dap.adapters`)
 ---@field runner function? custom runner used to launch a selected debug config
+---@field templates table<string, DebugConfig>? debug configuration templates per filetype
 
 ---@class PluginConfig
 ---@field task PluginConfigTask?
 ---@field debug PluginConfigDebug?
 ---@field insert_on_task_launch boolean? whether to auto-enter insert mode after launching task
 M.defaults = {
+  -- config_type 'directory' | 'stdpath'
+  debug = {
+    adapters = nil, -- CHECK: change this to adapter config instead of mapping?
+    runner = nil,
+    templates = nil,
+  },
+  insert_on_task_launch = false,
   task = {
     display = 'float',
-    -- rerun_replace_current = false, -- replace previous task or create unique using timestamp
     float_config = {
       relative = 'editor',
       border = 'rounded',
@@ -35,16 +43,12 @@ M.defaults = {
       env = nil,
       shell = nil,
     },
+    -- rerun_replace_current = false, -- replace previous task or create unique using timestamp
     runner = nil,
-    term = { clear_env = false },
+    term = {
+      clear_env = false,
+    },
   },
-  debug = {
-    runner = nil,
-    -- optional DAP default template for each filetype (for smaller config files)
-    -- ft_templates = {}
-  },
-  insert_on_task_launch = false,
-  -- config_type 'directory' | 'stdpath'
 }
 
 ---@type PluginConfig runtime user configuration
