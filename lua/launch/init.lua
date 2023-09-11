@@ -8,7 +8,7 @@ local util = require 'launch.util'
 local M = {}
 
 ---plugin setup function
----@param opts PluginConfig?
+---@param opts? PluginConfig
 function M.setup(opts)
   config.apply(opts)
 

@@ -10,19 +10,19 @@ local M = {}
 ---@field display DisplayType whether to render the task output in a tabpage or a floating window
 ---@field float_config table can contain the same key-values pairs as `vim.api.nvim_open_win()`
 ---@field options TaskOptions additional task environment options
----@field runner fun(c: TaskConfig)? custom runner used to launch a selected task
+---@field runner? fun(c: TaskConfig) custom runner used to launch a selected task
 ---@field term table can contain the same key-value pairs as `opts` argument of `jobstart()`
 
 ---@class PluginConfigDebug
----@field adapters table<string, string>? mapping filetype to an adapter name (from `dap.adapters`)
+---@field adapters? table<string, string> mapping filetype to an adapter name (from `dap.adapters`)
 ---@field disable boolean whether to disable debugger support
----@field runner function? custom runner used to launch a selected debug config
----@field templates table<string, DebugConfig>? debug configuration templates per filetype
+---@field runner? function custom runner used to launch a selected debug config
+---@field templates? table<string, DebugConfig> debug configuration templates per filetype
 
 ---@class PluginConfig
----@field debug PluginConfigDebug?
+---@field debug? PluginConfigDebug
 ---@field insert_on_task_launch boolean whether to auto-enter insert mode after launching task
----@field task PluginConfigTask?
+---@field task? PluginConfigTask
 M.defaults = {
   -- config_type 'directory' | 'stdpath'
   debug = {
@@ -57,7 +57,7 @@ M.defaults = {
 M.user = {} ---@diagnostic disable-line
 
 ---applies the argument options to the defaults and saves it as user config
----@param opts PluginConfig?
+---@param opts? PluginConfig
 function M.apply(opts) M.user = util.deep_merge(M.defaults, opts or {}) end
 
 return M

@@ -70,7 +70,7 @@ M.show_active = setmetatable({
       api.nvim_buf_set_lines(self.buf, 0, -1, false, lines)
 
       ---open the listed task in either a floating window or a tabpage
-      ---@param display DisplayType?
+      ---@param display? DisplayType
       local function open_task(display)
         local line, _ = unpack(api.nvim_win_get_cursor(0))
         if line == 1 or line == height + 2 then return end

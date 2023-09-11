@@ -10,9 +10,9 @@ local TaskConfig = require 'launch.types.TaskConfig'
 local UserVariable = require 'launch.types.UserVariable'
 
 ---@class ConfigFromFile
----@field task TaskConfigFromFile[]?
----@field debug DebugConfigFromFile[]?
----@field input table<string, UserVariable>?
+---@field task? TaskConfigFromFile[]
+---@field debug? DebugConfigFromFile[]
+---@field input? table<string, UserVariable>
 local ConfigFromFile = {}
 
 ---load all valid configurations from file
@@ -43,7 +43,7 @@ local function build_configs(configs, Builder)
 end
 
 ---load valid task configurations from file
----@param configs TaskConfigFromFile[]?
+---@param configs? TaskConfigFromFile[]
 ---POSSIBLY THROWS ERROR
 function ConfigFromFile.load_from_task(configs)
   task.list = {} -- reset the tasks list for reloading
@@ -53,7 +53,7 @@ function ConfigFromFile.load_from_task(configs)
 end
 
 ---load valid debugger configurations from file
----@param configs DebugConfigFromFile[]?
+---@param configs? DebugConfigFromFile[]
 ---POSSIBLY THROWS ERROR
 function ConfigFromFile.load_from_debug(configs)
   local dap = util.try_require 'dap'
@@ -66,7 +66,7 @@ function ConfigFromFile.load_from_debug(configs)
 end
 
 ---load valid user-defined variables from file
----@param variables table<string, UserVariable>
+---@param variables? table<string, UserVariable>
 ---POSSIBLY THROWS ERROR
 function ConfigFromFile.load_from_input(variables)
   user.variables = {} -- reset the variables list for reloading

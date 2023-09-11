@@ -8,8 +8,8 @@ local util = require 'launch.util'
 ---@class UserVariable
 ---@field type UserVarType user input method; either entered at a prompt or selected from a list
 ---@field desc string a description for the input variable which is displayed in user input prompt
----@field default UserVarValue? a default value for an 'input' type variable (ignored for 'select')
----@field items UserVarValue[]? a list of choices for a 'select' type variable (ignored for 'input')
+---@field default? UserVarValue a default value for an 'input' type variable (ignored for 'select')
+---@field items? UserVarValue[] a list of choices for a 'select' type variable (ignored for 'input')
 ---@field get_user_choice fun(self:UserVariable, callback:function) user input processsing function
 local UserVariable = {}
 

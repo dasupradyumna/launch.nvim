@@ -5,26 +5,26 @@ local util = require 'launch.util'
 
 ---@class ShellOptions
 ---@field exec string path to the binary shell executable
----@field args string[]? command-line arguments to the shell executable
+---@field args? string[] command-line arguments to the shell executable
 local ShellOptions = {}
 
 ---@class TaskOptions
----@field cwd string? current working directory of the shell which runs the task
----@field env table<string, string>? environment variables to set in shell before running task
----@field shell ShellOptions? optional shell config to use for running task
+---@field cwd? string current working directory of the shell which runs the task
+---@field env? table<string, string> environment variables to set in shell before running task
+---@field shell? ShellOptions optional shell config to use for running task
 -- all above options (when specified) override the default shell environment
 local TaskOptions = {}
 
 ---@class TaskConfig
 ---@field name string display name of the task
 ---@field command string command to be executed: can be an executable or a shell command
----@field args string[]? command-line arguments that follow the command
----@field display DisplayType? whether to render the task output in a tabpage or a floating window
----@field options TaskOptions? additional options configuring how the task is run
+---@field args? string[] command-line arguments that follow the command
+---@field display? DisplayType whether to render the task output in a tabpage or a floating window
+---@field options? TaskOptions additional options configuring how the task is run
 local TaskConfig = {}
 
 ---@class TaskConfigFromFile : TaskConfig
----@field filetype string? valid filetype that the task applies to
+---@field filetype? string valid filetype that the task applies to
 local TaskConfigFromFile = {}
 
 ---creates a new instance of `TaskConfig`

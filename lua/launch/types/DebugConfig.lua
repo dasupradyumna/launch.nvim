@@ -6,7 +6,7 @@ local util = require 'launch.util'
 ---@class DebugConfig
 ---mandatory DAP fields
 ---@field name string display name of the debug configuration
----@field type string? name of the debug adapter to use for launching
+---@field type? string name of the debug adapter to use for launching
 ---@field request 'launch' | 'attach' whether to launch a program or connect to a running program
 local DebugConfig = {}
 

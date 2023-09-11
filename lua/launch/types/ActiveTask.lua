@@ -79,7 +79,7 @@ ActiveTask.renderer = {
 }
 
 ---renders the running task in either a floating window or a tabpage
----@param display DisplayType?
+---@param display? DisplayType
 function ActiveTask:render(display)
   display = display or self.display
   self.renderer[display](self.buffer, self.title)
