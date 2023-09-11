@@ -13,7 +13,6 @@ local log_level = {
 ---@param message string display message
 ---@param level 'E' | 'I' | 'W' notification level
 function M.notify(level, message, ...)
-  vim.api.nvim_command 'redraw'
   local msg = message:format(...)
   vim.notify('[launch.nvim] ' .. msg, log_level[level])
 end
@@ -75,23 +74,30 @@ function M.tbl_isdict(t)
   return true
 end
 
----@type table<string, string> error message if the plugin is missing
-local err_msg = {
-  dap = 'The plugin `mfussenegger/nvim-dap` is not installed\n'
-    .. '    Please install it to include support for launching debugger processes',
-}
+M.try_require = setmetatable({
+  ---@type table<string, string> error message if the plugin is missing
+  warn_msg = {
+    dap = 'The plugin `mfussenegger/nvim-dap` was not found.\n    Please ensure it is installed and'
+      .. ' loaded before `launch.nvim` to include support for launching debugger processes',
+  },
+}, {
+  ---load the specified plugin if it exists else (optionally) notify the user
+  ---@param plugin string module name of the plugin
+  ---@param emit_warn? boolean whether to emit a warning if module could not be loaded
+  ---@return table? # the main plugin module if it exists
+  __call = function(self, plugin, emit_warn)
+    if not self[plugin] then
+      local ok, loaded = pcall(require, plugin)
+      self[plugin] = ok and loaded or {}
+    end
 
----load the specified plugin if it exists else notify the user
----@param plugin string module name of the plugin
----@return table? loaded the main plugin module if it exists
-function M.load_if_exists(plugin)
-  local ok, loaded = pcall(require, plugin)
-  if not ok then
-    M.notify('E', err_msg[plugin])
-    return
-  end
-
-  return loaded
-end
+    if vim.tbl_isempty(self[plugin]) then
+      if emit_warn then M.notify('W', self.warn_msg[plugin]) end
+      return
+    else
+      return self[plugin]
+    end
+  end,
+})
 
 return M

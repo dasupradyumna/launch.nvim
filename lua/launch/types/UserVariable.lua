@@ -55,24 +55,27 @@ function UserVariable.validate_input(name, var)
   end
 
   if type(var) ~= 'table' or vim.tbl_isempty(var) then
-    msg = { '`%s` should be a non-empty table\n    Got: %s', var }
+    msg = { '`%s` should be a non-empty table. Got:\n%s', var }
   elseif not util.tbl_isdict(var) then
     local non_str = {}
     for k, v in pairs(var) do
       if type(k) ~= 'string' then non_str[tostring(k)] = v end
     end
-    msg = { '`%s` should be a dictionary\n    Got non-string key-value pairs: %s', non_str }
+    msg = {
+      '`%s` should be a dictionary. Got the following key-value pairs with non-string keys:\n%s',
+      non_str,
+    }
   elseif #invalid_fields > 0 then
     msg = { '`%s` has the following invalid fields : %s', invalid_fields }
   elseif not vim.list_contains({ 'input', 'select' }, var.type) then
-    msg = { '`%s.type` field should be either "input" or "select"\n    Got: %s', var.type }
+    msg = { '`%s.type` field should be either "input" or "select". Got:\n%s', var.type }
   elseif type(var.desc) ~= 'string' then
-    msg = { '`%s.desc` field should be a string\n    Got: %s', var.desc }
+    msg = { '`%s.desc` field should be a string. Got:\n%s', var.desc }
   elseif var.type == 'input' then
     if type(var.items) ~= 'nil' then
       msg = { '`%s.items` field should not be defined; it is an "input" type variable' }
     elseif not vim.list_contains({ 'boolean', 'string', 'number', 'nil' }, type(var.default)) then
-      msg = { '`%s.default` (optional) field should be a `UserVarValue`\n    Got: %s', var.default }
+      msg = { '`%s.default` (optional) field should be a `UserVarValue`. Got:\n%s', var.default }
     end
   elseif var.type == 'select' then
     if type(var.default) ~= 'nil' then
@@ -80,12 +83,12 @@ function UserVariable.validate_input(name, var)
     elseif type(var.items) == 'nil' then
       msg = { '`%s.items` field is missing and should be defined; it is a "select" type variable' }
     elseif not vim.tbl_islist(var.items) or vim.tbl_isempty(var.items) then
-      msg = { '`%s.items` field should be a non-empty list-like table\n    Got: %s', var.items }
+      msg = { '`%s.items` field should be a non-empty list-like table. Got:\n%s', var.items }
     else
       for _, i in ipairs(var.items) do
         if not vim.list_contains({ 'boolean', 'string', 'number' }, type(i)) then
           msg =
-            { '`%s.items` list should only contain `UserVarValue` objects\n    Got: %s', var.items }
+            { '`%s.items` list should only contain `UserVarValue` objects. Got:\n%s', var.items }
           break
         end
       end

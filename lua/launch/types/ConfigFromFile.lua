@@ -1,5 +1,6 @@
 ----------------------------------------- CONFIG-FROM-FILE -----------------------------------------
 
+local config = require 'launch.config'
 local task = require 'launch.task'
 local user = require 'launch.user'
 local util = require 'launch.util'
@@ -22,7 +23,7 @@ function ConfigFromFile:load(cfg)
 
   -- load all tasks, debug configurations and user-defined variables from file
   self.load_from_task(cfg.task)
-  self.load_from_debug(cfg.debug)
+  if not config.user.debug.disable then self.load_from_debug(cfg.debug) end
   self.load_from_input(cfg.input)
 end
 
@@ -32,8 +33,8 @@ end
 ---@return table<string, DebugConfig | TaskConfig>
 local function build_configs(configs, Builder)
   local built = {}
-  for _, config in ipairs(configs) do
-    local ft, cfg = Builder:new(config)
+  for _, raw_cfg in ipairs(configs) do
+    local ft, cfg = Builder:new(raw_cfg)
     built[ft] = built[ft] or {}
     table.insert(built[ft], cfg)
   end
@@ -55,7 +56,7 @@ end
 ---@param configs DebugConfigFromFile[]?
 ---POSSIBLY THROWS ERROR
 function ConfigFromFile.load_from_debug(configs)
-  local dap = util.load_if_exists 'dap'
+  local dap = util.try_require 'dap'
   if not dap then return end
 
   dap.configurations = {} -- reset the debug configs list for reloading
@@ -91,28 +92,38 @@ function ConfigFromFile.validate_input(cfg)
   end
 
   if type(cfg) ~= 'table' or vim.tbl_isempty(cfg) then
-    msg = { 'should return a non-empty table\n    Got: %s', cfg }
+    msg = { 'should return a non-empty table. Got:\n%s', cfg }
   elseif not util.tbl_isdict(cfg) then
     local non_str = {}
     for k, v in pairs(cfg) do
       if type(k) ~= 'string' then non_str[tostring(k)] = v end
     end
-    msg = { 'table should be a dictionary\n    Got non-string key-value pairs: %s', non_str }
+    msg = {
+      'table should be a dictionary. Got the following key-value pairs with non-string keys:\n%s',
+      non_str,
+    }
   elseif #invalid_fields > 0 then
     msg = { 'table has the following invalid fields : %s', invalid_fields }
   elseif
     type(cfg.task) ~= 'nil' and (not vim.tbl_islist(cfg.task) or vim.tbl_isempty(cfg.task))
   then
-    msg = { 'table `task` field should be a non-empty list-like table\n    Got: %s', cfg.task }
-  elseif
-    type(cfg.debug) ~= 'nil' and (not vim.tbl_islist(cfg.debug) or vim.tbl_isempty(cfg.debug))
-  then
-    msg = { 'table `debug` field should be a non-empty list-like table\n    Got: %s', cfg.debug }
+    msg = { 'table `task` field should be a non-empty list-like table. Got:\n%s', cfg.task }
   elseif
     type(cfg.input) ~= 'nil' and (not util.tbl_isdict(cfg.input) or vim.tbl_isempty(cfg.input))
   then
-    msg =
-      { 'table `input` field should be a non-empty dictionary-like table\n    Got: %s', cfg.input }
+    msg = { 'table `input` field should be a non-empty dictionary-like table. Got:\n%s', cfg.input }
+  elseif config.user.debug.disable then
+    if type(cfg.debug) ~= 'nil' then
+      msg = {
+        'table `debug` field should not be specified; user has manually disabled debugger support. '
+          .. 'Got:\n%s',
+        cfg.debug,
+      }
+    end
+  elseif
+    type(cfg.debug) ~= 'nil' and (not vim.tbl_islist(cfg.debug) or vim.tbl_isempty(cfg.debug))
+  then
+    msg = { 'table `debug` field should be a non-empty list-like table. Got:\n%s', cfg.debug }
   end
 
   if msg then util.throw_notify('E', 'Config file "launch.lua" ' .. msg[1], vim.inspect(msg[2])) end

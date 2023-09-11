@@ -80,42 +80,41 @@ function TaskConfigFromFile.validate_input(cfg)
   end
 
   if type(cfg) ~= 'table' or vim.tbl_isempty(cfg) then
-    msg = { 'should be a non-empty table\n    Got: %s', vim.inspect(cfg) }
+    msg = { 'should be a non-empty table. Got:\n%s', vim.inspect(cfg) }
   elseif not util.tbl_isdict(cfg) then
     local non_str = {}
     for k, v in pairs(cfg) do
       if type(k) ~= 'string' then non_str[tostring(k)] = v end
     end
-    msg = { 'should be a dictionary\n    Got non-string key-value pairs: %s', vim.inspect(non_str) }
+    msg = {
+      'should be a dictionary. Got the following key-value pairs with non-string keys:\n%s',
+      vim.inspect(non_str),
+    }
   elseif type(cfg.name) ~= 'string' then
-    msg = { '`name` field should be a string\n    Got: %s', vim.inspect(cfg.name) }
+    msg = { '`name` field should be a string. Got:\n%s', vim.inspect(cfg.name) }
   elseif #invalid_fields > 0 then
     msg = { '"%s" has the following invalid fields : %s', cfg.name, invalid_fields }
   elseif not vim.list_contains({ 'string', 'nil' }, type(cfg.filetype)) then
     msg =
-      { '"%s" `filetype` (optional) field should be a string\n    Got: %s', cfg.name, cfg.filetype }
+      { '"%s" `filetype` (optional) field should be a string. Got:\n%s', cfg.name, cfg.filetype }
   elseif type(cfg.command) ~= 'string' then
-    msg = { '"%s" `command` field should be a string\n    Got: %s', cfg.name, cfg.command }
+    msg = { '"%s" `command` field should be a string. Got:\n%s', cfg.name, cfg.command }
   elseif type(cfg.display) ~= 'nil' and not vim.list_contains({ 'float', 'tab' }, cfg.display) then
     msg = {
-      '"%s" `display` (optional) field should be either "float" or "tab"\n    Got: %s',
+      '"%s" `display` (optional) field should be either "float" or "tab". Got:\n%s',
       cfg.name,
       cfg.display,
     }
   elseif not vim.list_contains({ 'table', 'nil' }, type(cfg.options)) then
-    msg =
-      { '"%s" `options` (optional) field should be a table\n    Got: %s', cfg.name, cfg.options }
+    msg = { '"%s" `options` (optional) field should be a table. Got:\n%s', cfg.name, cfg.options }
   elseif type(cfg.args) ~= 'nil' then
     if not vim.tbl_islist(cfg.args) or vim.tbl_isempty(cfg.args) then
-      msg = {
-        '"%s" `args` field should be a non-empty list-like table\n    Got: %s',
-        cfg.name,
-        cfg.args,
-      }
+      msg =
+        { '"%s" `args` field should be a non-empty list-like table. Got:\n%s', cfg.name, cfg.args }
     else
       for _, a in ipairs(cfg.args) do
         if type(a) ~= 'string' then
-          msg = { '"%s" `args` list should only contain strings\n    Got: %s', cfg.name, cfg.args }
+          msg = { '"%s" `args` list should only contain strings. Got:\n%s', cfg.name, cfg.args }
           break
         end
       end
@@ -142,24 +141,24 @@ function TaskOptions.validate_input(name, opts)
     for k, v in pairs(opts) do
       if type(k) ~= 'string' then non_str[tostring(k)] = v end
     end
-    msg = { '"%s" should be a dictionary\n    Got non-string key-value pairs: %s', non_str }
+    msg = {
+      '"%s" should be a dictionary. Got the following key-value pairs with non-string keys:\n%s',
+      non_str,
+    }
   elseif #invalid_fields > 0 then
     msg = { '"%s" has the following invalid fields : %s', invalid_fields }
   elseif not vim.list_contains({ 'string', 'nil' }, type(opts.cwd)) then
-    msg = { '"%s" `cwd` field should be a string\n    Got: %s', opts.cwd }
+    msg = { '"%s" `cwd` field should be a string. Got:\n%s', opts.cwd }
   elseif not vim.list_contains({ 'table', 'nil' }, type(opts.shell)) then
-    msg = { '"%s" `shell` (optional) field should be a table\n    Got: %s', opts.shell }
+    msg = { '"%s" `shell` (optional) field should be a table. Got:\n%s', opts.shell }
   elseif type(opts.env) ~= 'nil' then
     if not util.tbl_isdict(opts.env) or vim.tbl_isempty(opts.env) then
-      msg = {
-        '"%s" `env` field should be a non-empty dictionary-like table\n    Got: %s',
-        opts.env,
-      }
+      msg = { '"%s" `env` field should be a non-empty dictionary-like table. Got:\n%s', opts.env }
     else
       for _, v in pairs(opts.env) do
         if not vim.list_contains({ 'string', 'number' }, type(v)) then
           msg = {
-            '"%s" `env` dictionary should only contain strings or numbers as values\n    Got: %s',
+            '"%s" `env` dictionary should only contain strings or numbers as values. Got:\n%s',
             opts.env,
           }
           break
@@ -190,18 +189,21 @@ function ShellOptions.validate_input(name, opts)
     for k, v in pairs(opts) do
       if type(k) ~= 'string' then non_str[tostring(k)] = v end
     end
-    msg = { '"%s" should be a dictionary\n    Got non-string key-value pairs: %s', non_str }
+    msg = {
+      '"%s" should be a dictionary. Got the following key-value pairs with non-string keys:\n%s',
+      non_str,
+    }
   elseif #invalid_fields > 0 then
     msg = { '"%s" has the following invalid fields : %s', invalid_fields }
   elseif type(opts.exec) ~= 'string' then
-    msg = { '"%s" `exec` field should be a string\n    Got: %s', opts.exec }
+    msg = { '"%s" `exec` field should be a string. Got:\n%s', opts.exec }
   elseif type(opts.args) ~= 'nil' then
     if not vim.tbl_islist(opts.args) or vim.tbl_isempty(opts.args) then
-      msg = { '"%s" `args` field should be a non-empty list-like table\n    Got: %s', opts.args }
+      msg = { '"%s" `args` field should be a non-empty list-like table. Got:\n%s', opts.args }
     else
       for _, a in ipairs(opts.args) do
         if type(a) ~= 'string' then
-          msg = { '"%s" `args` list should only contain strings\n    Got: %s', opts.args }
+          msg = { '"%s" `args` list should only contain strings. Got:\n%s', opts.args }
           break
         end
       end

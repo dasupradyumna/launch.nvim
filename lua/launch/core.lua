@@ -31,7 +31,7 @@ local messages = {
 local function check_and_substitute_vars(type, config)
   if not config then
     vim.api.nvim_command 'redraw'
-    util.notify('I', messages[type].no_configs)
+    util.notify('I', messages[type].no_selection)
     return
   elseif vim.tbl_isempty(user.variables) then
     return config
@@ -97,8 +97,7 @@ function M.load_config_file()
   ok = pcall(function() ConfigFromFile:load(configs) end)
   if not ok then return end
 
-  vim.api.nvim_command 'redraw'
-  util.notify('I', 'Configurations updated')
+  util.notify('I', 'User configurations loaded')
 end
 
 return M

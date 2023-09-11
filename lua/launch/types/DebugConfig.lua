@@ -40,20 +40,23 @@ function DebugConfigFromFile.validate_input(cfg)
   local msg
 
   if type(cfg) ~= 'table' or vim.tbl_isempty(cfg) then
-    msg = { 'should be a non-empty table\n    Got: %s', vim.inspect(cfg) }
+    msg = { 'should be a non-empty table. Got:\n%s', vim.inspect(cfg) }
   elseif not util.tbl_isdict(cfg) then
     local non_str = {}
     for k, v in pairs(cfg) do
       if type(k) ~= 'string' then non_str[tostring(k)] = v end
     end
-    msg = { 'should be a dictionary\n    Got non-string key-value pairs: %s', vim.inspect(non_str) }
+    msg = {
+      'should be a dictionary. Got the following key-value pairs with non-string keys:\n%s',
+      vim.inspect(non_str),
+    }
   elseif type(cfg.name) ~= 'string' then
-    msg = { '`name` field should be a string\n    Got: %s', vim.inspect(cfg.name) }
+    msg = { '`name` field should be a string. Got:\n%s', vim.inspect(cfg.name) }
   elseif type(cfg.filetype) ~= 'string' then
-    msg = { '"%s" `filetype` field should be a string\n    Got: %s', cfg.name, cfg.filetype }
+    msg = { '"%s" `filetype` field should be a string. Got:\n%s', cfg.name, cfg.filetype }
   elseif not vim.list_contains({ 'attach', 'launch' }, cfg.request) then
     msg = {
-      '"%s" `request` field should be either "attach" or "launch"\n    Got: %s',
+      '"%s" `request` field should be either "attach" or "launch". Got:\n%s',
       cfg.name,
       cfg.request,
     }

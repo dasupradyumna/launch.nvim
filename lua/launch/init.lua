@@ -11,6 +11,14 @@ local M = {}
 ---@param opts PluginConfig?
 function M.setup(opts)
   config.apply(opts)
+
+  -- checking for debugger support via nvim-dap
+  if config.user.debug.disable then
+    vim.api.nvim_del_user_command 'LaunchDebugger'
+  else
+    util.try_require('dap', true)
+  end
+
   core.load_config_file()
 end
 
@@ -24,7 +32,12 @@ end
 ---displays available debug configurations to the user and launches the selected config
 ---@param show_all_fts boolean whether to display all configs or only based on current filetype
 function M.debugger(show_all_fts)
-  local dap = util.load_if_exists 'dap'
+  if config.user.debug.disable then
+    util.notify('E', 'Debugger support has been manually disabled by the user')
+    return
+  end
+
+  local dap = util.try_require('dap', true)
   if not dap then return end
 
   local run = config.user.debug.runner or dap.run

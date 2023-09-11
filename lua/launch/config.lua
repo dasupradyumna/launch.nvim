@@ -15,17 +15,19 @@ local M = {}
 
 ---@class PluginConfigDebug
 ---@field adapters table<string, string>? mapping filetype to an adapter name (from `dap.adapters`)
+---@field disable boolean whether to disable debugger support
 ---@field runner function? custom runner used to launch a selected debug config
 ---@field templates table<string, DebugConfig>? debug configuration templates per filetype
 
 ---@class PluginConfig
----@field task PluginConfigTask?
 ---@field debug PluginConfigDebug?
----@field insert_on_task_launch boolean? whether to auto-enter insert mode after launching task
+---@field insert_on_task_launch boolean whether to auto-enter insert mode after launching task
+---@field task PluginConfigTask?
 M.defaults = {
   -- config_type 'directory' | 'stdpath'
   debug = {
     adapters = nil, -- CHECK: change this to adapter config instead of mapping?
+    disable = false,
     runner = nil,
     templates = nil,
   },
