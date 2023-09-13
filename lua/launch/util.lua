@@ -1,5 +1,7 @@
 ---------------------------------------- UTILITY FUNCTIONS -----------------------------------------
 
+local api = vim.api
+
 local M = {}
 
 ---@type table<string, integer> mapping from simple string to `vim.log.levels`
@@ -34,8 +36,8 @@ end
 ---@nodiscard
 ---POSSIBLY THROWS ERROR
 function M.get_win_pos_centered(w, h)
-  local W = vim.api.nvim_get_option_value('columns', {})
-  local H = vim.api.nvim_get_option_value('lines', {})
+  local W = api.nvim_get_option_value('columns', {})
+  local H = api.nvim_get_option_value('lines', {})
   local r, c
   if w < 1 and h < 1 then
     w, h = w * W, h * H
@@ -44,6 +46,7 @@ function M.get_win_pos_centered(w, h)
     error 'arguments `w` and `h` should both be greater than (equal to) 1 or both lesser than 1'
   end
 
+  -- FIX: function does not handle h,w being greater than the window height and width
   r = (H - h) / 2 - 1
   c = (W - w) / 2 - 1
   return math.floor(r), math.floor(c), w, h
@@ -99,5 +102,52 @@ M.try_require = setmetatable({
     end
   end,
 })
+
+---filter the given dictionary of configs by current buffer filetype or list all configs
+---@param configs table<string, LaunchConfig[]> list of configurations for user to filter
+---@param all_filetypes boolean whether to return all configs or only filtered by current filetype
+---@return LaunchConfig[] filtered filtered configuration list
+---@return string? filetype filetype of the current buffer (**nil** if `all_filetypes` is **true**)
+function M.filter_configs_by_filetype(configs, all_filetypes)
+  local filtered, filetype
+  if all_filetypes then
+    filtered = {}
+    for _, ft_configs in pairs(configs) do
+      vim.list_extend(filtered, ft_configs)
+    end
+  else
+    filetype = vim.api.nvim_get_option_value('filetype', { buf = 0 })
+    filtered = configs[filetype] or {}
+  end
+
+  return filtered, filetype
+end
+
+---generate a string representation of the argument key-value pair, with indentation based on level
+---@param key string
+---@param value table
+---@param level integer
+---@param key_sorter function?
+---@return string[]
+function M.key_value_repr(key, value, level, key_sorter)
+  if vim.tbl_isempty(value) then return {} end
+
+  local ws = (' '):rep(level * 2)
+  local repr = { ('%s%s:'):format(ws, key) }
+  ws = ws .. '  '
+
+  local fields = vim.tbl_keys(value)
+  table.sort(fields, key_sorter)
+  for _, field in ipairs(fields) do
+    local f_value = value[field]
+    if type(f_value) == 'table' then
+      vim.list_extend(repr, M.key_value_repr(field, f_value, level + 1))
+    else
+      table.insert(repr, ('%s%s: %s'):format(ws, field, f_value))
+    end
+  end
+
+  return repr
+end
 
 return M

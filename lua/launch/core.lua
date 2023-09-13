@@ -22,9 +22,10 @@ local messages = {
 }
 
 ---@alias LaunchConfig TaskConfig | DebugConfig
+---@alias LaunchType 'debug' | 'task'
 
 ---check if configuration is valid and substitute any user-defined config variables
----@param type 'debug' | 'task' whether the target is a debug or a task configuration
+---@param type LaunchType whether the target is a debug or a task configuration
 ---@param config LaunchConfig a run configuration object
 ---@return LaunchConfig?
 ---@nodiscard
@@ -47,21 +48,12 @@ local function check_and_substitute_vars(type, config)
 end
 
 ---get and display a list of valid configurations and execute the one that the user selects
----@param type 'debug' | 'task' whether the target is a debug or a task configuration
+---@param type LaunchType whether the target is a debug or a task configuration
 ---@param show_all_fts boolean whether to display all configs or only based on current filetype
 ---@param all_configs table<string, LaunchConfig[]> list of configurations for user to select from
 ---@param run fun(config: LaunchConfig) target runner to process selected config
 function M.start(type, show_all_fts, all_configs, run)
-  local configs
-  if show_all_fts then
-    configs = {}
-    for _, ft_configs in pairs(all_configs) do
-      vim.list_extend(configs, ft_configs)
-    end
-  else
-    local filetype = vim.api.nvim_get_option_value('filetype', { buf = 0 })
-    configs = all_configs[filetype]
-  end
+  local configs = util.filter_configs_by_filetype(all_configs, show_all_fts)
 
   -- skip with warning message if no configurations are available
   if not configs or #configs == 0 then

@@ -6,11 +6,13 @@ local api = vim.api
 
 local function cmd(n, cb) api.nvim_create_user_command(n, cb, {}) end
 
-cmd('LaunchShowTasks', function() vim.print(require('launch.task').list) end)
-cmd('LaunchShowActiveTasks', function() require('launch.task').show_active() end)
-cmd('LaunchShowUserVariables', function() vim.print(require('launch.user').variables) end)
 cmd('LaunchTask', function() require('launch').task(true) end)
 cmd('LaunchDebugger', function() require('launch').debugger(true) end)
+cmd('LaunchShowTaskConfigs', function() require('launch').view('task', true) end)
+cmd('LaunchShowActiveTasks', function() require('launch.task').show_active() end)
+cmd('LaunchShowDebugConfigs', function() require('launch').view('debug', true) end)
+-- HACK: implement the user variables viewer (similar to above)
+cmd('LaunchShowUserVariables', function() vim.print(require('launch.user').variables) end)
 cmd('LaunchOpenConfig', function() api.nvim_command 'vsplit .nvim/launch.lua' end)
 
 ------------------------------ USER AUTOCOMMANDS -------------------------------
@@ -40,8 +42,10 @@ api.nvim_create_autocmd('TabClosed', {
 api.nvim_create_autocmd('WinClosed', {
   desc = 'Remove the cached task floating window handle when it is closed',
   callback = function(trigger)
-    local float = require('launch.types.ActiveTask').renderer.float
-    if tonumber(trigger.match, 10) == float.handle then float.handle = nil end
+    local float1 = require('launch.types.ActiveTask').renderer.float
+    local float2 = require('launch.view').open_win
+    if tonumber(trigger.match, 10) == float1.handle then float1.handle = nil end
+    if tonumber(trigger.match, 10) == float2.handle then float2.handle = nil end
   end,
   group = 'launch_nvim',
 })

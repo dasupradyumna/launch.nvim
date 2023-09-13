@@ -44,4 +44,15 @@ function M.debugger(show_all_fts)
   core.start('debug', show_all_fts, dap.configurations, run)
 end
 
+---displays the list of available configurations based on the type
+---@param type LaunchType whether the target is a debug or a task configuration
+---@param show_all_fts boolean whether to display all configs or only based on current filetype
+function M.view(type, show_all_fts)
+  local dap = util.try_require('dap', true)
+  if not dap then return end
+
+  local list = type == 'task' and task.list or dap.configurations
+  require('launch.view').render(list, type, show_all_fts)
+end
+
 return M

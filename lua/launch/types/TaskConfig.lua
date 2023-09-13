@@ -46,7 +46,7 @@ function TaskConfig:new(cfg)
 
   -- set defaults
   cfg.display = cfg.display or config.user.task.display
-  cfg.options = vim.tbl_deep_extend('force', config.user.task.options, cfg.options or {})
+  cfg.options = util.deep_merge(config.user.task.options, cfg.options or {})
   if cfg.options.cwd then cfg.options.cwd = vim.fs.normalize(cfg.options.cwd) end
 
   return ft, setmetatable(cfg, { __index = self })
