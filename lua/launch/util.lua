@@ -105,7 +105,7 @@ M.try_require = setmetatable({
 
 ---filter the given dictionary of configs by current buffer filetype or list all configs
 ---@param configs table<string, LaunchConfig[]> list of configurations for user to filter
----@param all_filetypes boolean whether to return all configs or only filtered by current filetype
+---@param all_filetypes? boolean whether to return all configs or only filtered by current filetype
 ---@return LaunchConfig[] filtered filtered configuration list
 ---@return string? filetype filetype of the current buffer (**nil** if `all_filetypes` is **true**)
 function M.filter_configs_by_filetype(configs, all_filetypes)

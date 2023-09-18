@@ -58,6 +58,18 @@ M.user = {} ---@diagnostic disable-line
 
 ---applies the argument options to the defaults and saves it as user config
 ---@param opts? PluginConfig
-function M.apply(opts) M.user = util.deep_merge(M.defaults, opts or {}) end
+function M.apply(opts)
+  -- TODO: validation of the argument options (below merging might fail otherwise)
+
+  M.user = util.deep_merge(M.defaults, opts or {})
+  M.user.task.float_config = util.merge(M.user.task.float_config, {
+    -- NOTE: values below are placeholders to safely initialize a blank float
+    title = '',
+    row = 1,
+    col = 1,
+    width = 5,
+    height = 5,
+  })
+end
 
 return M

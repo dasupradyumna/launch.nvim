@@ -112,18 +112,22 @@ function ConfigFromFile.validate_input(cfg)
     type(cfg.input) ~= 'nil' and (not util.tbl_isdict(cfg.input) or vim.tbl_isempty(cfg.input))
   then
     msg = { 'table `input` field should be a non-empty dictionary-like table. Got:\n%s', cfg.input }
-  elseif config.user.debug.disable then
-    if type(cfg.debug) ~= 'nil' then
+  elseif type(cfg.debug) ~= 'nil' then
+    if config.user.debug.disable then
       msg = {
         'table `debug` field should not be specified; user has manually disabled debugger support. '
           .. 'Got:\n%s',
         cfg.debug,
       }
+    elseif not util.try_require 'dap' then
+      msg = {
+        'table `debug` field has been specified, but the plugin `mfussenegger/nvim-dap` was not '
+          .. 'found. Got:\n%s',
+        cfg.debug,
+      }
+    elseif not vim.tbl_islist(cfg.debug) or vim.tbl_isempty(cfg.debug) then
+      msg = { 'table `debug` field should be a non-empty list-like table. Got:\n%s', cfg.debug }
     end
-  elseif
-    type(cfg.debug) ~= 'nil' and (not vim.tbl_islist(cfg.debug) or vim.tbl_isempty(cfg.debug))
-  then
-    msg = { 'table `debug` field should be a non-empty list-like table. Got:\n%s', cfg.debug }
   end
 
   if msg then util.throw_notify('E', 'Config file "launch.lua" ' .. msg[1], vim.inspect(msg[2])) end

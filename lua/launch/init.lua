@@ -45,14 +45,20 @@ function M.debugger(show_all_fts)
 end
 
 ---displays the list of available configurations based on the type
----@param type LaunchType whether the target is a debug or a task configuration
----@param show_all_fts boolean whether to display all configs or only based on current filetype
+---@param type ViewType the type of content that will be displayed
+---@param show_all_fts? boolean whether to display all configs or only based on current filetype
 function M.view(type, show_all_fts)
-  local dap = util.try_require('dap', true)
-  if not dap then return end
+  -- checking for debugger support via nvim-dap
+  if type == 'debug' then
+    if config.user.debug.disable then
+      util.notify('E', 'Debugger support has been manually disabled by the user')
+      return
+    elseif not util.try_require('dap', true) then
+      return
+    end
+  end
 
-  local list = type == 'task' and task.list or dap.configurations
-  require('launch.view').render(list, type, show_all_fts)
+  require('launch.view').render(type, show_all_fts)
 end
 
 return M

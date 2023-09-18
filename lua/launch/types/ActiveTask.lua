@@ -2,6 +2,7 @@
 
 local config = require 'launch.config'
 local util = require 'launch.util'
+local view = require 'launch.view'
 
 local api = vim.api
 local fn = vim.fn
@@ -31,35 +32,31 @@ function ActiveTask:new(cfg)
   }, { __index = self })
 end
 
----@type { float: table, tab: table } holds the rendering functions for floats and tabs
+---@type { float: function, tab: table } holds the rendering functions for floats and tabs
 ActiveTask.renderer = {
 
-  float = setmetatable({}, {
-    ---render active task in a floating window
-    ---@param buffer integer buffer of active task
-    ---@param title string title of active task
-    __call = function(self, buffer, title)
-      if not self.handle then
-        local r, c, w, h = util.get_win_pos_centered(0.8, 0.9)
-        self.config = util.merge(config.user.task.float_config, {
-          width = w,
-          height = h,
-          row = r,
-          col = c,
-          title = (' %s '):format(title),
-        })
-        self.handle = api.nvim_open_win(buffer, true, self.config)
-      else
-        api.nvim_win_set_buf(self.handle, buffer)
-        self.config.title = (' %s '):format(title)
-        api.nvim_win_set_config(self.handle, self.config)
-      end
+  ---render active task in a floating window
+  ---@param buffer integer buffer of active task
+  ---@param title string title of active task
+  float = function(buffer, title)
+    -- CHECK: very similar to `launch.view.open_win()`; possible refactor?
+    local r, c, w, h = util.get_win_pos_centered(0.8, 0.9)
+    local float_config = util.merge(config.user.task.float_config, {
+      width = w,
+      height = h,
+      row = r,
+      col = c,
+      title = (' %s '):format(title),
+    })
 
-      api.nvim_set_option_value('signcolumn', 'yes:1', { win = self.handle })
-      api.nvim_set_option_value('winbar', '', { win = self.handle })
-    end,
-  }),
+    local win = view.handles.win
+    api.nvim_win_set_buf(win, buffer)
+    api.nvim_win_set_config(win, float_config) -- for some reason, resets all window options
+    api.nvim_set_option_value('signcolumn', 'yes:1', { win = win })
+    api.nvim_set_option_value('winbar', '', { win = win })
+  end,
 
+  -- CHECK: can this be converted into a function?
   tab = setmetatable({}, {
     ---render active task in a tabpage
     ---@param buffer integer buffer of active task
