@@ -29,7 +29,9 @@ M.handles = setmetatable({}, {
       })
     -- create floating window if none exists
     elseif key == 'win' then
+      pcall(config.user.task.hooks.float.pre)
       val = api.nvim_open_win(self.buf, true, config.user.task.float_config)
+      pcall(config.user.task.hooks.float.post)
       api.nvim_win_set_buf(val, self.buf)
     end
 

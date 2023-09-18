@@ -62,10 +62,10 @@ ActiveTask.renderer = {
     ---@param buffer integer buffer of active task
     __call = function(self, buffer)
       if not self.handle then
-        api.nvim_set_var('disable_new_tab_name_prompt', true) -- HACK: remove this
+        pcall(config.user.task.hooks.tab.pre)
         api.nvim_command(('tab sbuffer %s'):format(buffer))
+        pcall(config.user.task.hooks.tab.post)
         self.handle = api.nvim_get_current_tabpage()
-        api.nvim_tabpage_set_var(0, 'tabname', 'TaskRunner') -- HACK: remove this
       else
         api.nvim_set_current_tabpage(self.handle)
       end

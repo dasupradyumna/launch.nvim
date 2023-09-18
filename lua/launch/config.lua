@@ -6,9 +6,14 @@ local M = {}
 
 ---@alias DisplayType 'float' | 'tab'
 
+---@class Hook
+---@field pre? function executed before a certain event
+---@field post? function executed after a certain event
+
 ---@class PluginConfigTask
 ---@field display DisplayType whether to render the task output in a tabpage or a floating window
 ---@field float_config table can contain the same key-values pairs as `vim.api.nvim_open_win()`
+---@field hooks { float: Hook, tab: Hook } user hooks for user to customize specific behavior
 ---@field options TaskOptions additional task environment options
 ---@field runner? fun(c: TaskConfig) custom runner used to launch a selected task
 ---@field term table can contain the same key-value pairs as `opts` argument of `jobstart()`
@@ -39,6 +44,16 @@ M.defaults = {
       border = 'rounded',
       title_pos = 'center',
       style = 'minimal',
+    },
+    hooks = {
+      float = {
+        pre = nil,
+        post = nil,
+      },
+      tab = {
+        pre = nil,
+        post = nil,
+      },
     },
     options = {
       cwd = nil,
