@@ -12,7 +12,7 @@ local ShellOptions = {}
 ---@field cwd? string current working directory of the shell which runs the task
 ---@field env? table<string, string> environment variables to set in shell before running task
 ---@field shell? ShellOptions optional shell config to use for running task
--- all above options (when specified) override the default shell environment
+-- all above options (when specified) override those of the default shell environment
 local TaskOptions = {}
 
 ---@class TaskConfig
@@ -32,7 +32,7 @@ local TaskConfigFromFile = {}
 ---@return string ft filetype associated with the current task
 ---@return TaskConfig
 ---@nodiscard
----POSSIBLY THROWS ERROR
+---*[POSSIBLY THROWS ERROR]*
 function TaskConfig:new(cfg)
   TaskConfigFromFile.validate_input(cfg)
   if cfg.options then
@@ -69,7 +69,7 @@ local valid_fields = {
 
 ---checks and validates if the argument `cfg` is a valid `TaskConfigFromFile` object
 ---@param cfg table task configuration under validation
----POSSIBLY THROWS ERROR
+---*[POSSIBLY THROWS ERROR]*
 function TaskConfigFromFile.validate_input(cfg)
   local msg, invalid_fields
   if type(cfg) == 'table' then
@@ -126,7 +126,7 @@ end
 
 ---checks and validates if the argument `opts` is a valid `TaskOptions` object
 ---@param opts table task options under validation
----POSSIBLY THROWS ERROR
+---*[POSSIBLY THROWS ERROR]*
 function TaskOptions.validate_input(name, opts)
   local msg, invalid_fields
   invalid_fields = vim.tbl_filter(
@@ -174,7 +174,7 @@ end
 
 ---checks and validates if the argument `opts` is a valid `ShellOptions` object
 ---@param opts table shell options under validation
----POSSIBLY THROWS ERROR
+---*[POSSIBLY THROWS ERROR]*
 function ShellOptions.validate_input(name, opts)
   local msg, invalid_fields
   invalid_fields = vim.tbl_filter(

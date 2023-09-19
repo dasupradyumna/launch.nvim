@@ -17,7 +17,7 @@ local ConfigFromFile = {}
 
 ---load all valid configurations from file
 ---@param cfg ConfigFromFile
----POSSIBLY THROWS ERROR
+---*[POSSIBLY THROWS ERROR]*
 function ConfigFromFile:load(cfg)
   self.validate_input(cfg)
 
@@ -44,7 +44,7 @@ end
 
 ---load valid task configurations from file
 ---@param configs? TaskConfigFromFile[]
----POSSIBLY THROWS ERROR
+---*[POSSIBLY THROWS ERROR]*
 function ConfigFromFile.load_from_task(configs)
   task.list = {} -- reset the tasks list for reloading
   if not configs then return end -- skip function if argument is empty
@@ -54,7 +54,7 @@ end
 
 ---load valid debugger configurations from file
 ---@param configs? DebugConfigFromFile[]
----POSSIBLY THROWS ERROR
+---*[POSSIBLY THROWS ERROR]*
 function ConfigFromFile.load_from_debug(configs)
   local dap = util.try_require 'dap'
   if not dap then return end
@@ -67,7 +67,7 @@ end
 
 ---load valid user-defined variables from file
 ---@param variables? table<string, UserVariable>
----POSSIBLY THROWS ERROR
+---*[POSSIBLY THROWS ERROR]*
 function ConfigFromFile.load_from_input(variables)
   user.variables = {} -- reset the variables list for reloading
   if not variables then return end -- skip function if argument is empty
@@ -84,7 +84,7 @@ local valid_fields = { task = true, debug = true, input = true }
 
 ---checks and validates if argument `cfg` is a valid `ConfigFromFile` object
 ---@param cfg table configuration table from file under validation
----POSSIBLY THROWS ERROR
+---*[POSSIBLY THROWS ERROR]*
 function ConfigFromFile.validate_input(cfg)
   local msg, invalid_fields
   if type(cfg) == 'table' then

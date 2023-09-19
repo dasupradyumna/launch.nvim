@@ -4,10 +4,10 @@ local config = require 'launch.config'
 local util = require 'launch.util'
 
 ---@class DebugConfig
----mandatory DAP fields
+---mandatory DAP fields; may have other fields depending on the debugger
 ---@field name string display name of the debug configuration
 ---@field type? string name of the debug adapter to use for launching
----@field request 'launch' | 'attach' whether to launch a program or connect to a running program
+---@field request 'attach' | 'launch' whether to launch a program or connect to a running program
 local DebugConfig = {}
 
 ---@class DebugConfigFromFile : DebugConfig
@@ -19,7 +19,7 @@ local DebugConfigFromFile = {}
 ---@return string ft filetype associated with the current debug config
 ---@return DebugConfig
 ---@nodiscard
----POSSIBLY THROWS ERROR
+---*[POSSIBLY THROWS ERROR]*
 function DebugConfig:new(cfg)
   DebugConfigFromFile.validate_input(cfg)
 
@@ -35,7 +35,7 @@ end
 
 ---checks and validates if the argument `cfg` is a valid `DebugConfigFromFile` object
 ---@param cfg table debug configuration under validation
----POSSIBLY THROWS ERROR
+---*[POSSIBLY THROWS ERROR]*
 function DebugConfigFromFile.validate_input(cfg)
   local msg
 

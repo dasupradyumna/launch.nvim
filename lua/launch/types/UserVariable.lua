@@ -8,8 +8,8 @@ local util = require 'launch.util'
 ---@class UserVariable
 ---@field type UserVarType user input method; either entered at a prompt or selected from a list
 ---@field desc string a description for the input variable which is displayed in user input prompt
----@field default? UserVarValue a default value for an 'input' type variable (ignored for 'select')
----@field items? UserVarValue[] a list of choices for a 'select' type variable (ignored for 'input')
+---@field default? UserVarValue a default value for an **input** type variable (ignored for **select**)
+---@field items? UserVarValue[] a list of choices for a **select** type variable (ignored for **input**)
 ---@field get_user_choice fun(self:UserVariable, callback:function) user input processsing function
 local UserVariable = {}
 
@@ -17,7 +17,7 @@ local UserVariable = {}
 ---@param var table argument with fields to initialize a `UserVariable`
 ---@return UserVariable
 ---@nodiscard
----POSSIBLY THROWS ERROR
+---*[POSSIBLY THROWS ERROR]*
 function UserVariable:new(name, var)
   self.validate_input(name, var)
 
@@ -46,7 +46,7 @@ local valid_fields = { type = true, desc = true, default = true, items = true }
 ---checks and validates if argument `var` is a valid `UserVariable` object
 ---@param name string name of the variable
 ---@param var table variable specification under validation
----POSSIBLY THROWS ERROR
+---*[POSSIBLY THROWS ERROR]*
 function UserVariable.validate_input(name, var)
   -- FIX: add a link to the user variables schema (to-be-added) in error message
   local msg, invalid_fields

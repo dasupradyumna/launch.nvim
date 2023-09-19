@@ -13,7 +13,7 @@ local M = {}
 ---@class PluginConfigTask
 ---@field display DisplayType whether to render the task output in a tabpage or a floating window
 ---@field float_config table can contain the same key-values pairs as `vim.api.nvim_open_win()`
----@field hooks { float: Hook, tab: Hook } user hooks for user to customize specific behavior
+---@field hooks { float: Hook, tab: Hook } function hooks for user to customize specific behavior
 ---@field options TaskOptions additional task environment options
 ---@field runner? fun(c: TaskConfig) custom runner used to launch a selected task
 ---@field term table can contain the same key-value pairs as `opts` argument of `jobstart()`
@@ -29,7 +29,7 @@ local M = {}
 ---@field insert_on_task_launch boolean whether to auto-enter insert mode after launching task
 ---@field task? PluginConfigTask
 M.defaults = {
-  -- config_type 'directory' | 'stdpath'
+  -- config_location 'directory' | 'stdpath'
   debug = {
     adapters = nil, -- CHECK: change this to adapter config instead of mapping?
     disable = false,

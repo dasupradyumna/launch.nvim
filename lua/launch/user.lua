@@ -11,7 +11,7 @@ M.variables = {}
 ---@param name string matched `${input:...}` variable
 ---@return string? # replacement string
 ---@nodiscard
----POSSIBLY THROWS ERROR
+---*[POSSIBLY THROWS ERROR]*
 local function gsub_callback(name)
   vim.api.nvim_command 'redraw' -- clean up previous substitution
   local replacement

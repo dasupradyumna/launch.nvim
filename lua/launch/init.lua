@@ -40,6 +40,11 @@ function M.debugger(show_all_fts)
   local dap = util.try_require('dap', true)
   if not dap then return end
 
+  if dap.session() then
+    util.notify('W', 'Debug session already active; please terminate current session first')
+    return
+  end
+
   local run = config.user.debug.runner or dap.run
   core.start('debug', show_all_fts, dap.configurations, run)
 end

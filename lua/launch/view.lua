@@ -76,7 +76,7 @@ end
 ---@param type ViewType the type of content that will be displayed
 ---@param show_all_fts? boolean whether to display all configs or only based on current filetype
 ---@return string[]? lines
----@return string? ft buffer filetype (optional)
+---@return string? ft buffer filetype (*optional*)
 function M.get_content(type, show_all_fts)
   local task = require 'launch.task'
   local lines, ft = {}, nil
@@ -118,7 +118,7 @@ function M.get_content(type, show_all_fts)
       local cfg_repr = M.get_repr(cfg)
       cfg_repr = vim.tbl_map(function(str)
         ---@cast str string
-        -- escaping whitespace characters for `nvim_buf_set_lines`
+        -- escaping whitespace characters for `nvim_buf_set_lines()`
         str = str:gsub('\n', '\\n')
         str = str:gsub('\t', '\\t')
         str = str:gsub('\r', '\\r')

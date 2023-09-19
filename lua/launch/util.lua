@@ -84,7 +84,7 @@ M.try_require = setmetatable({
       .. ' loaded before `launch.nvim` to include support for launching debugger processes',
   },
 }, {
-  ---load the specified plugin if it exists else (optionally) notify the user
+  ---load the specified plugin if it exists else (*optionally*) notify the user
   ---@param plugin string module name of the plugin
   ---@param emit_warn? boolean whether to emit a warning if module could not be loaded
   ---@return table? # the main plugin module if it exists
