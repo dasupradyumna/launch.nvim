@@ -10,7 +10,7 @@ local ShellOptions = {}
 
 ---@class TaskOptions
 ---@field cwd? string current working directory of the shell which runs the task
----@field env? table<string, string> environment variables to set in shell before running task
+---@field env? table<string, string|number> environment variables to set in shell before launching
 ---@field shell? ShellOptions optional shell config to use for running task
 -- all above options (when specified) override those of the default shell environment
 local TaskOptions = {}

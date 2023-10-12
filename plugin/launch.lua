@@ -7,13 +7,15 @@ local api = vim.api
 local function cmd(n, cb) api.nvim_create_user_command(n, cb, {}) end
 
 cmd('LaunchTask', function() require('launch').task(true) end)
-cmd('LaunchDebugger', function() require('launch').debugger(true) end)
+cmd('LaunchTaskFT', function() require('launch').task() end)
 cmd('LaunchShowTaskConfigs', function() require('launch').view('task', true) end)
 cmd('LaunchShowActiveTasks', function() require('launch').view 'active' end)
+cmd('LaunchDebugger', function() require('launch').debugger(true) end)
+cmd('LaunchDebuggerFT', function() require('launch').debugger() end)
 cmd('LaunchShowDebugConfigs', function() require('launch').view('debug', true) end)
 -- HACK: implement the user variables viewer (similar to above)
 -- cmd('LaunchShowUserVariables', function() vim.print(require('launch.user').variables) end)
-cmd('LaunchOpenConfig', function() api.nvim_command 'vsplit .nvim/launch.lua' end)
+cmd('LaunchOpenConfigFile', function() api.nvim_command 'vsplit .nvim/launch.lua' end)
 
 ------------------------------ USER AUTOCOMMANDS -------------------------------
 

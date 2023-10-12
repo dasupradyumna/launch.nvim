@@ -22,7 +22,7 @@ local M = {}
 ---@field adapters? table<string, string> mapping filetype to an adapter name (from `dap.adapters`)
 ---@field disable boolean whether to disable debugger support
 ---@field runner? function custom runner used to launch a selected debug config
----@field templates? table<string, DebugConfig> debug configuration templates per filetype
+---@field templates? table<string, DebugConfig> debug configuration template per filetype
 
 ---@class PluginConfig
 ---@field debug? PluginConfigDebug

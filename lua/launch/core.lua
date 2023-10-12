@@ -49,7 +49,7 @@ end
 
 ---get and display a list of valid configurations and execute the one that the user selects
 ---@param type LaunchType whether the target is a debug or a task configuration
----@param show_all_fts boolean whether to display all configs or only based on current filetype
+---@param show_all_fts? boolean whether to display all configs or only based on current filetype
 ---@param all_configs table<string, LaunchConfig[]> list of configurations for user to select from
 ---@param run fun(config: LaunchConfig) target runner to process selected config
 function M.start(type, show_all_fts, all_configs, run)
