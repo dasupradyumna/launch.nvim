@@ -12,7 +12,7 @@ local UserVariable = require 'launch.types.UserVariable'
 ---@class ConfigFromFile
 ---@field task? TaskConfigFromFile[]
 ---@field debug? DebugConfigFromFile[]
----@field input? table<string, UserVariable>
+---@field var? table<string, UserVariable>
 local ConfigFromFile = {}
 
 ---load all valid configurations from file
@@ -24,7 +24,7 @@ function ConfigFromFile:load(cfg)
   -- load all tasks, debug configurations and user-defined variables from file
   self.load_from_task(cfg.task)
   if not config.user.debug.disable then self.load_from_debug(cfg.debug) end
-  self.load_from_input(cfg.input)
+  self.load_from_var(cfg.var)
 end
 
 ---build configurations using the specified config builder
@@ -68,7 +68,7 @@ end
 ---load valid user-defined variables from file
 ---@param variables? table<string, UserVariable>
 ---*[POSSIBLY THROWS ERROR]*
-function ConfigFromFile.load_from_input(variables)
+function ConfigFromFile.load_from_var(variables)
   user.variables = {} -- reset the variables list for reloading
   if not variables then return end -- skip function if argument is empty
 
@@ -80,7 +80,7 @@ function ConfigFromFile.load_from_input(variables)
 end
 
 ---@type table<string, boolean> set of valid fields for `ConfigFromFile`
-local valid_fields = { task = true, debug = true, input = true }
+local valid_fields = { task = true, debug = true, var = true }
 
 ---checks and validates if argument `cfg` is a valid `ConfigFromFile` object
 ---@param cfg table configuration table from file under validation
@@ -108,10 +108,8 @@ function ConfigFromFile.validate_input(cfg)
     type(cfg.task) ~= 'nil' and (not vim.tbl_islist(cfg.task) or vim.tbl_isempty(cfg.task))
   then
     msg = { 'table `task` field should be a non-empty list-like table. Got:\n%s', cfg.task }
-  elseif
-    type(cfg.input) ~= 'nil' and (not util.tbl_isdict(cfg.input) or vim.tbl_isempty(cfg.input))
-  then
-    msg = { 'table `input` field should be a non-empty dictionary-like table. Got:\n%s', cfg.input }
+  elseif type(cfg.var) ~= 'nil' and (not util.tbl_isdict(cfg.var) or vim.tbl_isempty(cfg.var)) then
+    msg = { 'table `input` field should be a non-empty dictionary-like table. Got:\n%s', cfg.var }
   elseif type(cfg.debug) ~= 'nil' then
     if config.user.debug.disable then
       msg = {

@@ -36,7 +36,7 @@ end
 function M.substitute_variables(args)
   local ok
   for i = 1, #args do
-    ok, args[i] = pcall(string.gsub, args[i], '%${input:([_%a][_%w]*)}', gsub_callback)
+    ok, args[i] = pcall(string.gsub, args[i], '{@([_%a][_%w]*)}', gsub_callback)
     if not ok then return false end
   end
 

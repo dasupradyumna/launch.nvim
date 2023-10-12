@@ -202,12 +202,12 @@ cfg = {
 ## Schemas
 
 The plugin configuration file `launch.lua` should return a table with one or more of the following 3
-fields: **task**, **debug** and **input**. **task** and **debug** should be array-like tables of
-task and debug configurations respectively, and **input** should be a dictionary-like table with the
-key defining a variable name and the value being its configuration.  
+fields: **task**, **debug** and **var**. **task** and **debug** should be array-like tables of
+task and debug configurations respectively, and **var** should be a dictionary-like table of user
+variable definitions with the key being the variable's name and the value being its configuration.  
 Every field is optional, and can be omitted if no configurations need to be specified. (*If input
 variable syntax is used in any configuration, then the corresponding variable definition should be
-specified under the **input** field*)
+specified under the **var** field*)
 
 ```lua
 return {
@@ -219,7 +219,7 @@ return {
         { --[[ DebugConfig1 ]] },
         { --[[ DebugConfig2 ]] },
     },
-    input = {
+    var = {
         InputVar1 = { --[[ VarConfig1 ]] },
         InputVar2 = { --[[ VarConfig2 ]] },
     },
@@ -274,7 +274,8 @@ return { task = { task_config } }
     Additional options to customize the environment in which the task is run
 
     1. **TaskOptions.cwd** `string`  
-        Path to the custom directory which will be set as the current working directory for the task
+        Path (*absolute or relative*) to the custom directory to be set as the current working
+        directory for the task
 
     2. **TaskOptions.env** `table<string, string | number>`  
         Dictionary of specifications for environment variables to be defined before running the task
@@ -323,16 +324,16 @@ return {
         {
             name = 'Test Input Variables',
             command = 'echo',
-            args = { '${input:var_select}', '${input:var_input}' },
+            args = { '{@select_type}', '{@input_type}' },
         }
     },
-    input = {
-        var_select = {
+    var = {
+        select_type = {
             type = 'select',
             desc = 'selection type variable',
             items = { '<item1>', '<item2>' }
         },
-        var_input = {
+        input_type = {
             type = 'input',
             desc = 'input type variable',
             default = '<default_value>',
@@ -341,8 +342,8 @@ return {
 }
 ```
 
-Defined input variables can be used in any configuration with the following syntax
-`${input:<variable_name>}`, in `command` and `args` fields *(this will be supported in all string
+Defined input variables can be used in both task and debug configurations with the following syntax
+`{@<variable_name>}`, in `command` and `args` fields *(this will be supported in all string
 fields in the future)*
 
 1. **type** *(required)* `'select' | 'input'`  
