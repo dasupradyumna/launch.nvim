@@ -107,9 +107,6 @@ cfg = {
     templates = nil,
   },
 
-  -- whether to enter INSERT mode after launching task in a buffer
-  insert_on_task_launch = false, ---@type boolean
-
   -- task runner settings
   task = {
     -- whether to render the task output in a tabpage or a floating window, by default
@@ -137,6 +134,9 @@ cfg = {
         post = nil, ---@type function
       },
     },
+
+    -- whether to enter INSERT mode after launching task in a buffer
+    insert_on_launch = false, ---@type boolean
 
     options = {
       -- set the default current working directory for all tasks

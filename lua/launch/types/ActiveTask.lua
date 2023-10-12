@@ -110,7 +110,7 @@ function ActiveTask:run()
   api.nvim_buf_set_name(self.buffer, self.title)
   pcall(api.nvim_buf_delete, fn.bufnr '#', { force = true }) -- alternate buffer may not exist
 
-  if config.user.insert_on_task_launch then api.nvim_command 'startinsert' end
+  if config.user.task.insert_on_launch then api.nvim_command 'startinsert' end
 end
 
 return ActiveTask
