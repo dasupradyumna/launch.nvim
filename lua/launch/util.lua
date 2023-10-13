@@ -11,12 +11,21 @@ local log_level = {
   E = vim.log.levels.ERROR,
 }
 
+---@type boolean whether to display notifications or not
+M.no_notify = false
+
 ---display message with the appropriate highlight for its notification level
 ---@param message string display message
 ---@param level 'E' | 'I' | 'W' notification level
 function M.notify(level, message, ...)
+  if M.no_notify then return end
+
   local msg = message:format(...)
-  vim.notify('[launch.nvim] ' .. msg, log_level[level])
+  if type(vim.notify) == 'function' then -- builtin
+    vim.notify('[launch.nvim] ' .. msg, log_level[level])
+  elseif type(vim.notify) == 'table' then -- nvim-notify
+    vim.notify(msg, log_level[level], { title = 'launch.nvim' })
+  end
 end
 
 ---display the argument message of specified level and propagate an error up the stack

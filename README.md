@@ -21,15 +21,15 @@ neovim.
 
 ## Features
 
-- Create custom tasks for **every working directory** using a `$CWD/.nvim/launch.lua` file (The
-    configurations in this file are hot-reloaded upon saving changes)  
+- Create custom tasks for **every working directory** using a `$CWD/.nvim/launch.lua` file  
+    *All configurations in this file are hot-reloaded upon saving changes*  
     *This file's location will be moved to a different standard directory to prevent polluting
     project roots*
 - Configured tasks can be launched in a **tabpage** or a **floating window**, managed by the plugin
 - Closing the plugin-managed *tabpage* or *floating window* **will not kill** the current task(s);
     they will continue to run in the background
-- **Already launched** tasks can be reopened similarly, as long as the process is *still running* or
-    the terminal instance is *not closed*
+- **Already launched** tasks can be reopened in a *tabpage* or a *floating window*, as long as
+    the process is *still running* or the terminal instance is *not closed*
 - Create debugger configurations and launch debug sessions using **nvim-dap** plugin *(can be
     disabled)*  
     *UI elements for **nvim-dap** are not handled by **launch.nvim**; please refer to plugins like
@@ -41,11 +41,12 @@ neovim.
 
 ##### Requirements
 
-- Neovim 0.9+
-- [nvim-dap](https://github.com/mfussenegger/nvim-dap) for debugging support (*optional*)
-- Decorator plugins for `vim.ui` and `vim.notify` (*optional*)
-    (dressing.nvim, nvim-notify, trouble.nvim, noice.nvim) --- ADD LINKS
-- Telescope when used with dressing.nvim (*optional*) --- ADD LINKS
+- Neovim 0.9+ (*nightly recommended*)
+- [nvim-dap](https://github.com/mfussenegger/nvim-dap) for debugging support (*optional*)  
+    *Needs to be added as a dependency during the plugin manager setup*
+- Decorator plugins that provide customization `vim.notify` (*optional*)  
+    *For example, [nvim-notify](https://github.com/rcarriga/nvim-notify) and
+    [noice.nvim](https://github.com/folke/noice.nvim/)*
 
 #### [lazy.nvim](https://github.com/folke/lazy.nvim)
 

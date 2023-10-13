@@ -21,7 +21,9 @@ function M.setup(opts)
     util.try_require('dap', true)
   end
 
+  util.no_notify = true
   core.load_config_file()
+  util.no_notify = false
 end
 
 ---displays available tasks to the user and launches the selected task
