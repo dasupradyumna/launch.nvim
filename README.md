@@ -8,6 +8,7 @@ neovim.
 
 ### Contents
 
+- [Demo](#demo)
 - [Features](#features)
 - [Installation](#installation)
 - [Usage](#usage)
@@ -18,6 +19,10 @@ neovim.
   - [Debug Configuration](#debug-configuration)
   - [Input Variables](#input-variables)
 - [Contributing](#contributing)
+
+## Demo
+
+https://github.com/dasupradyumna/launch.nvim/assets/45595032/5f919d47-0711-4d5d-950d-73b47dadc915
 
 ## Features
 
