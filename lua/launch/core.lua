@@ -15,7 +15,7 @@ local messages = {
     prompt = 'Debug Configurations',
   },
   task = {
-    no_configs = 'No tasks found',
+    no_configs = 'No configured tasks found',
     no_selection = 'No task selected',
     prompt = 'Tasks',
   },
@@ -41,9 +41,11 @@ local function check_and_substitute_vars(type, config)
   -- if a config is selected and user variables are defined, try substituting them
   local target = type == 'task' and 'command' or 'program'
   local sub_config = vim.deepcopy(config)
+  sub_config.args = sub_config.args or {}
   table.insert(sub_config.args, 1, sub_config[target])
   if not user.substitute_variables(sub_config.args) then return end
   sub_config[target] = table.remove(sub_config.args, 1)
+  if vim.tbl_isempty(sub_config.args) then sub_config.args = nil end
   return sub_config
 end
 
@@ -53,17 +55,17 @@ end
 ---@param all_configs table<string, LaunchConfig[]> list of configurations for user to select from
 ---@param run fun(config: LaunchConfig) target runner to process selected config
 function M.start(type, show_all_fts, all_configs, run)
-  local configs = util.filter_configs_by_filetype(all_configs, show_all_fts)
+  local configs, ft = util.filter_configs_by_filetype(all_configs, show_all_fts)
 
   -- skip with warning message if no configurations are available
   if not configs or #configs == 0 then
-    util.notify('W', messages[type].no_configs)
+    util.notify('W', messages[type].no_configs .. (ft and (' for `%s` filetype'):format(ft) or ''))
     return
   end
 
   -- get user selection from the available configs
   vim.ui.select(configs, {
-    prompt = messages[type].prompt,
+    prompt = ('%s%s'):format(messages[type].prompt, (ft and (' : ' .. ft) or '')),
     format_item = function(config) return config.name end,
   }, function(config)
     local sub_config = check_and_substitute_vars(type, config)
@@ -77,7 +79,7 @@ end
 ---updates the runtime config list from the corresponding config file on disk
 function M.load_config_file()
   local user_tasks = '.nvim/launch.lua'
-  if vim.fn.filereadable(user_tasks) ~= 1 then return end
+  if vim.fn.filereadable(user_tasks) == 0 then return end
 
   local ok, configs = pcall(dofile, user_tasks)
   if not ok then

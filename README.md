@@ -37,6 +37,8 @@ neovim.
 - Create **custom placeholder variables** which can be used in both **task** and **debug**
     configurations; they will be substituted with user input *at runtime* when a config is launched
 
+***NOTE:** Every floating window created by the plugin can be closed by pressing the **`q`** key*
+
 ## Installation
 
 ##### Requirements
@@ -175,6 +177,10 @@ cfg = {
 - **LaunchShowTaskConfigs**  
     Show all configured tasks with their options in a floating window
 
+- **LaunchShowTaskConfigsFT**  
+    Show configured tasks filtered based on the current buffer filetype with their options in a
+    floating window
+
 - **LaunchShowActiveTasks**  
     Show the list of all active tasks in a floating window; each active task can be displayed
     either in a floating window or a new window in the plugin-managed tabpage  
@@ -197,8 +203,14 @@ cfg = {
     Show all debug configurations with their options in a floating window  
     *This command will not be available if debug support is disabled during plugin setup*
 
+- **LaunchShowDebugConfigsFT**  
+    Show debug configurations filtered based on the current buffer filetype with their options in a
+    floating window  
+    *This command will not be available if debug support is disabled during plugin setup*
+
 - **LaunchOpenConfigFile**  
-    Open the current launch configuration file (*`launch.lua`*) in a new vertical split
+    Open the current launch configuration file (*`.nvim/launch.lua`*) in a new vertical split  
+    Also, creates the config file and parent folder if it does not exist
 
 ## Schemas
 
@@ -226,6 +238,10 @@ return {
     },
 }
 ```
+
+***NOTE:**
+The plugin will issue error notifications if the user makes any syntax errors while writing the
+configurations in any of the 3 fields. (Open an issue if you spot any gaps in the syntax checker)  
 
 ### Task Configuration
 
