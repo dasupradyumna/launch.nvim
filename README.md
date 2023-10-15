@@ -25,7 +25,7 @@ neovim.
 This short 3 minute demo video covers all major features and commands offered by **launch.nvim**,
 starting from an empty project and a new configuration file (*`.nvim/launch.lua`*).
 
-<https://github.com/dasupradyumna/launch.nvim/assets/45595032/5f919d47-0711-4d5d-950d-73b47dadc915>
+<https://github.com/dasupradyumna/launch.nvim/assets/45595032/c5a515c6-0fd0-4076-b980-6a8443cb177b>
 
 Although debugger-related configurations and commands are not covered in the above demo, they have
 *exactly the same* UI and behavior as the task-related commands.
