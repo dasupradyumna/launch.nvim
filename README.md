@@ -22,19 +22,25 @@ neovim.
 
 ## Demo
 
-https://github.com/dasupradyumna/launch.nvim/assets/45595032/5f919d47-0711-4d5d-950d-73b47dadc915
+This short 3 minute demo video covers all major features and commands offered by **launch.nvim**,
+starting from an empty project and a new configuration file (*`.nvim/launch.lua`*).
+
+<https://github.com/dasupradyumna/launch.nvim/assets/45595032/5f919d47-0711-4d5d-950d-73b47dadc915>
+
+Although debugger-related configurations and commands are not covered in the above demo, they have
+*exactly the same* UI and behavior as the task-related commands.
 
 ## Features
 
 - Create custom tasks for **every working directory** using a `$CWD/.nvim/launch.lua` file  
-    *All configurations in this file are hot-reloaded upon saving changes*  
-    *This file's location will be moved to a different standard directory to prevent polluting
-    project roots*
+    *All configurations in this file are **hot-reloaded** upon saving changes*  
+    *(This file's location will be moved to a different standard directory to prevent polluting
+    project roots)*
 - Configured tasks can be launched in a **tabpage** or a **floating window**, managed by the plugin
 - Closing the plugin-managed *tabpage* or *floating window* **will not kill** the current task(s);
     they will continue to run in the background
-- **Already launched** tasks can be reopened in a *tabpage* or a *floating window*, as long as
-    the process is *still running* or the terminal instance is *not closed*
+- **Already launched tasks** (*active tasks*) can be reopened in a *tabpage* or a *floating window*,
+    as long as the process is *still running* or the terminal buffer is *not closed*
 - Create debugger configurations and launch debug sessions using **nvim-dap** plugin *(can be
     disabled)*  
     *UI elements for **nvim-dap** are not handled by **launch.nvim**; please refer to plugins like
@@ -42,17 +48,16 @@ https://github.com/dasupradyumna/launch.nvim/assets/45595032/5f919d47-0711-4d5d-
 - Create **custom placeholder variables** which can be used in both **task** and **debug**
     configurations; they will be substituted with user input *at runtime* when a config is launched
 
-***NOTE:** Every floating window created by the plugin can be closed by pressing the **`q`** key*
+***NOTE :** Every floating window created by the plugin can be closed by pressing the **`q`** key*
 
 ## Installation
 
 ##### Requirements
 
 - Neovim 0.9+ (*nightly recommended*)
-- [nvim-dap](https://github.com/mfussenegger/nvim-dap) for debugging support (*optional*)  
-    *Needs to be added as a dependency during the plugin manager setup*
-- Decorator plugins that provide customization `vim.notify` (*optional*)  
-    *For example, [nvim-notify](https://github.com/rcarriga/nvim-notify) and
+- [nvim-dap](https://github.com/mfussenegger/nvim-dap) for debugging support (*optional*)
+- Decorator plugins that provide customization for `vim.notify` (*optional*)  
+    *Currently supports [nvim-notify](https://github.com/rcarriga/nvim-notify) and
     [noice.nvim](https://github.com/folke/noice.nvim/)*
 
 #### [lazy.nvim](https://github.com/folke/lazy.nvim)
@@ -60,7 +65,14 @@ https://github.com/dasupradyumna/launch.nvim/assets/45595032/5f919d47-0711-4d5d-
 ```lua
 -- LazySpec (plugin specification)
 -- return {
-{ 'dasupradyumna/launch.nvim' }
+{
+    'dasupradyumna/launch.nvim',
+    -- add below plugins as per user requirement
+    dependencies = {
+        'mfussenegger/nvim-dap',
+        'rcarriga/nvim-notify',
+    }
+}
 -- }
 ```
 
@@ -69,13 +81,24 @@ https://github.com/dasupradyumna/launch.nvim/assets/45595032/5f919d47-0711-4d5d-
 ```lua
 -- inside setup function
 -- packer.startup(function(use)
-use { 'dasupradyumna/launch.nvim' }
+use {
+    'dasupradyumna/launch.nvim',
+    -- add below plugins as per user requirement
+    requires = {
+        'mfussenegger/nvim-dap',
+        'rcarriga/nvim-notify',
+    }
+}
 -- end)
 ```
 
 #### [vim-plug](https://github.com/junegunn/vim-plug)
 
 ```vim
+" add below dependencies as per user requirement
+Plug 'mfussenegger/nvim-dap'
+Plug 'rcarriga/nvim-notify'
+
 Plug 'dasupradyumna/launch.nvim'
 ```
 
@@ -83,21 +106,30 @@ Plug 'dasupradyumna/launch.nvim'
 
 ### Setup
 
-The main **setup** function can be called *independently* or a part of a plugin specification
-depending on the plugin manager that you are using. The plugin sets *very sensible* defaults so you
-can pass an empty configuration table to the setup to check it out.
+The main **setup** function can be called *independently* in your config or as a part of the plugin
+specification depending on the plugin manager that you are using. The plugin sets *very sensible*
+defaults so you can pass an empty configuration table to the setup to check it out.  
+*(The demo video shows the plugin being run on default setup options)*
 
 ```lua
 -- table of user-defined configuration options which override the plugin defaults
-local cfg
+local cfg = {} -- uses the plugin defaults
+
+-- independent setup (for vim-plug as well)
 require('launch').setup(cfg)
+
+-- for lazy.nvim
+return { 'dasupradyumna/launch.nvim', opts = cfg }
+
+-- for packer.nvim
+use { 'dasupradyumna/launch.nvim', config = function() require('launch').setup(cfg) end}
 ```
 
 The plugin sets the following default options -
 
 ```lua
--- PLUGIN SETUP DEFAULTS
-cfg = {
+-- PLUGIN DEFAULTS
+default_cfg = {
   -- debugger settings
   debug = {
     -- mapping from filetypes to debug adapter names as specified in `require('dap').adapters`
@@ -109,6 +141,7 @@ cfg = {
 
     -- custom debugger launcher function which receives the selected debug configuration as an
     -- argument; `nil` implies `require('dap').run` is used by default
+    -- NOTE : users should ignore this unless they know what they are doing
     runner = nil, ---@type function
 
     -- table containing debug configuration template per filetype
@@ -146,6 +179,7 @@ cfg = {
     -- whether to enter INSERT mode after launching task in a buffer
     insert_on_launch = false, ---@type boolean
 
+    -- same fields as `TaskOptions` in "Task Configuration" subsection
     options = {
       -- set the default current working directory for all tasks
       cwd = nil, ---@type string
@@ -159,6 +193,7 @@ cfg = {
 
     -- custom task launcher function which receives the selected task configuration as an
     -- argument; `nil` implies `require('launch.task').runner` is used by default
+    -- NOTE : users should ignore this unless they know what they are doing
     runner = nil, ---@type function
 
     -- config options for opening task in a terminal instance; see {opts} in `:h jobstart()`
@@ -168,6 +203,8 @@ cfg = {
   },
 }
 ```
+
+For further details about the configuration table and its fields, refer to [SETUP.md](doc/SETUP.md).
 
 ### Commands
 
@@ -215,7 +252,7 @@ cfg = {
 
 - **LaunchOpenConfigFile**  
     Open the current launch configuration file (*`.nvim/launch.lua`*) in a new vertical split  
-    Also, creates the config file and parent folder if it does not exist
+    Also creates the config file and parent folder if it does not exist
 
 ## Schemas
 
@@ -228,6 +265,7 @@ variable syntax is used in any configuration, then the corresponding variable de
 specified under the **var** field*)
 
 ```lua
+-- launch.lua
 return {
     task = {
         { --[[ TaskConfig1 ]] },
@@ -238,19 +276,19 @@ return {
         { --[[ DebugConfig2 ]] },
     },
     var = {
-        InputVar1 = { --[[ VarConfig1 ]] },
-        InputVar2 = { --[[ VarConfig2 ]] },
+        InputVar1 = { --[[ InputVarConfig1 ]] },
+        InputVar2 = { --[[ InputVarConfig2 ]] },
     },
 }
 ```
 
-***NOTE:**
-The plugin will issue error notifications if the user makes any syntax errors while writing the
-configurations in any of the 3 fields. (Open an issue if you spot any gaps in the syntax checker)  
+***NOTE :**
+The plugin will issue error notifications if the user makes any syntax errors while writing
+configurations for any field. Open an issue if you notice gaps in the syntax checker's logic.*
 
 ### Task Configuration
 
-A task configuration can have the following fields *(with dummy values)*
+A task configuration can have the following structure
 
 ```lua
 local task_config = {
@@ -261,8 +299,8 @@ local task_config = {
     options = {
         cwd = '<path_to_custom_cwd>',
         env = {
-            STR_ENV_VAR = 'hello_world',
-            NUM_ENV_VAR = 42,
+            STRING_VAR = 'hello_world',
+            NUMERIC_VAR = 42.42,
         },
         shell = {
             exec = '<shell_executable>',
@@ -279,7 +317,8 @@ return { task = { task_config } }
 
 2. **filetype** `string`  
     Optionally specify the filetype into which the current task is grouped, which is used by the
-    `LaunchTaskFT` command to filter tasks based on current buffer filetype
+    `LaunchTaskFT` and `LaunchShowTaskConfigsFT` commands to filter tasks based on current buffer
+    filetype
 
 3. **command** *(required)* `string`  
     Specifies the executable or program to execute in a new task instance
@@ -290,10 +329,12 @@ return { task = { task_config } }
 
 5. **display** `'float' | 'tab'`  
     Specifies whether the task instance should be rendered in a floating window or plugin-managed
-    tabpage by default when launched
+    tabpage by default when launched  
+    If not specified, the value provided in the **setup()** configuration is taken by default
 
 6. **options** `TaskOptions`  
-    Additional options to customize the environment in which the task is run
+    Additional options to customize the environment in which the task is run  
+    If not specified, the value provided in the **setup()** configuration is taken by default
 
     1. **TaskOptions.cwd** `string`  
         Path (*absolute or relative*) to the custom directory to be set as the current working
@@ -325,6 +366,7 @@ local debug_config = {
     type = '<adapter_name>',
     -- OR
     -- filetype = '<target_ft>', -- filetype-adapter mapping can be specified in `setup()`
+
     request = 'launch',
     name = '<config_name>',
 
@@ -388,8 +430,13 @@ fields in the future)*
 Any ideas for new *features* and *quality-of-life changes* that you wish to see in this plugin or
 its documentation are welcome. Please feel free to open an issue or even start a discussion
 regarding your requirement. And as always, all PRs are welcome! (*preferably* after the new feature
-has been discussed)
+has been discussed in a post)
 
 ## License
 
 **launch.nvim** is licensed under the *GNU General Public License 3.0*.
+
+### More plugins by Author
+
+[midnight.nvim](https://github.com/dasupradyumna/midnight.nvim) :crescent_moon:
+A modern black neovim theme written in Lua *(colorscheme used in the demo)*
