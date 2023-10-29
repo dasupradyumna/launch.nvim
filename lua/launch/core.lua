@@ -7,6 +7,9 @@ local ConfigFromFile = require 'launch.types.ConfigFromFile'
 
 local M = {}
 
+---@type string? the plugin config file path for current working directory
+M.config_file_path = nil
+
 ---@type table<string, { no_configs: string, no_selection: string, prompt: string }>
 local messages = {
   debug = {
@@ -78,10 +81,9 @@ end
 
 ---updates the runtime config list from the corresponding config file on disk
 function M.load_config_file()
-  local user_tasks = '.nvim/launch.lua'
-  if vim.fn.filereadable(user_tasks) == 0 then return end
+  if not vim.loop.fs_stat(M.config_file_path) then return end
 
-  local ok, configs = pcall(dofile, user_tasks)
+  local ok, configs = pcall(dofile, M.config_file_path)
   if not ok then
     -- FIX: add a link to the tasks schema (to-be-added) in error message
     util.notify('E', '"launch.lua" could not be compiled; Please check')

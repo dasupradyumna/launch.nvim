@@ -47,7 +47,10 @@ function TaskConfig:new(cfg)
   -- set defaults
   cfg.display = cfg.display or config.user.task.display
   cfg.options = util.deep_merge(config.user.task.options, cfg.options or {})
-  if cfg.options.cwd then cfg.options.cwd = vim.fs.normalize(cfg.options.cwd) end
+  if cfg.options.cwd then
+    cfg.options.cwd = vim.fs.normalize(cfg.options.cwd)
+    -- FIX: throw error if cfg.options.cwd is not a valid system path
+  end
 
   return ft, setmetatable(cfg, { __index = self })
 end

@@ -23,7 +23,9 @@ neovim.
 ## Demo
 
 This short 3 minute demo video covers all major features and commands offered by **launch.nvim**,
-starting from an empty project and a new configuration file (*`.nvim/launch.lua`*).
+starting from an empty project and a new configuration file.  
+*(This demo shows the config file using the old path; the new path does not pollute the project root
+anymore)*
 
 <https://github.com/dasupradyumna/launch.nvim/assets/45595032/8574ffe8-d37f-4d43-b83f-e9f611f6a2f2>
 
@@ -32,10 +34,9 @@ Although debugger-related configurations and commands are not covered in the abo
 
 ## Features
 
-- Create custom tasks for **every working directory** using a `$CWD/.nvim/launch.lua` file  
+- Create custom tasks for **every working directory** using file opened by *LaunchOpenConfigFile*
+    command  
     *All configurations in this file are **hot-reloaded** upon saving changes*  
-    *(This file's location will be moved to a different standard directory to prevent polluting
-    project roots)*
 - Configured tasks can be launched in a **tabpage** or a **floating window**, managed by the plugin
 - Closing the plugin-managed *tabpage* or *floating window* **will not kill** the current task(s);
     they will continue to run in the background
@@ -251,21 +252,20 @@ For further details about the configuration table and its fields, refer to [SETU
     *This command will not be available if debug support is disabled during plugin setup*
 
 - **LaunchOpenConfigFile**  
-    Open the current launch configuration file (*`.nvim/launch.lua`*) in a new vertical split  
-    Also creates the config file and parent folder if it does not exist
+    Open the current working directory's launch configuration file in a new vertical split  
 
 ## Schemas
 
-The plugin configuration file `launch.lua` should return a table with one or more of the following 3
-fields: **task**, **debug** and **var**. **task** and **debug** should be array-like tables of
-task and debug configurations respectively, and **var** should be a dictionary-like table of user
-variable definitions with the key being the variable's name and the value being its configuration.  
+The plugin configuration file should return a table with one or more of the following 3 fields:
+**task**, **debug** and **var**. **task** and **debug** should be array-like tables of task and
+debug configurations respectively, and **var** should be a dictionary-like table of user variable
+definitions with the key being a variable's name and the value being its config.  
 Every field is optional, and can be omitted if no configurations need to be specified. (*If input
 variable syntax is used in any configuration, then the corresponding variable definition should be
 specified under the **var** field*)
 
 ```lua
--- launch.lua
+-- config file
 return {
     task = {
         { --[[ TaskConfig1 ]] },

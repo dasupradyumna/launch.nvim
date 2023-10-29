@@ -17,9 +17,17 @@ function M.setup(opts)
     vim.api.nvim_del_user_command 'LaunchDebugger'
     vim.api.nvim_del_user_command 'LaunchDebuggerFT'
     vim.api.nvim_del_user_command 'LaunchShowDebugConfigs'
+    vim.api.nvim_del_user_command 'LaunchShowDebugConfigsFT'
   else
     util.try_require('dap', true)
   end
+
+  local data_folder = vim.fn.stdpath 'data' .. '/launch_nvim'
+  if not vim.loop.fs_stat(data_folder) then vim.loop.fs_mkdir(data_folder, 0755) end
+  core.config_file_path = ('%s/%s.lua'):format(
+    data_folder,
+    vim.loop.cwd():gsub('@', '@@'):gsub('/', '@')
+  )
 
   util.no_notify = true
   core.load_config_file()

@@ -21,7 +21,7 @@ constructed configuration is used to launch the task.
 Shown below are some example debug configurations for C++ and Python debuggers
 
 ```lua
--- launch.lua
+-- config file
 return {
     debug = {
         {
@@ -88,7 +88,7 @@ require('launch').setup { debug = {
 } }
 
 -----------------------------------------------------------------------------------------
----- Now, the configurations in launch.lua can look like this
+---- Now, the configurations in config file can look like this
 return {
     debug = {
         {   -- `type` field can be skipped now
@@ -116,7 +116,7 @@ return {
 Debuggers typically allow a ton of configuration options, but they do not provide a way to specify
 certain options to apply to every configuration. Thus, when a user has certain option preferences
 that are common to every configuration for a particular adapter, the debug configurations tend to
-become very verbose and redundant, as seen in the above example `launch.lua`.  
+become very verbose and redundant, as seen in the above example config file.  
 Users can make their debug configurations concise and less error-prone by letting **launch.nvim**
 know of these common options, by adding the following in the `setup()` function -
 
@@ -143,7 +143,7 @@ require('launch').setup { debug = {
 } }
 
 -----------------------------------------------------------------------------------------
----- Now, the configurations in launch.lua can look like this
+---- Now, the configurations in config file can look like this
 return {
     debug = {
         {

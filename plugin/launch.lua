@@ -17,10 +17,10 @@ cmd('LaunchShowDebugConfigs', function() require('launch').view('debug', true) e
 cmd('LaunchShowDebugConfigsFT', function() require('launch').view 'debug' end)
 -- HACK: implement the user variables viewer (similar to above)
 -- cmd('LaunchShowUserVariables', function() vim.print(require('launch.user').variables) end)
-cmd('LaunchOpenConfigFile', function()
-  if vim.fn.isdirectory '.nvim' == 0 then os.execute 'mkdir .nvim' end
-  api.nvim_command 'vsplit .nvim/launch.lua'
-end)
+cmd(
+  'LaunchOpenConfigFile',
+  function() api.nvim_command('vsplit ' .. require('launch.core').config_file_path) end
+)
 
 ------------------------------ USER AUTOCOMMANDS -------------------------------
 
@@ -28,10 +28,12 @@ api.nvim_create_augroup('launch_nvim', { clear = true })
 
 api.nvim_create_autocmd('BufWritePost', {
   desc = 'Update the configurations whenever the launch file is modified',
-  pattern = vim.loop.cwd() .. '/.nvim/launch.lua',
-  callback = function()
+  callback = function(trigger)
+    local core = require 'launch.core'
+    if trigger.file ~= core.config_file_path then return end
+
     api.nvim_command 'redraw'
-    require('launch.core').load_config_file()
+    core.load_config_file()
   end,
   group = 'launch_nvim',
 })

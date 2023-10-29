@@ -29,7 +29,6 @@ local M = {}
 ---@field debug? PluginConfigDebug
 ---@field task? PluginConfigTask
 M.defaults = {
-  -- config_location 'directory' | 'stdpath'
   debug = {
     adapters = nil, -- CHECK: change this to adapter config instead of mapping?
     disable = false,
