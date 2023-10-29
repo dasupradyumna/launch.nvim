@@ -28,7 +28,7 @@ api.nvim_create_augroup('launch_nvim', { clear = true })
 
 api.nvim_create_autocmd('BufWritePost', {
   desc = 'Update the configurations whenever the launch file is modified',
-  pattern = vim.uv.cwd() .. '/.nvim/launch.lua',
+  pattern = vim.loop.cwd() .. '/.nvim/launch.lua',
   callback = function()
     api.nvim_command 'redraw'
     require('launch.core').load_config_file()
