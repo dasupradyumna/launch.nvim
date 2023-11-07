@@ -20,6 +20,7 @@ function M.runner(cfg)
   task:run()
 
   M.active[task.buffer] = task
+  -- CHECK: possible refactor; repeated code for plugin-created buffers
   api.nvim_create_autocmd('BufWipeout', {
     desc = 'Remove current task from active task list when its buffer is deleted',
     callback = function() M.active[task.buffer] = nil end,

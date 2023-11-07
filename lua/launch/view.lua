@@ -21,6 +21,7 @@ M.handles = setmetatable({}, {
       val = api.nvim_create_buf(false, true)
       api.nvim_set_option_value('modifiable', false, { buf = val })
       vim.keymap.set('n', 'q', '<Cmd>quit<CR>', { buffer = val })
+      -- CHECK: possible refactor; repeated code for plugin-created buffers
       api.nvim_create_autocmd('BufWipeout', {
         desc = 'Uncache the buffer handle holding the content of the view',
         callback = function() self.buf = nil end,
@@ -46,13 +47,16 @@ M.handles = setmetatable({}, {
 ---@param height number window height
 ---@param ft? string target filetype for window title
 function M.open_win(type, width, height, ft)
+  local _title = (' [launch.nvim] %s %s'):format(title[type], (ft and (': %s '):format(ft) or ''))
   local r, c, w, h = util.get_win_pos_centered(width, height)
+  w = (w >= #_title + 8) and w or (#_title + 8) -- if title is wider than buffer content
   local float_config = util.merge(config.user.task.float_config, {
     width = w,
     height = h,
     row = r,
     col = c,
-    title = (' %s %s'):format(title[type], (ft and (': %s '):format(ft) or '')),
+    title = _title,
+    style = 'minimal',
   })
 
   local win = M.handles.win
@@ -90,7 +94,7 @@ function M.get_content(type, show_all_fts)
 
     table.sort(bufs)
     for i, buf in ipairs(bufs) do
-      local line = line_fmt:format(i, task.active[buf].title:sub(7))
+      local line = line_fmt:format(i, task.active[buf].title)
       table.insert(lines, line)
     end
 
@@ -149,7 +153,7 @@ function M.render(type, show_all_fts)
       return line
     end, lines)
   else
-    lines = { ('    No %s found'):format(title[type]:lower()) }
+    lines = { ('       No %s found'):format(title[type]:lower()) }
     width = lines[1]:len()
     height = 1
   end

@@ -17,10 +17,7 @@ cmd('LaunchShowDebugConfigs', function() require('launch').view('debug', true) e
 cmd('LaunchShowDebugConfigsFT', function() require('launch').view 'debug' end)
 -- HACK: implement the user variables viewer (similar to above)
 -- cmd('LaunchShowUserVariables', function() vim.print(require('launch.user').variables) end)
-cmd(
-  'LaunchOpenConfigFile',
-  function() api.nvim_command('vsplit ' .. require('launch.core').config_file_path) end
-)
+cmd('LaunchOpenConfigFile', function() require('launch.config').open_file() end)
 
 ------------------------------ USER AUTOCOMMANDS -------------------------------
 

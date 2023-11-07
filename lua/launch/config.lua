@@ -2,6 +2,8 @@
 
 local util = require 'launch.util'
 
+local api = vim.api
+
 local M = {}
 
 ---@alias DisplayType 'float' | 'tab'
@@ -41,7 +43,6 @@ M.defaults = {
       relative = 'editor',
       border = 'rounded',
       title_pos = 'center',
-      style = 'minimal',
     },
     hooks = {
       float = {
@@ -85,5 +86,37 @@ function M.apply(opts)
     height = 5,
   })
 end
+
+---opens the config file in a plugin-managed floating window in a buffer managed by this table
+M.open_file = setmetatable({}, {
+  __call = function(self)
+    if not self.buf then
+      self.buf = vim.fn.bufadd(require('launch.core').config_file_path)
+      -- CHECK: possible refactor; repeated code for plugin-created buffers
+      vim.keymap.set('n', 'q', '<Cmd>quit<CR>', { buffer = self.buf })
+      api.nvim_create_autocmd('BufWipeout', {
+        desc = 'Uncache the buffer handle holding the content of the view',
+        callback = function() self.buf = nil end,
+        buffer = self.buf,
+        group = 'launch_nvim',
+      })
+    end
+    local win = require('launch.view').handles.win
+    api.nvim_win_set_buf(win, self.buf)
+
+    -- CHECK: very similar to `launch.view.open_win()`; possible refactor?
+    local r, c, w, h = util.get_win_pos_centered(0.8, 0.9)
+    local float_config = util.merge(require('launch.config').user.task.float_config, {
+      width = w,
+      height = h,
+      row = r,
+      col = c,
+      title = ' [launch.nvim] User Configurations File ',
+    })
+    api.nvim_win_set_config(win, float_config)
+    api.nvim_set_option_value('winbar', '', { win = win })
+    api.nvim_set_option_value('signcolumn', 'yes:1', { win = win })
+  end,
+})
 
 return M

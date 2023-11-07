@@ -24,7 +24,7 @@ function ActiveTask:new(cfg)
   api.nvim_set_option_value('filetype', 'launch_nvim_terminal', { buf = buffer })
 
   return setmetatable({
-    title = ('TASK: %s [%s]'):format(cfg.name, os.date '%d-%b %H:%M:%S'),
+    title = ('%s ( %s )'):format(cfg.name, os.date '%d-%b %H:%M:%S'),
     buffer = buffer,
     command = ('%s %s'):format(cfg.command, table.concat(cfg.args or {}, ' ')),
     display = cfg.display,
@@ -46,7 +46,8 @@ ActiveTask.renderer = {
       height = h,
       row = r,
       col = c,
-      title = (' %s '):format(title),
+      title = (' [launch.nvim] TASK: %s '):format(title),
+      style = 'minimal',
     })
 
     local win = view.handles.win
