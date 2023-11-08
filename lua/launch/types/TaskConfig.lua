@@ -9,7 +9,7 @@ local util = require 'launch.util'
 local ShellOptions = {}
 
 ---@class TaskOptions
----@field cwd? string current working directory of the shell which runs the task
+---@field cwd? string|fun():string current working directory of the shell which runs the task
 ---@field env? table<string, string|number> environment variables to set in shell before launching
 ---@field shell? ShellOptions optional shell config to use for running task
 -- all above options (when specified) override those of the default shell environment
@@ -47,10 +47,6 @@ function TaskConfig:new(cfg)
   -- set defaults
   cfg.display = cfg.display or config.user.task.display
   cfg.options = util.deep_merge(config.user.task.options, cfg.options or {})
-  if cfg.options.cwd then
-    cfg.options.cwd = vim.fs.normalize(cfg.options.cwd)
-    -- FIX: throw error if cfg.options.cwd is not a valid system path
-  end
 
   return ft, setmetatable(cfg, { __index = self })
 end
@@ -138,30 +134,38 @@ function TaskOptions.validate_input(name, opts)
   )
 
   if vim.tbl_isempty(opts) then
-    msg = { '"%s" should be a non-empty dictionary' }
+    msg = { '"%s" `options` should be a non-empty dictionary' }
   elseif not util.tbl_isdict(opts) then
     local non_str = {}
     for k, v in pairs(opts) do
       if type(k) ~= 'string' then non_str[tostring(k)] = v end
     end
     msg = {
-      '"%s" should be a dictionary. Got the following key-value pairs with non-string keys:\n%s',
+      '"%s" `options` should be a dictionary. Got the following key-value pairs with non-string '
+        .. 'keys:\n%s',
       non_str,
     }
   elseif #invalid_fields > 0 then
-    msg = { '"%s" has the following invalid fields : %s', invalid_fields }
-  elseif not vim.list_contains({ 'string', 'nil' }, type(opts.cwd)) then
-    msg = { '"%s" `cwd` field should be a string. Got:\n%s', opts.cwd }
+    msg = { '"%s" `options` has the following invalid fields : %s', invalid_fields }
+  elseif not vim.list_contains({ 'function', 'string', 'nil' }, type(opts.cwd)) then
+    msg = {
+      '"%s" `options.cwd` field should be a string or a function returning one. Got:\n%s',
+      opts.cwd,
+    }
   elseif not vim.list_contains({ 'table', 'nil' }, type(opts.shell)) then
-    msg = { '"%s" `shell` (optional) field should be a table. Got:\n%s', opts.shell }
+    msg = { '"%s" `options.shell` (optional) field should be a table. Got:\n%s', opts.shell }
   elseif type(opts.env) ~= 'nil' then
     if not util.tbl_isdict(opts.env) or vim.tbl_isempty(opts.env) then
-      msg = { '"%s" `env` field should be a non-empty dictionary-like table. Got:\n%s', opts.env }
+      msg = {
+        '"%s" `options.env` field should be a non-empty dictionary-like table. Got:\n%s',
+        opts.env,
+      }
     else
       for _, v in pairs(opts.env) do
         if not vim.list_contains({ 'string', 'number' }, type(v)) then
           msg = {
-            '"%s" `env` dictionary should only contain strings or numbers as values. Got:\n%s',
+            '"%s" `options.env` dictionary should only contain strings or numbers as values. '
+              .. 'Got:\n%s',
             opts.env,
           }
           break
@@ -170,9 +174,7 @@ function TaskOptions.validate_input(name, opts)
     end
   end
 
-  if msg then
-    util.throw_notify('E', 'Task config `options` for ' .. msg[1], name, vim.inspect(msg[2]))
-  end
+  if msg then util.throw_notify('E', 'Task config ' .. msg[1], name, vim.inspect(msg[2])) end
 end
 
 ---checks and validates if the argument `opts` is a valid `ShellOptions` object
@@ -197,25 +199,27 @@ function ShellOptions.validate_input(name, opts)
       non_str,
     }
   elseif #invalid_fields > 0 then
-    msg = { '"%s" has the following invalid fields : %s', invalid_fields }
+    msg = { '"%s" `options.shell` has the following invalid fields : %s', invalid_fields }
   elseif type(opts.exec) ~= 'string' then
-    msg = { '"%s" `exec` field should be a string. Got:\n%s', opts.exec }
+    msg = { '"%s" `options.shell.exec` field should be a string. Got:\n%s', opts.exec }
   elseif type(opts.args) ~= 'nil' then
     if not vim.tbl_islist(opts.args) or vim.tbl_isempty(opts.args) then
-      msg = { '"%s" `args` field should be a non-empty list-like table. Got:\n%s', opts.args }
+      msg = {
+        '"%s" `options.shell.args` field should be a non-empty list-like table. Got:\n%s',
+        opts.args,
+      }
     else
       for _, a in ipairs(opts.args) do
         if type(a) ~= 'string' then
-          msg = { '"%s" `args` list should only contain strings. Got:\n%s', opts.args }
+          msg =
+            { '"%s" `options.shell.args` list should only contain strings. Got:\n%s', opts.args }
           break
         end
       end
     end
   end
 
-  if msg then
-    util.throw_notify('E', 'Task config `options.shell` for ' .. msg[1], name, vim.inspect(msg[2]))
-  end
+  if msg then util.throw_notify('E', 'Task config ' .. msg[1], name, vim.inspect(msg[2])) end
 end
 
 return TaskConfig

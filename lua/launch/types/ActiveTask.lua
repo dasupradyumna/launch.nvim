@@ -19,9 +19,25 @@ local ActiveTask = {}
 ---@param cfg TaskConfig task configuration which needs to run
 ---@return ActiveTask
 ---@nodiscard
+---*[POSSIBLY THROWS ERROR]*
 function ActiveTask:new(cfg)
   local buffer = api.nvim_create_buf(false, true)
   api.nvim_set_option_value('filetype', 'launch_nvim_terminal', { buf = buffer })
+
+  -- processing current working directory field
+  local cwd = cfg.options.cwd
+  if cwd then
+    if type(cwd) == 'function' then cwd = cwd() end
+    cwd = vim.fs.normalize(cwd) -- resolve all special characters to get an absolute system path
+    if not vim.loop.fs_stat(cwd) then
+      local msg = ('Task Config "%s" `options.cwd` directory does not exist.\nGot CWD: %s'):format(
+        cfg.name,
+        cwd
+      )
+      util.throw_notify('E', msg) -- if cwd does not exist, throw an error and exit
+    end
+    cfg.options.cwd = cwd
+  end
 
   return setmetatable({
     title = ('%s ( %s )'):format(cfg.name, os.date '%d-%b %H:%M:%S'),

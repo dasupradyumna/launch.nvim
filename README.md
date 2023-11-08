@@ -183,7 +183,7 @@ default_cfg = {
     -- same fields as `TaskOptions` in "Task Configuration" subsection
     options = {
       -- set the default current working directory for all tasks
-      cwd = nil, ---@type string
+      cwd = nil, ---@type string|fun():string
 
       -- table with definitions of environment variables to be set for all tasks
       env = nil, ---@type table<string, string|number>
@@ -252,7 +252,8 @@ For further details about the configuration table and its fields, refer to [SETU
     *This command will not be available if debug support is disabled during plugin setup*
 
 - **LaunchOpenConfigFile**  
-    Open the current working directory's launch configuration file in a new vertical split  
+    Open the current working directory's launch configuration file in a plugin-managed floating
+    window
 
 ## Schemas
 
@@ -297,7 +298,7 @@ local task_config = {
     args = { '<command_arg1>', '<command_arg2>' },
     display = 'float',
     options = {
-        cwd = '<path_to_custom_cwd>',
+        cwd = '<path_to_custom_cwd>', -- OR function() return <path_to_custom_cwd> end,
         env = {
             STRING_VAR = 'hello_world',
             NUMERIC_VAR = 42.42,
@@ -336,9 +337,10 @@ return { task = { task_config } }
     Additional options to customize the environment in which the task is run  
     If not specified, the value provided in the **setup()** configuration is taken by default
 
-    1. **TaskOptions.cwd** `string`  
+    1. **TaskOptions.cwd** `string | fun():string`  
         Path (*absolute or relative*) to the custom directory to be set as the current working
-        directory for the task
+        directory for the task  
+        This path can be specified directly as a *string* or via a *function* which returns a string
 
     2. **TaskOptions.env** `table<string, string | number>`  
         Dictionary of specifications for environment variables to be defined before running the task

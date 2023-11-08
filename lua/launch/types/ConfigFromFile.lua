@@ -128,7 +128,7 @@ function ConfigFromFile.validate_input(cfg)
     end
   end
 
-  if msg then util.throw_notify('E', 'Config file "launch.lua" ' .. msg[1], vim.inspect(msg[2])) end
+  if msg then util.throw_notify('E', 'Config file ' .. msg[1], vim.inspect(msg[2])) end
 end
 
 return ConfigFromFile

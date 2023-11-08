@@ -43,7 +43,7 @@ end
 ---@return integer # pixel width of window
 ---@return integer # pixel height of window
 ---@nodiscard
----POSSIBLY THROWS ERROR
+---*[POSSIBLY THROWS ERROR]*
 function M.get_win_pos_centered(w, h)
   local W = api.nvim_get_option_value('columns', {})
   local H = api.nvim_get_option_value('lines', {})
