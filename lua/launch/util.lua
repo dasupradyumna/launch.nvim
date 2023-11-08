@@ -50,15 +50,15 @@ function M.get_win_pos_centered(w, h)
   local r, c
   if w < 1 and h < 1 then
     w, h = w * W, h * H
-    w, h = math.floor(w), math.floor(h)
-  elseif not (w >= 1 and h >= 1) then
+  elseif w >= 1 and h >= 1 then
+    w, h = math.min(w, 0.9 * W), math.min(h, 0.9 * H)
+  else
     error 'arguments `w` and `h` should both be greater than (equal to) 1 or both lesser than 1'
   end
 
-  -- FIX: function does not handle h,w being greater than the window height and width
   r = (H - h) / 2 - 1
   c = (W - w) / 2 - 1
-  return math.floor(r), math.floor(c), w, h
+  return math.floor(r), math.floor(c), math.floor(w), math.floor(h)
 end
 
 ---shallow-merges the template table with a custom table, prioritizing custom keys

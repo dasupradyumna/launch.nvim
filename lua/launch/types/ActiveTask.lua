@@ -40,7 +40,7 @@ ActiveTask.renderer = {
   ---@param title string title of active task
   float = function(buffer, title)
     -- CHECK: very similar to `launch.view.open_win()`; possible refactor?
-    local r, c, w, h = util.get_win_pos_centered(0.8, 0.9)
+    local r, c, w, h = util.get_win_pos_centered(0.9, 0.9)
     local float_config = util.merge(config.user.task.float_config, {
       width = w,
       height = h,
