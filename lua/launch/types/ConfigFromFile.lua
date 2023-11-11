@@ -19,6 +19,7 @@ local ConfigFromFile = {}
 ---@param cfg ConfigFromFile
 ---*[POSSIBLY THROWS ERROR]*
 function ConfigFromFile:load(cfg)
+  cfg = cfg or {}
   self.validate_input(cfg)
 
   -- load all tasks, debug configurations and user-defined variables from file
@@ -91,7 +92,7 @@ function ConfigFromFile.validate_input(cfg)
     invalid_fields = vim.tbl_filter(function(f) return not valid_fields[f] end, vim.tbl_keys(cfg))
   end
 
-  if type(cfg) ~= 'table' or vim.tbl_isempty(cfg) then
+  if type(cfg) ~= 'table' then
     msg = { 'should return a non-empty table. Got:\n%s', cfg }
   elseif not util.tbl_isdict(cfg) then
     local non_str = {}

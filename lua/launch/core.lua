@@ -81,7 +81,16 @@ end
 
 ---updates the runtime config list from the corresponding config file on disk
 function M.load_config_file()
-  if not vim.loop.fs_stat(M.config_file_path) then return end
+  local config_file_stat = vim.loop.fs_stat(M.config_file_path)
+  if not config_file_stat then
+    return
+  elseif config_file_stat.size == 0 then
+    -- if config file is empty, delete it and close the floating window
+    os.remove(M.config_file_path)
+    if rawget(require('launch.view').handles, 'win') then vim.api.nvim_command 'bwipeout' end
+    util.notify('I', 'User configurations file deleted')
+    return
+  end
 
   local ok, configs = pcall(dofile, M.config_file_path)
   if not ok then

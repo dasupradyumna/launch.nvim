@@ -17,7 +17,7 @@ neovim.
 - [Schemas](#schemas)
   - [Task Configuration](#task-configuration)
   - [Debug Configuration](#debug-configuration)
-  - [Input Variables](#input-variables)
+  - [User Variables](#user-variables)
 - [Contributing](#contributing)
 
 ## Demo
@@ -34,9 +34,9 @@ Although debugger-related configurations and commands are not covered in the abo
 
 ## Features
 
-- Create custom tasks for **every working directory** using file opened by *LaunchOpenConfigFile*
-    command  
-    *All configurations in this file are **hot-reloaded** upon saving changes*  
+- Create custom tasks for **every working directory** using the file opened by
+    *`LaunchOpenConfigFile`* command  
+    *All configurations in this file are **hot-reloaded** upon saving changes*
 - Configured tasks can be launched in a **tabpage** or a **floating window**, managed by the plugin
 - Closing the plugin-managed *tabpage* or *floating window* **will not kill** the current task(s);
     they will continue to run in the background
@@ -260,10 +260,12 @@ For further details about the configuration table and its fields, refer to [SETU
 The plugin configuration file should return a table with one or more of the following 3 fields:
 **task**, **debug** and **var**. **task** and **debug** should be array-like tables of task and
 debug configurations respectively, and **var** should be a dictionary-like table of user variable
-definitions with the key being a variable's name and the value being its config.  
-Every field is optional, and can be omitted if no configurations need to be specified. (*If input
-variable syntax is used in any configuration, then the corresponding variable definition should be
-specified under the **var** field*)
+definitions with the key being a variable's name and the value being its config.
+
+Every field is *optional*, and can be omitted if no configurations need to be specified. If the
+plugin configuration file returns `nil` or an empty table `{}`; all task, debug and variable
+configurations are cleared. (*If the user variable syntax is used in any configuration, then the
+corresponding variable definition should be specified under the **var** field*)
 
 ```lua
 -- config file
@@ -380,15 +382,15 @@ local debug_config = {
 return { debug = { debug_config } }
 ```
 
-### Input Variables
+### User Variables
 
-An example user-defined input variable specification can look like this -
+An example user-defined variable specification can look like this -
 
 ```lua
 return {
     task = {
         {
-            name = 'Test Input Variables',
+            name = 'Test User Variables',
             command = 'echo',
             args = { '{@select_type}', '{@input_type}' },
         }
@@ -408,15 +410,16 @@ return {
 }
 ```
 
-Defined input variables can be used in both task and debug configurations with the following syntax
-`{@<variable_name>}`, in `command` and `args` fields *(this will be supported in all string
-fields in the future)*
+Defined user variables can be used in both task and debug configurations with the following syntax
+`{@<variable_name>}`, in `command` and `args` fields. When a task using this syntax is launched, it
+will prompt a choice from the user, substitute the syntax with the user's choice and then launches
+the task. *(this will be supported in all string fields in the future)*
 
 1. **type** *(required)* `'select' | 'input'`  
     Describes whether user is prompted for input from keyboard or select from a list of choices
 
 2. **desc** *(required)* `string`  
-    A brief description for the input variable, displayed when user input is required
+    A brief description for the user variable, displayed when user input is required
 
 3. **default** `string | number | boolean`  
     Default value already filled in when user is prompted for keyboard input  
