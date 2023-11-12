@@ -43,6 +43,7 @@ M.defaults = {
       relative = 'editor',
       border = 'rounded',
       title_pos = 'center',
+      zindex = 49, -- one unit lesser than the default for neovim floats
     },
     hooks = {
       float = {
