@@ -251,6 +251,9 @@ For further details about the configuration table and its fields, refer to [SETU
     floating window  
     *This command will not be available if debug support is disabled during plugin setup*
 
+- **LaunchShowUserVariables**  
+    Show all defined user variables with their specifications in a floating window
+
 - **LaunchOpenConfigFile**  
     Open the current working directory's launch configuration file in a plugin-managed floating
     window

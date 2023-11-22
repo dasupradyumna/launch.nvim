@@ -15,8 +15,7 @@ cmd('LaunchDebugger', function() require('launch').debugger(true) end)
 cmd('LaunchDebuggerFT', function() require('launch').debugger() end)
 cmd('LaunchShowDebugConfigs', function() require('launch').view('debug', true) end)
 cmd('LaunchShowDebugConfigsFT', function() require('launch').view 'debug' end)
--- HACK: implement the user variables viewer (similar to above)
--- cmd('LaunchShowUserVariables', function() vim.print(require('launch.user').variables) end)
+cmd('LaunchShowUserVariables', function() require('launch').view 'user' end)
 cmd('LaunchOpenConfigFile', function() require('launch.config').open_file() end)
 
 ------------------------------ USER AUTOCOMMANDS -------------------------------

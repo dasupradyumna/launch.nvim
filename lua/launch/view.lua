@@ -7,10 +7,15 @@ local api = vim.api
 
 local M = {}
 
----@alias ViewType 'active' | LaunchType
+---@alias ViewType 'active' | 'user' | LaunchType
 
 ---@type table<ViewType, string>
-local title = { active = 'Active Tasks', debug = 'Debug Configurations', task = 'Configured Tasks' }
+local title = {
+  active = 'Active Tasks',
+  debug = 'Debug Configurations',
+  task = 'Configured Tasks',
+  user = 'User Variables',
+}
 
 M.handles = setmetatable({}, {
   __index = function(self, key)
@@ -113,14 +118,22 @@ function M.get_content(type, show_all_fts)
     vim.keymap.set('n', '<C-F>', function() open_task 'float' end, { buffer = M.handles.buf })
     vim.keymap.set('n', '<C-T>', function() open_task 'tab' end, { buffer = M.handles.buf })
     vim.keymap.set('n', '<CR>', open_task, { buffer = M.handles.buf })
+  elseif type == 'user' then
+    -- display content for user variables
+
+    for name, cfg in pairs(require('launch.user').variables) do
+      local cfg_repr = util.key_value_repr(name, cfg, 0)
+      table.insert(cfg_repr, '')
+      vim.list_extend(lines, cfg_repr)
+    end
+    lines[#lines] = nil -- remove extra new line at the end
   else
     -- display content for task and debug configurations
 
     local list = type == 'task' and task.list or require('dap').configurations
     list, ft = util.filter_configs_by_filetype(list, show_all_fts)
     for _, cfg in ipairs(list) do
-      local cfg_repr = M.get_repr(cfg)
-      cfg_repr = vim.tbl_map(function(str)
+      local cfg_repr = vim.tbl_map(function(str)
         ---@cast str string
         -- escaping whitespace characters for `nvim_buf_set_lines()`
         str = str:gsub('\n', '\\n')
