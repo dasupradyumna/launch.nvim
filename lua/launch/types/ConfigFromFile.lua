@@ -32,9 +32,21 @@ end
 ---@param configs DebugConfigFromFile[] | TaskConfigFromFile[]
 ---@param Builder DebugConfig | TaskConfig
 ---@return table<string, DebugConfig | TaskConfig>
+---*[POSSIBLY THROWS ERROR]*
 local function build_configs(configs, Builder)
   local built = {}
+  local cfg_names = {} -- caches all names of built configurations
   for _, raw_cfg in ipairs(configs) do
+    if cfg_names[raw_cfg.name] then
+      util.throw_notify(
+        'E',
+        'Multiple %s configurations found with the same name: "%s"',
+        Builder == TaskConfig and 'task' or 'debug',
+        raw_cfg.name
+      )
+    end
+    cfg_names[raw_cfg.name] = true
+
     local ft, cfg = Builder:new(raw_cfg)
     built[ft] = built[ft] or {}
     table.insert(built[ft], cfg)

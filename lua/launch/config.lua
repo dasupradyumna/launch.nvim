@@ -102,7 +102,10 @@ M.open_file = setmetatable({}, {
         group = 'launch_nvim',
       })
     end
-    local win = require('launch.view').handles.win
+    local handles = require('launch.view').handles
+    -- close a 'minimal' style window to open a non-minimal float for config file
+    if rawget(handles, 'win') then api.nvim_win_close(handles.win, true) end
+    local win = handles.win
     api.nvim_win_set_buf(win, self.buf)
 
     -- CHECK: very similar to `launch.view.open_win()`; possible refactor?
