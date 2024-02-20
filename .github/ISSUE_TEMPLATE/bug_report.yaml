@@ -1,0 +1,63 @@
+name: Bug Report
+description: File a bug or an issue with launch.nvim
+title: "bug: "
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **Before** reporting an issue, make sure to read the [documentation](https://github.com/dasupradyumna/launch.nvim) and search through [existing issues](https://github.com/dasupradyumna/launch.nvim/issues).
+        Usage questions such as ***"How do I...?"*** belong in [Discussions](https://github.com/dasupradyumna/launch.nvim/discussions) and will be closed.
+  - type: checkboxes
+    attributes:
+      label: Did you check documentation and existing issues?
+      description: Make sure you have checked all of the below checkboxes before submitting an issue
+      options:
+        - label: I have read all the launch.nvim documentation
+          required: true
+        - label: I have searched through all existing issues of launch.nvim
+          required: true
+        - label: My issue is non-trivial and does not belong in the Discussions section
+          required: true
+  - type: input
+    attributes:
+      label: "Neovim Version (nvim -v)"
+      placeholder: v0.10.0-dev
+    validations:
+      required: true
+  - type: input
+    attributes:
+      label: "Operating System & Version"
+      placeholder: "Linux 5.15.0-75-generic GNU/Linux"
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Describe The Bug
+      description: |
+        A clear and concise description of what the bug is. Please include any related errors you see in Neovim.
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Steps To Reproduce
+      description: Elaborate the steps to reproduce the behavior.
+      placeholder: |
+        1. Open Neovim.
+        2. ...
+        3. ... ...
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Expected Behavior
+      description: A concise description of what you expected to happen.
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Configuration Used To Reproduce
+      description: |
+        It is assumed that the user could reproduce the issue using `test/minimal.lua` as the configuration. If that is not the case, please provide the configuration logic used to reproduce the issue below -
+    validations:
+      required: false
