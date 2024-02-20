@@ -23,7 +23,7 @@ function M.setup(opts)
   end
 
   local data_folder = vim.fn.stdpath 'data' .. '/launch_nvim'
-  if not vim.loop.fs_stat(data_folder) then vim.loop.fs_mkdir(data_folder, 0755) end
+  vim.fn.mkdir(data_folder, 'p', 493)
   core.config_file_path = ('%s/%s.lua'):format(
     data_folder,
     vim.loop.cwd():gsub('@', '@@'):gsub('/', '@')

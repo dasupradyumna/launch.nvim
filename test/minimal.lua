@@ -22,7 +22,7 @@ vim.opt.runtimepath:prepend(lazypath)
 -- install plugins
 require('lazy').setup({
   { 'dasupradyumna/launch.nvim', opts = {} },
-}, { root = root .. '/plugins' })
+}, { root = vim.fs.joinpath(root, 'plugins') })
 
 -- BUG: use treesitter builtin parsers (for lua, vimdoc filetypes)
 vim.opt.runtimepath:append '/usr/lib/x86_64-linux-gnu/nvim'
