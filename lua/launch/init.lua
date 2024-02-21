@@ -26,7 +26,7 @@ function M.setup(opts)
   vim.fn.mkdir(data_folder, 'p', 493)
   core.config_file_path = ('%s/%s.lua'):format(
     data_folder,
-    vim.loop.cwd():gsub('@', '@@'):gsub('/', '@')
+    vim.loop.cwd():gsub('@', '@@'):gsub('[\\/:]', '@')
   )
 
   util.no_notify = true
