@@ -32,6 +32,7 @@ api.nvim_create_autocmd('BufWritePost', {
     core.load_config_file()
   end,
   group = 'launch_nvim',
+  nested = true,
 })
 
 api.nvim_create_autocmd('TabClosed', {
