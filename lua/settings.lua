@@ -2,22 +2,23 @@
 
 local utils = require 'launch-nvim.utils'
 
-local settings = {}
-
----@type LaunchNvimSettings default plugin settings
-settings.default = {
-  confirm_choice = false,
-  task = {
-    display = 'float',
-    env = {},
-    insert_mode_on_launch = false,
+---@class LaunchNvimSettingsModule
+---@field private default LaunchNvimSettings default plugin settings
+---@field private active LaunchNvimSettings active plugin settings
+local settings = {
+  default = {
+    confirm_choice = false,
+    task = {
+      display = 'float',
+      env = {},
+      insert_mode_on_launch = false,
+    },
+    debug = {},
   },
-  debug = {},
-}
 
----@type LaunchNvimSettings active plugin settings
----@diagnostic disable-next-line:missing-fields
-settings.active = {}
+  ---@diagnostic disable-next-line:missing-fields
+  active = {},
+}
 
 ---apply the user specified settings to internal active settings table
 ---@param user_settings? LaunchNvimSettings

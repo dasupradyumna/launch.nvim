@@ -2,18 +2,14 @@
 
 local utils = require 'launch-nvim.utils'
 
-local configs = {}
-
----@type string launch.nvim data directory where all runtime configs are saved
----@diagnostic disable-next-line:param-type-mismatch
-configs.data_dir = vim.fs.joinpath(vim.fn.stdpath 'data', 'launch_nvim')
-
----@type string runtime configs file path for the current working directory
-configs.runtime_file_path = nil
-
--- TODO: add meta file with type definitions
----@type table
-configs.list = {}
+---@class LaunchNvimConfigsModule
+---@field data_dir string launch.nvim data directory where all runtime configs are saved
+---@field private runtime_file_path string runtime configs file path for CWD
+---@field list table runtime configs table
+local configs = {
+  ---@diagnostic disable-next-line:param-type-mismatch
+  data_dir = vim.fs.joinpath(vim.fn.stdpath 'data', 'launch_nvim'),
+}
 
 ---loads runtime configs for CWD from JSON file
 function configs:load()
@@ -43,6 +39,7 @@ function configs:save()
     return
   end
 
+  -- FIX: do not save empty tables / sub-tables
   runtime_file:write(vim.json.encode(self.list))
   runtime_file:close()
 end
