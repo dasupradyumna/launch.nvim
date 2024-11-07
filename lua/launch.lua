@@ -2,12 +2,12 @@
 
 local configs = require 'launch-nvim.configs'
 local settings = require 'launch-nvim.settings'
+local utils = require 'launch-nvim.utils'
 
 local launch = {}
 
 ---plugin setup function
--- TODO: add meta file with type definitions
----@param user_settings? table
+---@param user_settings? LaunchNvimSettings
 function launch.setup(user_settings)
   settings:apply(user_settings)
 
@@ -16,8 +16,28 @@ function launch.setup(user_settings)
   configs:load()
 end
 
-function launch.task() vim.notify 'Task launched' end
+function launch.task()
+  if settings:failed() then
+    utils.notify:error {
+      'Plugin has not been setup correctly and cannot be used.',
+      'Please fix the issue and reload it.',
+    }
+    return
+  end
 
-function launch.debugger() vim.notify 'Debugger launched' end
+  vim.notify 'Task launched'
+end
+
+function launch.debugger()
+  if settings:failed() then
+    utils.notify:error {
+      'Plugin has not been setup correctly and cannot be used.',
+      'Please fix the issue and reload it.',
+    }
+    return
+  end
+
+  vim.notify 'Debugger launched'
+end
 
 return launch
