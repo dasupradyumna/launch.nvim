@@ -39,6 +39,8 @@
 ---@field display? LaunchNvimTaskDisplayType controls the task output rendering
 ---@field env? table<string, string|number> custom task environment variables dictionary
 
----@class LaunchNvimDebugConfig: Configuration
-
 ---@class LaunchNvimActiveTask
+---@field buffer integer task buffer ID
+---@field config LaunchNvimTaskConfig final configuration used to launch this task
+
+---@class LaunchNvimDebugConfig: Configuration

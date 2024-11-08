@@ -1,6 +1,7 @@
 -------------------------------------------- LAUNCH-NVIM -------------------------------------------
 
 local configs = require 'launch-nvim.configs'
+local core = require 'launch-nvim.core'
 local settings = require 'launch-nvim.settings'
 local utils = require 'launch-nvim.utils'
 
@@ -26,6 +27,19 @@ function launch.task()
   end
 
   vim.notify 'Task launched'
+
+  -- REMOVE:
+  ---@type LaunchNvimTaskConfig
+  local test_config = {
+    name = 'Launch Test',
+    command = 'echo',
+    args = { 'hello', '$USERNAME', 'from', '"$PWD"!' },
+    cwd = vim.fs.dirname(vim.uv.cwd()),
+    display = 'float',
+    -- env = { USERNAME = 'Pradyumna' },
+  }
+
+  core:run('TASK', test_config)
 end
 
 function launch.debugger()
@@ -38,6 +52,8 @@ function launch.debugger()
   end
 
   vim.notify 'Debugger launched'
+
+  core:run 'DEBUG'
 end
 
 return launch

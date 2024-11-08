@@ -4,7 +4,7 @@ local utils = require 'launch-nvim.utils'
 
 ---@class LaunchNvimSettingsModule
 ---@field private default LaunchNvimSettings default plugin settings
----@field private active LaunchNvimSettings active plugin settings
+---@field active LaunchNvimSettings active plugin settings
 local settings = {
   default = {
     confirm_choice = false,
