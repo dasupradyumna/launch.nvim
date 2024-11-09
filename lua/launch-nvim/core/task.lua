@@ -31,7 +31,7 @@ end
 ---run the task specified by the argument config
 ---@param config LaunchNvimTaskConfig target task config
 function task:run(config)
-  local task_settings = settings.task.active
+  local task_settings = settings.active.task
   local new_task = { config = vim.deepcopy(config) }
 
   -- apply defaults to optional configuration fields
