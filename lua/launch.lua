@@ -26,8 +26,6 @@ function launch.task()
     return
   end
 
-  vim.notify 'Task launched'
-
   -- REMOVE:
   ---@type LaunchNvimTaskConfig
   local test_config = {

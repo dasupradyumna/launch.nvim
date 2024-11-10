@@ -28,7 +28,7 @@ function settings:apply(user_settings)
     { '[[user_settings]]', true, 'record', { 'confirm_choice', 'task', 'debug' } },
     { 'confirm_choice', true, 'boolean' },
     { 'task', true, 'record', { 'display', 'env', 'insert_mode_on_launch' } },
-    { 'task.display', true, 'enum', { 'float', 'tabpage', 'vsplit', 'hsplit' } },
+    { 'task.display', true, 'enum', { 'float', 'vsplit', 'hsplit' } },
     { 'task.env', true, 'dict', { 'string', 'number' } },
     { 'task.insert_mode_on_launch', true, 'boolean' },
   }, 'Plugin setup failed! User settings could not be applied.')

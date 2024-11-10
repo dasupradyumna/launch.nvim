@@ -32,7 +32,14 @@ end
 ---@param config LaunchNvimTaskConfig target task config
 function task:run(config)
   local task_settings = settings.active.task
-  local new_task = { config = vim.deepcopy(config) }
+
+  ---@type LaunchNvimActiveTask active task instance for the task to be launched
+  ---@diagnostic disable-next-line:missing-fields
+  local new_task = {
+    -- TODO: deepcopy needs to be done before variable substitution
+    config = vim.deepcopy(config), ---@diagnostic disable-line:assign-type-mismatch
+    title = ('TASK: %s'):format(config.name),
+  }
 
   -- apply defaults to optional configuration fields
   new_task.config.display = config.display or task_settings.display
@@ -55,11 +62,19 @@ function task:run(config)
   ui:open(new_task)
 
   -- launch the task in the terminal buffer
+  new_task.spawn_time = utils.curr_time_ms()
   vim.fn.termopen(table.concat({ config.command, unpack(config.args or {}) }, ' '), {
     clear_env = false,
     cwd = new_task.config.cwd,
     env = new_task.config.env,
+    on_exit = function() new_task.exit_time = utils.curr_time_ms() end,
   })
+
+  -- change the buffer name to task title
+  -- FIX: this fails when same task is run multiple times
+  vim.api.nvim_buf_set_name(new_task.buffer, new_task.title .. ' ' .. new_task.spawn_time)
+  -- buffer with old name (if not [EMPTY]) becomes alternate buffer so delete it
+  pcall(vim.api.nvim_buf_delete, vim.fn.bufnr '#', { force = true })
 
   -- start insert mode if user enabled that option
   if task_settings.insert_mode_on_launch then vim.api.nvim_command 'startinsert' end

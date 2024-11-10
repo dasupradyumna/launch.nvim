@@ -3,7 +3,7 @@
 
 ---@alias LaunchNvimConfigType 'TASK' | 'DEBUG'
 
----@alias LaunchNvimTaskDisplayType 'float' | 'tabpage' | 'vsplit' | 'hsplit'
+---@alias LaunchNvimTaskDisplayType 'float' | 'vsplit' | 'hsplit'
 
 --------------------------- VALIDATION SPECIFICATION ---------------------------
 
@@ -39,8 +39,16 @@
 ---@field display? LaunchNvimTaskDisplayType controls the task output rendering
 ---@field env? table<string, string|number> custom task environment variables dictionary
 
+---@class LaunchNvimActiveTaskConfig: LaunchNvimTaskConfig
+---@field cwd string custom working directory path, defaults to neovim CWD
+---@field display LaunchNvimTaskDisplayType controls the task output rendering
+---@field env table<string, string|number> custom task environment variables dictionary
+
 ---@class LaunchNvimActiveTask
+---@field title string title for current active task
 ---@field buffer integer task buffer ID
----@field config LaunchNvimTaskConfig final configuration used to launch this task
+---@field config LaunchNvimActiveTaskConfig final configuration used to launch this task
+---@field spawn_time integer task spawn UNIX timestamp (in ms)
+---@field exit_time integer task exit UNIX timestamp (in ms)
 
 ---@class LaunchNvimDebugConfig: Configuration
