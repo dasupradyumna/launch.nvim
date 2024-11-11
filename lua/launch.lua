@@ -3,7 +3,6 @@
 local configs = require 'launch-nvim.configs'
 local core = require 'launch-nvim.core'
 local settings = require 'launch-nvim.settings'
-local utils = require 'launch-nvim.utils'
 
 local launch = {}
 
@@ -18,13 +17,7 @@ function launch.setup(user_settings)
 end
 
 function launch.task()
-  if settings:failed() then
-    utils.notify:error {
-      'Plugin has not been setup correctly and cannot be used.',
-      'Please fix the issue and reload it.',
-    }
-    return
-  end
+  if not settings:ready() then return end
 
   -- REMOVE:
   ---@type LaunchNvimTaskConfig
@@ -41,13 +34,7 @@ function launch.task()
 end
 
 function launch.debugger()
-  if settings:failed() then
-    utils.notify:error {
-      'Plugin has not been setup correctly and cannot be used.',
-      'Please fix the issue and reload it.',
-    }
-    return
-  end
+  if not settings:ready() then return end
 
   vim.notify 'Debugger launched'
 

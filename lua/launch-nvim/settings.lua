@@ -37,8 +37,20 @@ function settings:apply(user_settings)
   self.active = vim.tbl_deep_extend('force', self.default, user_settings or {})
 end
 
----indicates whether user settings have not been applied
+---indicates whether user settings have been applied and ready to use
 ---@nodiscard
-function settings:failed() return vim.tbl_isempty(self.active) end
+function settings:ready()
+  local failed = vim.tbl_isempty(self.active)
+
+  -- send error notification if settings have not been applied
+  if failed then
+    utils.notify:error {
+      'Plugin has not been setup correctly and cannot be used.',
+      'Please fix the issue and reload it.',
+    }
+  end
+
+  return not failed
+end
 
 return settings
