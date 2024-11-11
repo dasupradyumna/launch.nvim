@@ -2,10 +2,8 @@
 
 local notify = require 'launch-nvim.utils.notify'
 
-local validate = {}
-
----@type table<string, fun(target: any, rules: string[]): string?> validator methods table
-local validators = setmetatable({}, {
+---table of validator methods per valid type
+local validator = setmetatable({}, {
   __index = function(_, valid_type)
     -- fall back to builtin type checker
     return function(target)
@@ -22,7 +20,7 @@ local validators = setmetatable({}, {
 ---@param target any value under validation
 ---@param types string[] list of allowed types for values
 ---@return string? # nil if successful, else returns error message
-function validators.dict(target, types)
+function validator.dict(target, types)
   if type(target) ~= 'table' then return 'must be a "table".' end
   for key, value in pairs(target) do
     if type(key) ~= 'string' then
@@ -42,7 +40,7 @@ end
 ---@param target any value under validation
 ---@param values string[] list of allowed types for values
 ---@return string? # nil if successful, else returns error message
-function validators.enum(target, values)
+function validator.enum(target, values)
   return vim.list_contains(values, target) and nil
     or ('must be one of %s.'):format(vim.inspect(values))
 end
@@ -54,7 +52,7 @@ end
 ---@param target any value under validation
 ---@param types string[] list of allowed types for values
 ---@return string? # nil if successful, else returns error message
-function validators.list(target, types)
+function validator.list(target, types)
   if type(target) ~= 'table' then return 'must be a "table".' end
   local idx = 0
   for key, value in pairs(target) do
@@ -77,7 +75,7 @@ end
 ---@param target any value under validation
 ---@param fields string[] list of allowed types for values
 ---@return string? # nil if successful, else returns error message
-function validators.record(target, fields)
+function validator.record(target, fields)
   if type(target) ~= 'table' then return 'must be a "table".' end
   for key in pairs(target) do
     if not vim.list_contains(fields, key) then
@@ -85,6 +83,9 @@ function validators.record(target, fields)
     end
   end
 end
+
+---@class LaunchNvimValidationModule
+local validate = {}
 
 ---perform argument validation according to specifications
 ---@param value any argument under validation
@@ -123,7 +124,7 @@ function validate.argument(value, spec_list, failure_msg)
     else
       -- check if type specification is satisfied with the respective validator
       ---@diagnostic disable-next-line:param-type-mismatch
-      error_msg = validators[valid_type](target, extra_info)
+      error_msg = validator[valid_type](target, extra_info)
       if error_msg then error_msg = ('  > "%s" %s %s'):format(spec_name, valid_type, error_msg) end
     end
 
