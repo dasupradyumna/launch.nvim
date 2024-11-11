@@ -6,6 +6,16 @@ framework in *Visual Studio Code*. It also provides (optional) support for debug
 [nvim-dap](https://github.com/mfussenegger/nvim-dap), a debug adapter protocol implementation for
 neovim.
 
+> [!IMPORTANT]
+> Development is actively ongoing for v1.0.0 release on the
+> [**release/v1.0.0**](https://github.com/dasupradyumna/launch.nvim/tree/release/v1.0.0) branch,
+> with a revamped user interface for configuring tasks, debuggers and user variables. The core
+> functionality will remain the same as **main** branch *for the most part*. Development on the
+> **main** branch will be on hold indefinitely, since it is planned to be replaced.  
+> A discussion has been opened [here](https://github.com/dasupradyumna/launch.nvim/discussions/9)
+> for new and existing users to provide feedback or ideas on what they would like to see in the
+> upcoming release. They will be added to the feature roadmap based on feasibility and popularity.
+
 ### Contents
 
 - [Demo](#demo)
