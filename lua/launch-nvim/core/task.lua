@@ -71,8 +71,11 @@ function task:run(config)
   })
 
   -- change the buffer name to task title
-  -- FIX: this fails when same task is run multiple times
-  vim.api.nvim_buf_set_name(new_task.buffer, new_task.title .. ' ' .. new_task.spawn_time)
+  -- FIX: this fails when same task is run multiple times (without spawn_time)
+  vim.api.nvim_buf_set_name(
+    new_task.buffer,
+    '[launch.nvim] ' .. new_task.title .. ' ' .. new_task.spawn_time
+  )
   -- buffer with old name (if not [EMPTY]) becomes alternate buffer so delete it
   pcall(vim.api.nvim_buf_delete, vim.fn.bufnr '#', { force = true })
 

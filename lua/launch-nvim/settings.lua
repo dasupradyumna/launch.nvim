@@ -11,6 +11,15 @@ local settings = {
     task = {
       display = 'float',
       env = {},
+      float = {
+        size = 'large',
+        config = {
+          title_pos = 'center',
+          footer_pos = 'right',
+          border = 'rounded',
+          zindex = 49, -- one unit lesser than neovim default
+        },
+      },
       insert_mode_on_launch = false,
     },
     debug = {},

@@ -1,8 +1,24 @@
 --------------------------------------- TASK RENDERING LOGIC ---------------------------------------
 
+local settings = require 'launch-nvim.settings'
+
 ---@class LaunchNvimTaskUIModule
 ---@field private win_id table<LaunchNvimTaskDisplayType, integer> window ID per display type
 local task_ui = { win_id = vim.empty_dict() }
+
+---mapping from size names to fraction of screen dimensions
+local float_size_to_ratio = { small = 0.45, medium = 0.65, large = 0.85 }
+
+---get the floating window UI position-size specifications
+---@param size LaunchNvimSettingsTaskFloatSize
+local function get_float_specs(size)
+  local W, H = vim.go.columns, vim.go.lines
+  local ratio = float_size_to_ratio[size]
+  local w, h = ratio * W, ratio * H
+  local c = (W - w) / 2 - 2
+  local r = (H - h) / 2 - 2
+  return math.floor(r), math.floor(c), math.ceil(w), math.ceil(h)
+end
 
 ---table of renderer methods per display type
 local renderer = {}
@@ -13,20 +29,20 @@ local renderer = {}
 ---@return integer # current window ID
 ---@nodiscard
 function renderer.float(buffer, title)
-  local float_config = {
-    row = 5,
-    col = 45,
-    width = 150,
-    height = 50,
-    title = ' ' .. title .. ' ',
-    title_pos = 'center',
+  local float_settings = settings.active.task.float
+
+  -- construct floating window config
+  local row, col, width, height = get_float_specs(float_settings.size)
+  local float_config = vim.tbl_extend('force', float_settings.config, {
+    relative = 'editor', -- CHECK: can other options be supported?
+    row = row,
+    col = col,
+    width = width,
+    height = height,
+    title = (' %s '):format(title),
     footer = ' launch.nvim ',
-    footer_pos = 'right',
     style = 'minimal',
-    relative = 'editor',
-    border = 'rounded',
-    zindex = 49,
-  }
+  })
 
   local win = vim.api.nvim_open_win(buffer, true, float_config)
   vim.api.nvim_set_option_value('signcolumn', 'yes:1', { scope = 'local' })

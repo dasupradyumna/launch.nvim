@@ -3,17 +3,15 @@
 
 ---@alias LaunchNvimConfigType 'TASK' | 'DEBUG'
 
----@alias LaunchNvimTaskDisplayType 'float' | 'vsplit' | 'hsplit'
-
 --------------------------- VALIDATION SPECIFICATION ---------------------------
-
----@alias LaunchNvimValidatorType 'dict' | 'enum' | 'list' | 'record' | type
 
 ---@class LaunchNvimValidationSpec
 ---@field [1] string specification name, can be a nested key sequence
 ---@field [2] boolean indicates whether this argument is optional, i.e. can be nil
 ---@field [3] LaunchNvimValidatorType data type that maps to the respective validator
 ---@field [4] string[]? list of strings; extra rules to the validator method
+
+---@alias LaunchNvimValidatorType 'dict' | 'enum' | 'list' | 'record' | type
 
 -------------------------------- PLUGIN SETTINGS -------------------------------
 
@@ -25,7 +23,16 @@
 ---@class LaunchNvimSettingsTask
 ---@field display LaunchNvimTaskDisplayType default task rendering type, overridable
 ---@field env table<string, string|number> default environment variables dictionary. overridable
+---@field float LaunchNvimSettingsTaskFloat settings for task UI in float mode
 ---@field insert_mode_on_launch boolean whether to enter insert mode after launching task
+
+---@alias LaunchNvimTaskDisplayType 'float' | 'vsplit' | 'hsplit'
+
+---@class LaunchNvimSettingsTaskFloat
+---@field size LaunchNvimSettingsTaskFloatSize size of the task UI float
+---@field config vim.api.keyset.win_config neovim floating window configuration
+
+---@alias LaunchNvimSettingsTaskFloatSize 'small' | 'medium' | 'large'
 
 ---@class LaunchNvimSettingsDebug
 
