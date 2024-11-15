@@ -7,8 +7,9 @@ local validator = setmetatable({}, {
   __index = function(_, valid_type)
     -- fall back to builtin type checker
     return function(target)
-      return type(target) == valid_type and nil
-        or ('option has value of type "%s".'):format(type(target))
+      if type(target) ~= valid_type then
+        return ('option has value of type "%s".'):format(type(target))
+      end
     end
   end,
 })
