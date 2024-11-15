@@ -15,7 +15,7 @@ task.active = {}
 function task:setup_buffer(new_task)
   -- create a buffer for the task
   new_task.buffer = vim.api.nvim_create_buf(false, true)
-  vim.api.nvim_set_option_value('filetype', 'launch_nvim_task', { buf = new_task.buffer })
+  vim.bo[new_task.buffer].filetype = 'launch_nvim_task'
   vim.keymap.set('n', 'q', '<Cmd>quit<CR>', { buffer = new_task.buffer })
 
   -- add current task to list of active tasks
@@ -42,7 +42,7 @@ function task:run(config)
   }
 
   -- apply defaults to optional configuration fields
-  new_task.config.display = config.display or task_settings.display
+  new_task.config.display = config.display or task_settings.ui.display
   new_task.config.env = vim.tbl_deep_extend('force', task_settings.env, config.env or {})
   new_task.config.cwd = vim.fs.normalize(config.cwd or vim.uv.cwd())
 

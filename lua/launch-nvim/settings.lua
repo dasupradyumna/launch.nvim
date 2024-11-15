@@ -9,17 +9,21 @@ local settings = {
   default = {
     confirm_choice = false,
     task = {
-      display = 'float',
-      env = {},
-      float = {
-        size = 'large',
-        config = {
-          title_pos = 'center',
-          footer_pos = 'right',
-          border = 'rounded',
-          zindex = 49, -- one unit lesser than neovim default
+      ui = {
+        display = 'float',
+        float = {
+          size = 'large',
+          config = {
+            title_pos = 'center',
+            footer_pos = 'right',
+            border = 'rounded',
+            zindex = 49, -- one unit lesser than neovim default
+          },
         },
+        hsplit_height = 30,
+        vsplit_width = 50,
       },
+      env = {},
       insert_mode_on_launch = false,
     },
     debug = {},
@@ -36,8 +40,14 @@ function settings:apply(user_settings)
   local ok = utils.validate.argument(user_settings, {
     { '[[user_settings]]', true, 'record', { 'confirm_choice', 'task', 'debug' } },
     { 'confirm_choice', true, 'boolean' },
-    { 'task', true, 'record', { 'display', 'env', 'insert_mode_on_launch' } },
-    { 'task.display', true, 'enum', { 'float', 'vsplit', 'hsplit' } },
+    { 'task', true, 'record', { 'ui', 'env', 'insert_mode_on_launch' } },
+    { 'task.ui', true, 'record', { 'display', 'float', 'hsplit_height', 'vsplit_width' } },
+    { 'task.ui.display', true, 'enum', { 'float', 'vsplit', 'hsplit' } },
+    { 'task.ui.float', true, 'record', { 'size', 'config' } },
+    { 'task.ui.float.size', true, 'enum', { 'small', 'medium', 'large' } },
+    { 'task.ui.float.config', true, 'record', { 'title_pos', 'footer_pos', 'border', 'zindex' } },
+    { 'task.ui.hsplit_height', true, 'number' },
+    { 'task.ui.vsplit_width', true, 'number' },
     { 'task.env', true, 'dict', { 'string', 'number' } },
     { 'task.insert_mode_on_launch', true, 'boolean' },
   }, 'Plugin setup failed! User settings could not be applied.')

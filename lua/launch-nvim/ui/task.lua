@@ -12,12 +12,12 @@ local float_size_to_ratio = { small = 0.45, medium = 0.65, large = 0.85 }
 ---get the floating window UI position-size specifications
 ---@param size LaunchNvimSettingsTaskFloatSize
 local function get_float_specs(size)
-  local W, H = vim.go.columns, vim.go.lines
+  local screen_w, screen_h = vim.o.columns, vim.o.lines
   local ratio = float_size_to_ratio[size]
-  local w, h = ratio * W, ratio * H
-  local c = (W - w) / 2 - 2
-  local r = (H - h) / 2 - 2
-  return math.floor(r), math.floor(c), math.ceil(w), math.ceil(h)
+  local win_w, win_h = ratio * screen_w, ratio * screen_h
+  local win_c = (screen_w - win_w) / 2 - 2
+  local win_r = (screen_h - win_h) / 2 - 2
+  return math.floor(win_r), math.floor(win_c), math.ceil(win_w), math.ceil(win_h)
 end
 
 ---table of renderer methods per display type
@@ -29,7 +29,7 @@ local renderer = {}
 ---@return integer # current window ID
 ---@nodiscard
 function renderer.float(buffer, title)
-  local float_settings = settings.active.task.float
+  local float_settings = settings.active.task.ui.float
 
   -- construct floating window config
   local row, col, width, height = get_float_specs(float_settings.size)
@@ -45,8 +45,8 @@ function renderer.float(buffer, title)
   })
 
   local win = vim.api.nvim_open_win(buffer, true, float_config)
-  vim.api.nvim_set_option_value('signcolumn', 'yes:1', { scope = 'local' })
-  vim.api.nvim_set_option_value('winbar', '', { scope = 'local' })
+  vim.wo.signcolumn = 'yes:1'
+  vim.wo.winbar = ''
 
   -- auto-close when focus is lost
   vim.api.nvim_create_autocmd('WinLeave', {
@@ -64,19 +64,23 @@ end
 ---open the task in a vertically split window
 ---@return integer # current window ID
 ---@nodiscard
-function renderer.vsplit()
-  vim.api.nvim_command 'vsplit'
-  vim.api.nvim_set_option_value('signcolumn', 'yes:1', { scope = 'local' })
-  return vim.api.nvim_get_current_win()
+function renderer.vsplit(buffer)
+  local width = math.floor(vim.o.columns * settings.active.task.ui.vsplit_width * 0.01)
+  local win = vim.api.nvim_open_win(buffer, true, { split = 'right', width = width })
+  vim.wo.signcolumn = 'yes:1'
+
+  return win
 end
 
 ---open the task in a horizontally split window
 ---@return integer # current window ID
 ---@nodiscard
-function renderer.hsplit()
-  vim.api.nvim_command 'split'
-  vim.api.nvim_set_option_value('signcolumn', 'yes:1', { scope = 'local' })
-  return vim.api.nvim_get_current_win()
+function renderer.hsplit(buffer)
+  local height = math.floor(vim.o.lines * settings.active.task.ui.hsplit_height * 0.01)
+  local win = vim.api.nvim_open_win(buffer, true, { split = 'below', height = height })
+  vim.wo.signcolumn = 'yes:1'
+
+  return win
 end
 
 ---open the task in UI mode specified by its config
@@ -87,9 +91,9 @@ function task_ui:open(active_task)
   self.win_id[display] = win
 
   vim.api.nvim_set_current_win(win)
-  vim.api.nvim_set_option_value('winfixbuf', false, { scope = 'local' })
+  vim.wo.winfixbuf = false
   vim.api.nvim_set_current_buf(active_task.buffer)
-  vim.api.nvim_set_option_value('winfixbuf', true, { scope = 'local' })
+  vim.wo.winfixbuf = true
 end
 
 return task_ui

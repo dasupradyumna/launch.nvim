@@ -21,14 +21,19 @@
 ---@field debug LaunchNvimSettingsDebug debug section of settings
 
 ---@class LaunchNvimSettingsTask
----@field display LaunchNvimTaskDisplayType default task rendering type, overridable
+---@field ui LaunchNvimSettingsTaskUI task UI rendering settings
 ---@field env table<string, string|number> default environment variables dictionary. overridable
----@field float LaunchNvimSettingsTaskFloat settings for task UI in float mode
 ---@field insert_mode_on_launch boolean whether to enter insert mode after launching task
 
----@alias LaunchNvimTaskDisplayType 'float' | 'vsplit' | 'hsplit'
+---@class LaunchNvimSettingsTaskUI
+---@field display LaunchNvimTaskDisplayType default task rendering type, overridable
+---@field float LaunchNvimSettingsTaskUIFloat settings for task UI in float mode
+---@field hsplit_height integer percentage of screen height for horizontal split (if possible)
+---@field vsplit_width integer percentage of screen width for vertical split (if possible)
 
----@class LaunchNvimSettingsTaskFloat
+---@alias LaunchNvimTaskDisplayType 'float' | 'hsplit' | 'vsplit'
+
+---@class LaunchNvimSettingsTaskUIFloat
 ---@field size LaunchNvimSettingsTaskFloatSize size of the task UI float
 ---@field config vim.api.keyset.win_config neovim floating window configuration
 
