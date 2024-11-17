@@ -43,6 +43,10 @@
 
 ---------------------------- RUNTIME CONFIGURATIONS ----------------------------
 
+---@class LaunchNvimDebugConfig: Configuration
+
+-------------------- TASK CONFIGURATIONS -------------------
+
 ---@class LaunchNvimTaskConfig
 ---@field name string task name
 ---@field command string executable or program to be launched by this task
@@ -63,4 +67,15 @@
 ---@field spawn_time integer task spawn UNIX timestamp (in ms)
 ---@field exit_time integer task exit UNIX timestamp (in ms)
 
----@class LaunchNvimDebugConfig: Configuration
+------------------ VARIABLE CONFIGURATIONS -----------------
+
+---@class LaunchNvimVariableConfig
+---@field name string variable name
+---@field type 'text' | 'list' user input mode for variable
+---@field description string? brief description for context during user input
+
+---@class LaunchNvimVariableConfigText : LaunchNvimVariableConfig
+---@field default_text string? default value for the user prompt
+
+---@class LaunchNvimVariableConfigList : LaunchNvimVariableConfig
+---@field choice_list string[] list of choices for user to select

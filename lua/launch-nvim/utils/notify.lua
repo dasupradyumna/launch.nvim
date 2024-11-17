@@ -46,4 +46,14 @@ function notify:warn(...) self:send('W', ...) end
 ---@overload fun(self, msg_list: string[])
 function notify:error(...) self:send('E', ...) end
 
+---display an error message and raise an error that propagates up the call stack
+---
+---> the message can either be a string or a list of strings which will be joined by newline
+---@overload fun(self, msg: string)
+---@overload fun(self, msg_list: string[])
+function notify:throw(...)
+  self:error(...)
+  error(nil, 2)
+end
+
 return notify

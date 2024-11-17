@@ -24,13 +24,19 @@ function launch.task()
   local test_config = {
     name = 'Launch Test',
     command = 'echo',
-    args = { 'hello', '$USERNAME', 'from', '"$PWD"!' },
+    args = { '{@greeting}', '$USERNAME', 'from {@country}', 'at', '"$PWD"!' },
     cwd = vim.fs.dirname(vim.uv.cwd()),
     display = 'float',
     -- env = { USERNAME = 'Pradyumna' },
   }
 
-  core:run('TASK', test_config)
+  coroutine.wrap(function()
+    local variable = require 'launch-nvim.core.variable'
+    local ok = variable:substitute_config(test_config)
+    if not ok then error 'variable substitution failed' end
+
+    core:run('TASK', test_config)
+  end)()
 end
 
 function launch.debugger()

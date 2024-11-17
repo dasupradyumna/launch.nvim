@@ -12,4 +12,9 @@ function utils.curr_time_ms()
   return ts.sec * 10 ^ 3 + math.floor(ts.nsec / 10 ^ 6)
 end
 
+---enters insert mode immediately when called
+---
+---> this funciton is needed because 'startinsert' does not work well with scripts
+function utils.start_insert_mode() vim.api.nvim_feedkeys('i', 'n', false) end
+
 return utils

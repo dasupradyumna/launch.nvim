@@ -80,7 +80,7 @@ function task:run(config)
   pcall(vim.api.nvim_buf_delete, vim.fn.bufnr '#', { force = true })
 
   -- start insert mode if user enabled that option
-  if task_settings.insert_mode_on_launch then vim.api.nvim_command 'startinsert' end
+  if task_settings.insert_mode_on_launch then utils.start_insert_mode() end
 end
 
 return task
