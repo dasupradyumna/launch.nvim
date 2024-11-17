@@ -32,10 +32,11 @@ function launch.task()
 
   coroutine.wrap(function()
     local variable = require 'launch-nvim.core.variable'
-    local ok = variable:substitute_config(test_config)
-    if not ok then error 'variable substitution failed' end
+    local test_config_ = vim.deepcopy(test_config)
+    local ok = pcall(function() variable:substitute_config(test_config_) end)
+    if not ok then return end
 
-    core:run('TASK', test_config)
+    core:run('TASK', test_config_)
   end)()
 end
 

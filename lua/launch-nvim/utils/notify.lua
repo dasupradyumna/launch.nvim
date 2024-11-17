@@ -53,7 +53,7 @@ function notify:error(...) self:send('E', ...) end
 ---@overload fun(self, msg_list: string[])
 function notify:throw(...)
   self:error(...)
-  error(nil, 2)
+  error()
 end
 
 return notify

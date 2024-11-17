@@ -16,12 +16,20 @@ local variable = {}
 function variable:substitute_variable(target)
   local var_config = configs.list.variable[target]
   if not var_config then
-    utils.notify:throw(('Variable "%s" definition not found.'):format(target))
+    utils.notify:throw {
+      'Task runner launch cancelled!',
+      ('  Defintion of variable "%s" not found.'):format(target),
+    }
   end
 
   -- get user input for current variable
   local user_input = var_ui:open(var_config)
-  if not user_input then utils.notify:throw 'Task runner launch cancelled' end
+  if not user_input then
+    utils.notify:throw {
+      'Task runner launch cancelled!',
+      ('  Substitution of variable "%s" failed ; did not receive user input.'):format(target),
+    }
+  end
 
   return user_input
 end
@@ -56,27 +64,21 @@ function variable:substitute_string(target)
 end
 
 ---perform variable substitution on all string fields in the argument config (will be mutated)
+---
+---! **THROWS ERROR**
 ---@param target table<string, any> config for in-place substitution
----@return boolean # whether variable substitution was successful
----@nodiscard
 function variable:substitute_config(target)
-  local ok = true
-
   -- iterate and perform substitution over all string and table fields
   for key, value in pairs(target) do
     if type(value) == 'string' then
       -- NOTE: custom function was required since string.gsub did not work with Lua coroutines
-      ok, value = pcall(function() return self:substitute_string(value) end)
+      value = self:substitute_string(value)
     elseif type(value) == 'table' then
-      ok = self:substitute_config(value)
+      self:substitute_config(value)
     end
 
-    -- abort if any substitution fails
-    if not ok then break end
     target[key] = value
   end
-
-  return ok
 end
 
 return variable

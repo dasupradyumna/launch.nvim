@@ -12,10 +12,19 @@ local renderer = {}
 ---@nodiscard
 function renderer.text(config)
   local buf = vim.api.nvim_create_buf(false, true)
-  -- vim.bo[buf].filetype = 'launch_nvim_var_ui_' .. type
   vim.api.nvim_buf_set_lines(buf, -1, -1, true, { config.description })
-  vim.bo[buf].buftype = 'prompt'
-  vim.fn.prompt_setprompt(buf, ' > ')
+
+  local parent_co = coroutine.running()
+  vim.b[buf].on_user_action = function(text)
+    vim.api.nvim_win_close(0, true)
+    vim.api.nvim_buf_delete(buf, { force = true })
+
+    -- empty string is an invalid input
+    -- CHECK: this branch produces an extra "Press ENTER or type command to continue" message
+    if text == '' then text = nil end
+    coroutine.resume(parent_co, text)
+  end
+  vim.bo[buf].filetype = 'launch_nvim_var_ui_' .. config.type
 
   local win = vim.api.nvim_open_win(buf, true, {
     relative = 'editor',
@@ -25,21 +34,17 @@ function renderer.text(config)
     footer = ' launch.nvim ',
     footer_pos = 'right',
     style = 'minimal',
-    width = 80,
-    height = 10,
-    col = 80,
-    row = 25,
+    width = 30,
+    height = 4,
+    col = 105,
+    row = 30,
   })
   vim.wo[win].wrap = true
   vim.wo[win].signcolumn = 'yes:1'
 
-  local parent_co = coroutine.running()
-  vim.fn.prompt_setcallback(buf, function(text)
-    vim.api.nvim_win_close(win, true)
-    vim.api.nvim_buf_delete(buf, { force = true })
-    coroutine.resume(parent_co, text)
-  end)
+  -- enter insert mode, and (optionally) insert default text
   utils.start_insert_mode()
+  vim.api.nvim_feedkeys(config.default_text, 't', false)
 
   return coroutine.yield()
 end

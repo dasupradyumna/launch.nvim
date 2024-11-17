@@ -1,7 +1,7 @@
 ----------------------------------------- TASK RUNNER LOGIC ----------------------------------------
 
 local settings = require 'launch-nvim.settings'
-local ui = require 'launch-nvim.ui.task'
+local task_ui = require 'launch-nvim.ui.task'
 local utils = require 'launch-nvim.utils'
 
 local task = {}
@@ -36,8 +36,7 @@ function task:run(config)
   ---@type LaunchNvimActiveTask active task instance for the task to be launched
   ---@diagnostic disable-next-line:missing-fields
   local new_task = {
-    -- TODO: deepcopy needs to be done before variable substitution
-    config = vim.deepcopy(config), ---@diagnostic disable-line:assign-type-mismatch
+    config = config, ---@diagnostic disable-line:assign-type-mismatch
     title = ('TASK: %s'):format(config.name),
   }
 
@@ -59,7 +58,7 @@ function task:run(config)
 
   -- setup buffer and UI for the new task
   self:setup_buffer(new_task)
-  ui:open(new_task)
+  task_ui:open(new_task)
 
   -- launch the task in the terminal buffer
   new_task.spawn_time = utils.curr_time_ms()
