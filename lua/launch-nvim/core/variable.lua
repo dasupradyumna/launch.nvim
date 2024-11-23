@@ -4,7 +4,7 @@ local configs = require 'launch-nvim.configs'
 local utils = require 'launch-nvim.utils'
 local var_ui = require 'launch-nvim.ui.variable'
 
-local variable = {}
+local M = {}
 
 ---perform variable substitution for the argument variable
 ---
@@ -13,7 +13,7 @@ local variable = {}
 ---@return string? # substitution string
 ---@nodiscard
 ---@private
-function variable:substitute_variable(target)
+function M:substitute_variable(target)
   local var_config = configs.list.variable[target]
   if not var_config then
     utils.notify:throw {
@@ -41,7 +41,7 @@ end
 ---@return string # argument string with variables substituted (if any)
 ---@nodiscard
 ---@private
-function variable:substitute_string(target)
+function M:substitute_string(target)
   local iter = 1
   local start_idx, end_idx, var_name
   local output = {}
@@ -67,7 +67,7 @@ end
 ---
 ---! **THROWS ERROR**
 ---@param target table<string, any> config for in-place substitution
-function variable:substitute_config(target)
+function M:substitute_config(target)
   -- iterate and perform substitution over all string and table fields
   for key, value in pairs(target) do
     if type(value) == 'string' then
@@ -81,4 +81,4 @@ function variable:substitute_config(target)
   end
 end
 
-return variable
+return M

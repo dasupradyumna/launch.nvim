@@ -6,13 +6,13 @@ local utils = require 'launch-nvim.utils'
 ---@field data_dir string launch.nvim data directory where all runtime configs are saved
 ---@field private runtime_file_path string runtime configs file path for CWD
 ---@field list table runtime configs table
-local configs = {
+local M = {
   ---@diagnostic disable-next-line:param-type-mismatch
   data_dir = vim.fs.joinpath(vim.fn.stdpath 'data', 'launch_nvim'),
 }
 
 ---loads runtime configs for CWD from JSON file
-function configs:load()
+function M:load()
   self.runtime_file_path = ('%s/%s.json'):format(
     self.data_dir,
     vim.uv.cwd():gsub('@', '@@'):gsub('[\\/:]', '@')
@@ -32,7 +32,7 @@ function configs:load()
 end
 
 ---saves runtime configs for CWD to JSON file
-function configs:save()
+function M:save()
   local runtime_file, error = io.open(self.runtime_file_path, 'w+')
   if not runtime_file then
     utils.notify:error { 'Could not save configs to runtime file.', ('\tERROR: %s'):format(error) }
@@ -44,4 +44,4 @@ function configs:save()
   runtime_file:close()
 end
 
-return configs
+return M

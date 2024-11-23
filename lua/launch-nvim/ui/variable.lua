@@ -2,7 +2,7 @@
 
 local utils = require 'launch-nvim.utils'
 
-local var_ui = {}
+local M = {}
 
 local renderer = {}
 
@@ -53,12 +53,14 @@ end
 ---@param config LaunchNvimVariableConfigList variable config
 ---@return string? # user list choice
 ---@nodiscard
-function renderer.list(config) end
+function renderer.list(config)
+  -- XXX: implement this
+end
 
 ---open a UI for the user to provide for variable substitution
 ---@param config LaunchNvimVariableConfig variable config
 ---@return string? # substitution string
 ---@nodiscard
-function var_ui:open(config) return renderer[config.type](config) end
+function M:open(config) return renderer[config.type](config) end
 
-return var_ui
+return M

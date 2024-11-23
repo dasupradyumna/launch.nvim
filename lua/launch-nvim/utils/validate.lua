@@ -4,13 +4,15 @@ local notify = require 'launch-nvim.utils.notify'
 
 ---table of validator methods per valid type
 local validator = setmetatable({}, {
-  __index = function(_, valid_type)
+  __index = function(self, valid_type)
     -- fall back to builtin type checker
-    return function(target)
+    self[valid_type] = function(target)
       if type(target) ~= valid_type then
         return ('option has value of type "%s".'):format(type(target))
       end
     end
+
+    return self[valid_type]
   end,
 })
 
@@ -86,14 +88,14 @@ function validator.record(target, fields)
 end
 
 ---@class LaunchNvimValidationModule
-local validate = {}
+local M = {}
 
 ---perform argument validation according to specifications
 ---@param value any argument under validation
 ---@param spec_list LaunchNvimValidationSpec[] list of validation specifications
 ---@param failure_msg string header message in case of failure
 ---@return boolean # whether validation was successful or not
-function validate.argument(value, spec_list, failure_msg)
+function M.argument(value, spec_list, failure_msg)
   ---@type string[] list of error strings from checking every specification
   local error_list = { failure_msg, '' }
   for _, spec in ipairs(spec_list) do
@@ -143,4 +145,4 @@ function validate.argument(value, spec_list, failure_msg)
   return true
 end
 
-return validate
+return M

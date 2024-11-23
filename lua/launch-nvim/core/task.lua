@@ -4,15 +4,15 @@ local settings = require 'launch-nvim.settings'
 local task_ui = require 'launch-nvim.ui.task'
 local utils = require 'launch-nvim.utils'
 
-local task = {}
+local M = {}
 
 ---@type LaunchNvimActiveTask[] list of currently active tasks
-task.active = {}
+M.active = {}
 
 ---sets up buffer-local keymaps and autocommands for the new task
 ---@param new_task LaunchNvimActiveTask new task config
 ---@private
-function task:setup_buffer(new_task)
+function M:setup_buffer(new_task)
   -- create a buffer for the task
   new_task.buffer = vim.api.nvim_create_buf(false, true)
   vim.bo[new_task.buffer].filetype = 'launch_nvim_task'
@@ -30,7 +30,7 @@ end
 
 ---run the task specified by the argument config
 ---@param config LaunchNvimTaskConfig target task config
-function task:run(config)
+function M:run(config)
   local task_settings = settings.active.task
 
   ---@type LaunchNvimActiveTask active task instance for the task to be launched
@@ -82,4 +82,4 @@ function task:run(config)
   if task_settings.insert_mode_on_launch then utils.start_insert_mode() end
 end
 
-return task
+return M

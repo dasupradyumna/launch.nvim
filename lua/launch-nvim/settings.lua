@@ -5,7 +5,7 @@ local utils = require 'launch-nvim.utils'
 ---@class LaunchNvimSettingsModule
 ---@field private default LaunchNvimSettings default plugin settings
 ---@field active LaunchNvimSettings active plugin settings
-local settings = {
+local M = {
   default = {
     confirm_choice = false,
     task = {
@@ -35,7 +35,7 @@ local settings = {
 
 ---apply the user specified settings to internal active settings table
 ---@param user_settings? LaunchNvimSettings
-function settings:apply(user_settings)
+function M:apply(user_settings)
   -- validate the settings table provided by the user
   local ok = utils.validate.argument(user_settings, {
     { '[[user_settings]]', true, 'record', { 'confirm_choice', 'task', 'debug' } },
@@ -58,7 +58,7 @@ end
 
 ---indicates whether user settings have been applied and ready to use
 ---@nodiscard
-function settings:ready()
+function M:ready()
   local failed = vim.tbl_isempty(self.active)
 
   -- send error notification if settings have not been applied
@@ -72,4 +72,4 @@ function settings:ready()
   return not failed
 end
 
-return settings
+return M

@@ -2,15 +2,15 @@
 
 local task = require 'launch-nvim.core.task'
 
-local core = {}
+local M = {}
 
 ---@type LaunchNvimActiveTask[] reference to original list of active tasks
-core.active_tasks = task.active
+M.active_tasks = task.active
 
 ---run the logic required to launch the specified config type
 ---@param config_type LaunchNvimConfigType config type
 ---@param config LaunchNvimTaskConfig | LaunchNvimDebugConfig selected config to launch
-function core:run(config_type, config)
+function M:run(config_type, config)
   if config_type == 'TASK' then
     task:run(config --[[@as LaunchNvimTaskConfig]])
   elseif config_type == 'DEBUG' then
@@ -18,4 +18,4 @@ function core:run(config_type, config)
   end
 end
 
-return core
+return M

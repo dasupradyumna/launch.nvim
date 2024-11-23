@@ -4,11 +4,11 @@ local configs = require 'launch-nvim.configs'
 local core = require 'launch-nvim.core'
 local settings = require 'launch-nvim.settings'
 
-local launch = {}
+local M = {}
 
 ---plugin setup function
 ---@param user_settings? LaunchNvimSettings
-function launch.setup(user_settings)
+function M.setup(user_settings)
   settings:apply(user_settings)
 
   -- ensure plugin data directory exists and load configs for CWD
@@ -16,7 +16,7 @@ function launch.setup(user_settings)
   configs:load()
 end
 
-function launch.task()
+function M.task()
   if not settings:ready() then return end
 
   -- REMOVE:
@@ -40,7 +40,7 @@ function launch.task()
   end)()
 end
 
-function launch.debugger()
+function M.debugger()
   if not settings:ready() then return end
 
   vim.notify 'Debugger launched'
@@ -48,4 +48,4 @@ function launch.debugger()
   core:run 'DEBUG'
 end
 
-return launch
+return M

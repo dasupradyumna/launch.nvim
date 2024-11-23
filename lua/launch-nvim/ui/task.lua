@@ -2,9 +2,10 @@
 
 local settings = require 'launch-nvim.settings'
 
----@class LaunchNvimTaskUIModule
----@field private win_id table<LaunchNvimTaskDisplayType, integer> window ID per display type
-local task_ui = { win_id = vim.empty_dict() }
+local M = {}
+
+---@type table<LaunchNvimTaskDisplayType, integer> window ID per display type
+M.win_id = vim.empty_dict()
 
 ---mapping from size names to fraction of screen dimensions
 local float_size_to_ratio = { small = 0.45, medium = 0.65, large = 0.85 }
@@ -85,7 +86,7 @@ end
 
 ---open the task in UI mode specified by its config
 ---@param active_task LaunchNvimActiveTask runtime data of current task
-function task_ui:open(active_task)
+function M:open(active_task)
   local display = active_task.config.display
   local win = self.win_id[display] or renderer[display](active_task.buffer, active_task.title)
   self.win_id[display] = win
@@ -96,4 +97,4 @@ function task_ui:open(active_task)
   vim.wo.winfixbuf = true
 end
 
-return task_ui
+return M

@@ -10,6 +10,7 @@
 ---@field [2] boolean indicates whether this argument is optional, i.e. can be nil
 ---@field [3] LaunchNvimValidatorType data type that maps to the respective validator
 ---@field [4] string[]? list of strings; extra rules to the validator method
+-- REMOVE: 'optional' boolean argument; redundant (remove if not necessary anywhere else)
 
 ---@alias LaunchNvimValidatorType 'dict' | 'enum' | 'list' | 'record' | type
 
@@ -19,6 +20,8 @@
 ---@field confirm_choice boolean whether to confirm user choice before launch
 ---@field task LaunchNvimSettingsTask task section of settings
 ---@field debug LaunchNvimSettingsDebug debug section of settings
+
+----------------------- TASK SETTINGS ----------------------
 
 ---@class LaunchNvimSettingsTask
 ---@field ui LaunchNvimSettingsTaskUI task UI rendering settings
@@ -38,6 +41,8 @@
 ---@field config vim.api.keyset.win_config neovim floating window configuration
 
 ---@alias LaunchNvimSettingsTaskFloatSize 'small' | 'medium' | 'large'
+
+---------------------- DEBUG SETTINGS ----------------------
 
 ---@class LaunchNvimSettingsDebug
 

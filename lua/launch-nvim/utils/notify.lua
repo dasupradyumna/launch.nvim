@@ -2,10 +2,10 @@
 
 ---@class LaunchNvimNotifyModule
 ---@field private level table<LaunchNvimNotifyLevel, integer> enum mapping to neovim log levels
-local notify = {}
+local M = {}
 
 ---@enum (key) LaunchNvimNotifyLevel
-notify.level = {
+M.level = {
   I = vim.log.levels.INFO,
   W = vim.log.levels.WARN,
   E = vim.log.levels.ERROR,
@@ -17,7 +17,7 @@ notify.level = {
 ---@param level LaunchNvimNotifyLevel notification level
 ---@param message string|string[] notification message(s)
 ---@private
-function notify:send(level, message)
+function M:send(level, message)
   if type(message) == 'string' then message = { message } end
   local msg = table.concat(message, '\n')
 
@@ -30,30 +30,30 @@ end
 ---> the message can either be a string or a list of strings which will be joined by newline
 ---@overload fun(self, msg: string)
 ---@overload fun(self, msg_list: string[])
-function notify:info(...) self:send('I', ...) end
+function M:info(...) self:send('I', ...) end
 
 ---display a warning message
 ---
 ---> the message can either be a string or a list of strings which will be joined by newline
 ---@overload fun(self, msg: string)
 ---@overload fun(self, msg_list: string[])
-function notify:warn(...) self:send('W', ...) end
+function M:warn(...) self:send('W', ...) end
 
 ---display an error message
 ---
 ---> the message can either be a string or a list of strings which will be joined by newline
 ---@overload fun(self, msg: string)
 ---@overload fun(self, msg_list: string[])
-function notify:error(...) self:send('E', ...) end
+function M:error(...) self:send('E', ...) end
 
 ---display an error message and raise an error that propagates up the call stack
 ---
 ---> the message can either be a string or a list of strings which will be joined by newline
 ---@overload fun(self, msg: string)
 ---@overload fun(self, msg_list: string[])
-function notify:throw(...)
+function M:throw(...)
   self:error(...)
   error()
 end
 
-return notify
+return M
