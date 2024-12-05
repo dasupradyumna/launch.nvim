@@ -1,0 +1,12 @@
+[package]
+name = "launch-nvim"
+version = "0.1.0"
+edition = "2021"
+authors = ["Dasu Pradyumna"]
+
+[lib]
+name = "launch"
+crate-type = ["cdylib"]
+
+[dependencies]
+nvim-oxi = { version = "0.5", features = ["neovim-0-10"] }
