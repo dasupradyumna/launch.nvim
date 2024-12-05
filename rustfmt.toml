@@ -1,0 +1,16 @@
+#----------------------------------------- RUSTFMT CONFIG -----------------------------------------#
+### Config for "rustfmt" formatter (current: v1.7.1)
+### Options info: "https://rust-lang.github.io/rustfmt/?version=v1.7.1&search="
+
+attr_fn_like_width = 60
+chain_width = 70
+edition = "2021"
+match_block_trailing_comma = true
+short_array_element_width_threshold = 20
+single_line_if_else_max_width = 70
+single_line_let_else_max_width = 0
+struct_lit_width = 30
+struct_variant_width = 40
+use_field_init_shorthand = true
+use_small_heuristics = 'Off'
+use_try_shorthand = true
