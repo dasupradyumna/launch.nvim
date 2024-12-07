@@ -1,9 +1,27 @@
 /*------------------------------------------ LAUNCH-NVIM -----------------------------------------*/
 
-use nvim_oxi::lua::print;
-use nvim_oxi::{Dictionary, Function};
-
 mod settings;
+
+use std::cell::{LazyCell, RefCell};
+
+use ::nvim_oxi::lua::print;
+use ::nvim_oxi::{Dictionary, Function};
+
+use crate::settings::Settings;
+
+#[derive(Debug)]
+struct PluginState {
+    settings: Settings,
+}
+
+impl PluginState {
+    fn new() -> PluginState {
+        PluginState { settings: Settings::new() }
+    }
+}
+
+static mut STATE: LazyCell<RefCell<PluginState>> =
+    LazyCell::new(|| RefCell::new(PluginState::new()));
 
 #[nvim_oxi::plugin]
 fn launch() -> Dictionary {
@@ -20,10 +38,7 @@ fn setup(user_settings: Dictionary) {
     settings::apply(&user_settings);
 
     unsafe {
-        let Some(ref active) = settings::ACTIVE_SETTINGS else {
-            panic!("")
-        };
-        print!("Active settings: {:?}", active);
+        print!("State settings: {:?}", STATE.borrow().settings);
     }
 }
 

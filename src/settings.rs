@@ -2,7 +2,39 @@
 
 use nvim_oxi::Dictionary;
 
-pub(crate) static mut ACTIVE_SETTINGS: Option<Dictionary> = None;
+#[derive(Debug)]
+struct SettingsTask {
+    insert_mode_on_launch: bool,
+}
+
+#[derive(Debug)]
+pub(crate) struct Settings {
+    confirm_choice: bool,
+    task: SettingsTask,
+}
+
+impl Settings {
+    pub fn new() -> Settings {
+        Settings {
+            confirm_choice: false,
+            task: SettingsTask { insert_mode_on_launch: false },
+        }
+    }
+
+    fn apply(&mut self, dict: Dictionary) {
+        unsafe {
+            self.confirm_choice = dict.get("confirm_choice").unwrap().as_boolean_unchecked();
+            self.task.insert_mode_on_launch = dict
+                .get("task")
+                .cloned()
+                .unwrap()
+                .into_dict_unchecked()
+                .get("insert_mode_on_launch")
+                .unwrap()
+                .as_boolean_unchecked();
+        }
+    }
+}
 
 fn default_settings() -> Dictionary {
     let mut default = Dictionary::new();
@@ -21,6 +53,9 @@ pub(crate) fn apply(user_settings: &Dictionary) {
         .map(|(k, default_v)| (k.clone(), user_settings.get(&k).cloned().unwrap_or(default_v)));
 
     unsafe {
-        ACTIVE_SETTINGS = Some(Dictionary::from_iter(active_settings));
+        crate::STATE
+            .borrow_mut()
+            .settings
+            .apply(Dictionary::from_iter(active_settings));
     }
 }
