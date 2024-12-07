@@ -2,50 +2,59 @@
 
 mod settings;
 
-use std::cell::{LazyCell, RefCell};
-
-use ::nvim_oxi::lua::print;
-use ::nvim_oxi::{Dictionary, Function};
-
+use crate::plugin::Plugin;
 use crate::settings::Settings;
+use ::nvim_oxi::{Dictionary, Function};
+use std::sync::{LazyLock, Mutex};
 
-#[derive(Debug)]
-struct PluginState {
-    settings: Settings,
+static PLUGIN: LazyLock<Mutex<Plugin>> = plugin::new();
+macro_rules! plugin {
+    () => {
+        PLUGIN.lock().unwrap()
+    };
 }
-
-impl PluginState {
-    fn new() -> PluginState {
-        PluginState { settings: Settings::new() }
-    }
-}
-
-static mut STATE: LazyCell<RefCell<PluginState>> =
-    LazyCell::new(|| RefCell::new(PluginState::new()));
 
 #[nvim_oxi::plugin]
 fn launch() -> Dictionary {
     let mut api = Dictionary::new();
 
-    api.insert("setup", Function::from_fn(setup));
-    api.insert("task", Function::from_fn(|()| task()));
-    api.insert("debugger", Function::from_fn(|()| debugger()));
+    api.insert("setup", Function::from_fn(|settings| plugin!().setup(settings)));
+    api.insert("task", Function::from_fn(|()| plugin!().task()));
+    api.insert("debugger", Function::from_fn(|()| plugin!().debugger()));
 
     api
 }
 
-fn setup(user_settings: Dictionary) {
-    settings::apply(&user_settings);
+mod plugin {
 
-    unsafe {
-        print!("State settings: {:?}", STATE.borrow().settings);
+    use super::*;
+    use ::nvim_oxi::lua::print;
+
+    pub(super) struct Plugin {
+        settings: Settings,
     }
-}
 
-fn task() {
-    print!("Task launched!");
-}
+    pub(super) const fn new() -> LazyLock<Mutex<Plugin>> {
+        LazyLock::new(|| Mutex::new(Plugin::new()))
+    }
 
-fn debugger() {
-    print!("Debugger launched!");
+    impl Plugin {
+        const fn new() -> Self {
+            Self { settings: Settings::new() }
+        }
+
+        pub(super) fn setup(&mut self, user_settings: Dictionary) {
+            self.settings.apply(&user_settings);
+
+            print!("{:?}", self.settings);
+        }
+
+        pub(super) fn task(&self) {
+            print!("Task launched!");
+        }
+
+        pub(super) fn debugger(&self) {
+            print!("Debugger launched!");
+        }
+    }
 }
