@@ -4,7 +4,7 @@ mod settings;
 
 use crate::plugin::Plugin;
 use crate::settings::Settings;
-use ::nvim_oxi::{Dictionary, Function};
+use ::nvim_oxi::{Dictionary, Function, Object};
 use std::sync::{LazyLock, Mutex};
 
 static PLUGIN: LazyLock<Mutex<Plugin>> = plugin::new();
@@ -43,8 +43,8 @@ mod plugin {
             Self { settings: Settings::new() }
         }
 
-        pub(super) fn setup(&mut self, user_settings: Dictionary) {
-            self.settings.apply(&user_settings);
+        pub(super) fn setup(&mut self, user_settings: Object) {
+            self.settings.apply(user_settings);
 
             print!("{:?}", self.settings);
         }
