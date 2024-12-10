@@ -1,6 +1,7 @@
 /*------------------------------------------ LAUNCH-NVIM -----------------------------------------*/
 
 mod settings;
+mod utils;
 
 use crate::plugin::Plugin;
 use crate::settings::Settings;
