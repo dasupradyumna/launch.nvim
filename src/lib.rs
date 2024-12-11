@@ -4,8 +4,7 @@ mod settings;
 mod utils;
 
 use crate::plugin::Plugin;
-use crate::settings::Settings;
-use ::nvim_oxi::{Dictionary, Function, Object};
+use ::nvim_oxi::{Dictionary, Function};
 use std::sync::{LazyLock, Mutex};
 
 static PLUGIN: LazyLock<Mutex<Plugin>> = plugin::new();
@@ -29,7 +28,9 @@ fn launch() -> Dictionary {
 mod plugin {
 
     use super::*;
-    use ::nvim_oxi::lua::print;
+    use crate::settings::Settings;
+    use crate::utils::notify;
+    use ::nvim_oxi::Object;
 
     pub(super) struct Plugin {
         settings: Settings,
@@ -46,16 +47,14 @@ mod plugin {
 
         pub(super) fn setup(&mut self, user_settings: Object) {
             self.settings.apply(user_settings);
-
-            print!("{:?}", self.settings);
         }
 
         pub(super) fn task(&self) {
-            print!("Task launched!");
+            notify::send!(Info: "Task launched!");
         }
 
         pub(super) fn debugger(&self) {
-            print!("Debugger launched!");
+            notify::send!(Info: "Debugger launched!");
         }
     }
 }

@@ -1,7 +1,8 @@
 /*---------------------------------------- PLUGIN SETTINGS ---------------------------------------*/
 
+use crate::utils::notify;
 use ::nvim_oxi::serde::Deserializer as NvimOxiDeserializer;
-use ::nvim_oxi::{print as nvim_print, Object};
+use ::nvim_oxi::Object;
 use ::serde::de::{Error, MapAccess, Visitor};
 use ::serde::{Deserialize, Deserializer};
 
@@ -30,8 +31,14 @@ impl Settings {
         match Settings::deserialize(des) {
             Ok(value) => *self = value,
             Err(err) => {
-                nvim_print!("Deserialization failed! {err}");
-                nvim_print!("Refer to [{WIKI_URL}] for documentation.\nUsing default settings...");
+                notify::send!(Error: [
+                    format!("Deserialization failed! {err}"),
+                    format!("Refer to [{WIKI_URL}] for documentation."),
+                ]);
+                notify::send!(Warn: [
+                    "Using default settings...",
+                    format!("{:#?}", self).as_str(),
+                ]);
             },
         }
     }
