@@ -1,6 +1,5 @@
 /*---------------------------------------- PLUGIN SETTINGS ---------------------------------------*/
 
-use crate::utils::StructVisitor;
 use ::nvim_oxi::serde::Deserializer as NvimOxiDeserializer;
 use ::nvim_oxi::{print as nvim_print, Object};
 use ::serde::de::{Error, MapAccess, Visitor};
@@ -8,7 +7,7 @@ use ::serde::{Deserialize, Deserializer};
 
 const WIKI_URL: &str = "https://github.com/dasupradyumna/launch.nvim/wiki/Plugin-Settings";
 
-crate::setup_deserializable_structs! {
+crate::utils::serde::setup_deserializable_structs! {
     pub(crate) Settings {
         confirm_choice: bool = false;
         ---

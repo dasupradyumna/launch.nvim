@@ -1,4 +1,4 @@
-/*----------------------------------------- UTILITY ITEMS ----------------------------------------*/
+/*------------------------------------ DESERIALIZATION HELPERS -----------------------------------*/
 
 use std::marker::PhantomData;
 
@@ -10,7 +10,6 @@ impl<T> StructVisitor<T> {
     }
 }
 
-#[macro_export]
 macro_rules! setup_deserializable_structs {
     ( $(
         $pub:vis $struct_name:ident {
@@ -18,7 +17,10 @@ macro_rules! setup_deserializable_structs {
             ---
             $( $field_struct:ident: $field_struct_type:ident ;)*
         }
-    ,)* ) => { $(
+    ,)* ) => {
+    use crate::utils::serde::StructVisitor;
+
+    $(
 
         #[derive(Debug)]
         $pub struct $struct_name {
@@ -78,3 +80,5 @@ macro_rules! setup_deserializable_structs {
 
     )* };
 }
+
+pub(crate) use setup_deserializable_structs;
