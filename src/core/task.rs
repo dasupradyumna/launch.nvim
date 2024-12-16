@@ -28,7 +28,7 @@ pub(crate) fn run(config: TaskConfig) -> Result<()> {
     api::command("wincmd n")?;
 
     // launch the task in a terminal buffer
-    api::call_function("termopen", Array::from_iter([config.command()]))?;
+    api::call_function("termopen", Array::from_iter([config.command(), config.term_options()]))?;
 
     // enter insert mode after launching the task
     if api!().settings.task.insert_mode_on_launch {

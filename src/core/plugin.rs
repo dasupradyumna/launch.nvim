@@ -39,7 +39,7 @@ impl Plugin {
             &["\"Hey ${USR:-default_user}", "from India", "at '$PWD'!\""],
             TaskDisplay::Float,
             "/home/pradyumna/data/jira",
-            HashMap::new(),
+            HashMap::from_iter([("USR".to_string(), "Pradyu".to_string())]),
         );
 
         task::run(config);
