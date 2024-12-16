@@ -1,5 +1,7 @@
 /*------------------------------------ RUNTIME CONFIGURATIONS ------------------------------------*/
 
+use ::nvim_oxi::api::StringOrInt;
+use ::nvim_oxi::Object;
 use std::collections::HashMap;
 use std::path::PathBuf;
 
@@ -36,5 +38,25 @@ impl TaskConfig {
             cwd: PathBuf::from(cwd),
             env,
         }
+    }
+
+    // REMOVE: all unwrap() calls and handle them better
+
+    pub(crate) fn command(&self) -> Object {
+        let mut ret = String::new();
+        ret.push_str(&self.command);
+        ret.push(' ');
+        ret += &self
+            .args
+            .clone()
+            .iter_mut()
+            .reduce(|acc, e| {
+                acc.push(' ');
+                acc.push_str(&e);
+                acc
+            })
+            .unwrap();
+
+        StringOrInt::to_object(ret)
     }
 }

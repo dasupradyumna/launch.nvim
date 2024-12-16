@@ -1,5 +1,6 @@
 /*--------------------------------------- PLUGIN STATE-API ---------------------------------------*/
 
+use super::task;
 use crate::settings::Settings;
 use crate::utils::notify;
 use ::nvim_oxi::Object;
@@ -16,7 +17,7 @@ macro_rules! api {
 pub(crate) use api;
 
 pub(crate) struct Plugin {
-    settings: Settings,
+    pub(crate) settings: Settings,
 }
 
 impl Plugin {
@@ -29,6 +30,20 @@ impl Plugin {
     }
 
     pub(crate) fn task(&self) {
+        ///////////////// testing config ///////////////////////////
+        use crate::config::{TaskConfig, TaskDisplay};
+        use std::collections::HashMap;
+        let config = TaskConfig::new(
+            "Launch Test",
+            "echo",
+            &["\"Hey ${USR:-default_user}", "from India", "at '$PWD'!\""],
+            TaskDisplay::Float,
+            "/home/pradyumna/data/jira",
+            HashMap::new(),
+        );
+
+        task::run(config);
+
         notify::send!(Info: "Task launched!");
     }
 

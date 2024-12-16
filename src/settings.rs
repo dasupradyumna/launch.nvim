@@ -10,12 +10,12 @@ const WIKI_URL: &str = "https://github.com/dasupradyumna/launch.nvim/wiki/Plugin
 
 crate::utils::serde::setup_deserializable_structs! {
     pub(crate) Settings {
-        confirm_choice: bool = false;
+        pub(crate) confirm_choice: bool = false;
         ---
-        task: SettingsTask;
+        pub(crate) task: SettingsTask;
     },
-    SettingsTask {
-        insert_mode_on_launch: bool = false;
+    pub(crate) SettingsTask {
+        pub(crate) insert_mode_on_launch: bool = false;
         ---
     },
 }

@@ -10,12 +10,13 @@ impl<T> StructVisitor<T> {
     }
 }
 
+// CHECK: if pub0, pub1, pub2 can be removed and just hard-coded as pub(crate)
 macro_rules! setup_deserializable_structs {
     ( $(
-        $pub:vis $struct_name:ident {
-            $( $field:ident: $field_type:ty = $field_default:expr ;)*
+        $pub0:vis $struct_name:ident {
+            $( $pub1:vis $field:ident: $field_type:ty = $field_default:expr ;)*
             ---
-            $( $field_struct:ident: $field_struct_type:ident ;)*
+            $( $pub2:vis $field_struct:ident: $field_struct_type:ident ;)*
         }
     ,)* ) => {
     use crate::utils::serde::StructVisitor;
@@ -23,13 +24,13 @@ macro_rules! setup_deserializable_structs {
     $(
 
         #[derive(Debug)]
-        $pub struct $struct_name {
-            $( $field: $field_type ,)*
-            $( $field_struct: $field_struct_type ,)*
+        $pub0 struct $struct_name {
+            $( $pub1 $field: $field_type ,)*
+            $( $pub2 $field_struct: $field_struct_type ,)*
         }
 
         impl $struct_name {
-            $pub const fn new() -> Self {
+            $pub0 const fn new() -> Self {
                 Self {
                     $( $field: $field_default ,)*
                     $( $field_struct: $field_struct_type::new() ,)*
