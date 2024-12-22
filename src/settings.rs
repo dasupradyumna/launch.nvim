@@ -3,8 +3,6 @@
 use crate::utils::notify;
 use ::nvim_oxi::serde::Deserializer as NvimOxiDeserializer;
 use ::nvim_oxi::Object;
-use ::serde::de::{Error, MapAccess, Visitor};
-use ::serde::{Deserialize, Deserializer};
 
 const WIKI_URL: &str = "https://github.com/dasupradyumna/launch.nvim/wiki/Plugin-Settings";
 
@@ -40,6 +38,6 @@ impl Settings {
                     format!("{:#?}", self).as_str(),
                 ]);
             },
-        }
+        };
     }
 }

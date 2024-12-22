@@ -20,6 +20,8 @@ macro_rules! setup_deserializable_structs {
         }
     ,)* ) => {
     use crate::utils::serde::StructVisitor;
+    use ::serde::de::{Error, MapAccess, Visitor};
+    use ::serde::{Deserialize, Deserializer};
 
     $(
 

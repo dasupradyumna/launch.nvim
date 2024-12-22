@@ -1,7 +1,5 @@
 /*------------------------------------ RUNTIME CONFIGURATIONS ------------------------------------*/
 
-use ::nvim_oxi::api::StringOrInt;
-use ::nvim_oxi::conversion::ToObject;
 use ::nvim_oxi::{Dictionary, Object};
 use std::collections::HashMap;
 use std::path::PathBuf;
@@ -41,7 +39,7 @@ impl TaskConfig {
         }
     }
 
-    // REMOVE: all unwrap() calls and handle them better
+    // REMOVE: all unwrap() calls with Result<Object> as return types
 
     pub(crate) fn command(&self) -> Object {
         let mut ret = String::new();
@@ -58,17 +56,17 @@ impl TaskConfig {
             })
             .unwrap();
 
-        StringOrInt::to_object(ret)
+        Object::from(ret)
     }
 
     pub(crate) fn term_options(&self) -> Object {
         let env = Dictionary::from_iter(self.env.iter().map(|(k, v)| (k.as_str(), v.as_str())));
-        Dictionary::from_iter([
+        let ret = Dictionary::from_iter([
             ("clear_env", Object::from(false)),
             ("cwd", Object::from(self.cwd.to_str())),
-            ("env", env.to_object().unwrap()),
-        ])
-        .to_object()
-        .unwrap()
+            ("env", Object::from(env)),
+        ]);
+
+        Object::from(ret)
     }
 }

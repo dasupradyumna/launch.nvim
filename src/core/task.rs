@@ -1,14 +1,13 @@
 /*------------------------------------------ TASK RUNNER -----------------------------------------*/
 
-use super::plugin::plugin as state;
 use crate::config::{TaskConfig, TaskDisplay};
+use crate::settings::SettingsTask;
 use crate::utils::notify;
 use ::nvim_oxi::api::opts::{CreateAutocmdOpts, OptionOpts};
 use ::nvim_oxi::api::types::{Mode, SplitDirection, WindowConfig};
 use ::nvim_oxi::api::{self, Buffer, Window};
-use ::nvim_oxi::{Array, Result};
 
-fn render(buffer: &Buffer, display: &TaskDisplay) -> Result<Window> {
+fn render(buffer: &Buffer, display: &TaskDisplay) -> ::nvim_oxi::Result<Window> {
     let mut config_builder = WindowConfig::builder();
     let config = match display {
         TaskDisplay::Float => config_builder
@@ -31,7 +30,7 @@ fn render(buffer: &Buffer, display: &TaskDisplay) -> Result<Window> {
 
 // TODO: next steps
 // * save the window ID as part of the TaskDisplay variant, and save it ActiveTask list
-pub(crate) fn run(config: TaskConfig) -> Result<()> {
+pub(crate) fn run(settings: &SettingsTask, config: TaskConfig) -> ::nvim_oxi::Result<()> {
     // create a new task buffer
     let buffer = api::create_buf(false, true)?;
     let opts = OptionOpts::builder().buffer(buffer.clone()).build();
@@ -51,18 +50,16 @@ pub(crate) fn run(config: TaskConfig) -> Result<()> {
     let _window = render(&buffer, &config.display)?;
 
     // launch the task in a terminal buffer
-    // CHECK: if Array::from_iter can be removed altogether to use Into<Array> bound
     let command = config.command();
     let term_options = config.term_options();
     // ::nvim_oxi::dbg!(&command);
     // ::nvim_oxi::dbg!(&term_options);
-    api::call_function::<_, i32>("termopen", Array::from_iter([command, term_options]))?;
+    let _job: i32 = api::call_function("termopen", (command, term_options))?;
 
     // enter insert mode after launching the task
-    // FIX: state!() is hanging neovim instance
-    // if state!().settings.task.insert_mode_on_launch {
-    //     api::feedkeys("i", Mode::Normal, false);
-    // }
+    if settings.insert_mode_on_launch {
+        api::feedkeys("i", Mode::Normal, false);
+    }
 
     Ok(())
 }
