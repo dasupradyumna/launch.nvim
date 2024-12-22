@@ -9,5 +9,7 @@ name = "launch"
 crate-type = ["cdylib"]
 
 [dependencies]
-nvim-oxi = { version = "0.5", features = ["neovim-0-10"] }
+# CHECK: wait for v0.5.2, refer to "https://github.com/noib3/nvim-oxi/issues/202"
+# nvim-oxi = { version = "0.5", features = ["neovim-nightly"] }
+nvim-oxi = { path = "/home/pradyumna/foss/nvim-oxi", features = ["neovim-nightly"] }
 serde = { version = "1.0" }

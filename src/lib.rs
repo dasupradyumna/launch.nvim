@@ -5,7 +5,7 @@ mod core;
 mod settings;
 mod utils;
 
-use crate::core::plugin::api;
+use crate::core::plugin::plugin as api;
 use ::nvim_oxi::{Dictionary, Function};
 
 #[nvim_oxi::plugin]

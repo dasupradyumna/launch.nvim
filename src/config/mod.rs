@@ -16,7 +16,7 @@ pub(crate) struct TaskConfig {
     name: String,
     command: String,
     args: Vec<String>,
-    display: TaskDisplay,
+    pub(crate) display: TaskDisplay,
     cwd: PathBuf,
     env: HashMap<String, String>,
     // shell: ???
@@ -47,13 +47,13 @@ impl TaskConfig {
         let mut ret = String::new();
         ret.push_str(&self.command);
         ret.push(' ');
-        ret += &self
+        ret += self
             .args
             .clone()
             .iter_mut()
             .reduce(|acc, e| {
                 acc.push(' ');
-                acc.push_str(&e);
+                acc.push_str(e);
                 acc
             })
             .unwrap();

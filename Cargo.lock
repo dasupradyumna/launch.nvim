@@ -19,8 +19,6 @@ checksum = "09d6582e104315a817dff97f75133544b2e094ee22447d2acf4a74e189ba06fc"
 [[package]]
 name = "nvim-oxi"
 version = "0.5.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "13587f8434641462a0674bc575fb1ca88d66827118470df3c2608e769fc8e3ee"
 dependencies = [
  "nvim-oxi-api",
  "nvim-oxi-luajit",
@@ -32,8 +30,6 @@ dependencies = [
 [[package]]
 name = "nvim-oxi-api"
 version = "0.5.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0926b8fac04e376a743a7519382ef21c9d6e3ef584338d439972b911e5d85554"
 dependencies = [
  "nvim-oxi-luajit",
  "nvim-oxi-macros",
@@ -46,8 +42,6 @@ dependencies = [
 [[package]]
 name = "nvim-oxi-luajit"
 version = "0.5.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d3d83bb0ca6908c82bad8b22379f7577d0d82aa050601c0dce15d7c691c2131a"
 dependencies = [
  "thiserror",
 ]
@@ -55,8 +49,6 @@ dependencies = [
 [[package]]
 name = "nvim-oxi-macros"
 version = "0.5.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b0db91ed44967f43c9ac9f80ce629391f53787aac6212aac79966422940671f9"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -66,8 +58,6 @@ dependencies = [
 [[package]]
 name = "nvim-oxi-types"
 version = "0.5.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c2545fa96873e7bc0bd12e1e68582a89ca593fad872e996e479a8615ae986424"
 dependencies = [
  "libc",
  "nvim-oxi-luajit",
@@ -137,18 +127,18 @@ dependencies = [
 
 [[package]]
 name = "thiserror"
-version = "1.0.69"
+version = "2.0.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b6aaf5339b578ea85b50e080feb250a3e8ae8cfcdff9a461c9ec2904bc923f52"
+checksum = "f072643fd0190df67a8bab670c20ef5d8737177d6ac6b2e9a236cb096206b2cc"
 dependencies = [
  "thiserror-impl",
 ]
 
 [[package]]
 name = "thiserror-impl"
-version = "1.0.69"
+version = "2.0.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4fee6c4efc90059e10f81e6d42c60a18f76588c3d74cb83a0b242a2b6c7504c1"
+checksum = "7b50fa271071aae2e6ee85f842e2e28ba8cd2c5fb67f11fcb1fd70b276f9e7d4"
 dependencies = [
  "proc-macro2",
  "quote",
