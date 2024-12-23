@@ -16,6 +16,7 @@ impl Plugin {
 
     pub(crate) fn setup(&mut self, user_settings: Object) {
         self.settings.apply(user_settings);
+        // ::nvim_oxi::dbg!(&self.settings);
     }
 
     pub(crate) fn task(&self) {

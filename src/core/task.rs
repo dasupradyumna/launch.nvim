@@ -4,20 +4,22 @@ use crate::config::{TaskConfig, TaskDisplay};
 use crate::settings::SettingsTask;
 use crate::utils::notify;
 use ::nvim_oxi::api::opts::{CreateAutocmdOpts, OptionOpts};
-use ::nvim_oxi::api::types::{Mode, SplitDirection, WindowConfig};
+use ::nvim_oxi::api::types::{
+    Mode, SplitDirection, WindowBorder, WindowConfig, WindowRelativeTo, WindowStyle,
+};
 use ::nvim_oxi::api::{self, Buffer, Window};
 
 fn render(buffer: &Buffer, display: &TaskDisplay) -> ::nvim_oxi::Result<Window> {
     let mut config_builder = WindowConfig::builder();
     let config = match display {
         TaskDisplay::Float => config_builder
-            .relative(api::types::WindowRelativeTo::Editor)
+            .relative(WindowRelativeTo::Editor)
             .row(10)
             .col(10)
             .width(80)
             .height(30)
-            .style(api::types::WindowStyle::Minimal)
-            .border(api::types::WindowBorder::Rounded)
+            .style(WindowStyle::Minimal)
+            .border(WindowBorder::Rounded)
             .build(),
         TaskDisplay::VSplit => config_builder.split(SplitDirection::Right).width(40).build(),
         TaskDisplay::HSplit => config_builder.split(SplitDirection::Below).height(10).build(),
@@ -28,8 +30,7 @@ fn render(buffer: &Buffer, display: &TaskDisplay) -> ::nvim_oxi::Result<Window> 
     Ok(window)
 }
 
-// TODO: next steps
-// * save the window ID as part of the TaskDisplay variant, and save it ActiveTask list
+// TODO: save the window ID as part of the TaskDisplay variant, and save it ActiveTask list
 pub(crate) fn run(settings: &SettingsTask, config: TaskConfig) -> ::nvim_oxi::Result<()> {
     // create a new task buffer
     let buffer = api::create_buf(false, true)?;

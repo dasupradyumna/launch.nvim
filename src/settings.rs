@@ -1,5 +1,6 @@
 /*---------------------------------------- PLUGIN SETTINGS ---------------------------------------*/
 
+use crate::config::{TaskDisplay, TaskDisplayFloatSize};
 use crate::utils::notify;
 use ::nvim_oxi::serde::Deserializer as NvimOxiDeserializer;
 use ::nvim_oxi::Object;
@@ -7,15 +8,32 @@ use ::nvim_oxi::Object;
 const WIKI_URL: &str = "https://github.com/dasupradyumna/launch.nvim/wiki/Plugin-Settings";
 
 crate::utils::serde::setup_deserializable_structs! {
+
     pub(crate) Settings {
         pub(crate) confirm_choice: bool = false;
         ---
         pub(crate) task: SettingsTask;
     },
+
     pub(crate) SettingsTask {
         pub(crate) insert_mode_on_launch: bool = false;
         ---
+        pub(crate) ui: SettingsTaskUI;
     },
+
+    pub(crate) SettingsTaskUI {
+        pub(crate) display: TaskDisplay = TaskDisplay::Float;
+        pub(crate) hsplit_height: u8 = 30;
+        pub(crate) vsplit_width: u8 = 50;
+        ---
+        pub(crate) float: SettingsTaskUIFloat;
+    },
+
+    pub(crate) SettingsTaskUIFloat {
+        pub(crate) size: TaskDisplayFloatSize = TaskDisplayFloatSize::Medium;
+        ---
+    },
+
 }
 
 impl Settings {

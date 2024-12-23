@@ -1,13 +1,85 @@
 /*------------------------------------ RUNTIME CONFIGURATIONS ------------------------------------*/
 
+use crate::utils::serde::StructVisitor;
 use ::nvim_oxi::{Dictionary, Object};
+use ::serde::{de::EnumAccess, de::Error, de::Visitor, Deserialize};
 use std::collections::HashMap;
 use std::path::PathBuf;
 
+// TODO: refactor TaskDisplay and TaskDisplayFloatSize into setup_deserializable_structs! macro
+
+#[derive(Debug)]
 pub(crate) enum TaskDisplay {
     Float,
     VSplit,
     HSplit,
+}
+
+impl<'de> Deserialize<'de> for TaskDisplay {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        deserializer.deserialize_enum("", &[], StructVisitor::<TaskDisplay>::new())
+    }
+}
+
+impl<'de> Visitor<'de> for StructVisitor<TaskDisplay> {
+    type Value = TaskDisplay;
+
+    fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
+        formatter.write_str("a `TaskDisplay` enum string.")
+    }
+
+    fn visit_enum<E>(self, data: E) -> Result<Self::Value, E::Error>
+    where
+        E: EnumAccess<'de>,
+    {
+        let (variant, _) = data.variant::<String>()?;
+        match variant.as_str() {
+            "float" => Ok(Self::Value::Float),
+            "hsplit" => Ok(Self::Value::HSplit),
+            "vsplit" => Ok(Self::Value::VSplit),
+            _ => Err(E::Error::unknown_variant(&variant, &["float", "hsplit", "vsplit"])),
+        }
+    }
+}
+
+#[derive(Debug)]
+pub(crate) enum TaskDisplayFloatSize {
+    Small = 45,
+    Medium = 65,
+    Large = 85,
+}
+
+impl<'de> Deserialize<'de> for TaskDisplayFloatSize {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        deserializer.deserialize_enum("", &[], StructVisitor::<TaskDisplayFloatSize>::new())
+    }
+}
+
+impl<'de> Visitor<'de> for StructVisitor<TaskDisplayFloatSize> {
+    type Value = TaskDisplayFloatSize;
+
+    fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
+        formatter.write_str("a `TaskDisplayFloatSize` enum string.")
+    }
+
+    fn visit_enum<E>(self, data: E) -> Result<Self::Value, E::Error>
+    where
+        E: EnumAccess<'de>,
+    {
+        let (variant, _) = data.variant::<String>()?;
+        match variant.as_str() {
+            "small" => Ok(Self::Value::Small),
+            "medium" => Ok(Self::Value::Medium),
+            "large" => Ok(Self::Value::Large),
+            _ => Err(E::Error::unknown_variant(&variant, &["small", "medium", "large"])),
+        }
+    }
 }
 
 pub(crate) struct TaskConfig {
