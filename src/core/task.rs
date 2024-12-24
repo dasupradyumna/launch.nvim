@@ -1,28 +1,60 @@
 /*------------------------------------------ TASK RUNNER -----------------------------------------*/
 
-use crate::config::{TaskConfig, TaskDisplay};
-use crate::settings::SettingsTask;
+use crate::config::{TaskConfig, TaskDisplay, TaskDisplayFloatSize};
+use crate::settings::{SettingsTask, SettingsTaskUI};
 use crate::utils::notify;
 use ::nvim_oxi::api::opts::{CreateAutocmdOpts, OptionOpts};
 use ::nvim_oxi::api::types::{
-    Mode, SplitDirection, WindowBorder, WindowConfig, WindowRelativeTo, WindowStyle,
+    Mode, SplitDirection, WindowBorder, WindowConfig, WindowRelativeTo, WindowStyle, WindowTitle,
+    WindowTitlePosition,
 };
 use ::nvim_oxi::api::{self, Buffer, Window};
 
-fn render(buffer: &Buffer, display: &TaskDisplay) -> ::nvim_oxi::Result<Window> {
+fn get_float_specs(size: TaskDisplayFloatSize, lines: u32, columns: u32) -> [u32; 4] {
+    let width = columns * (size as u32) / 100;
+    let height = lines * (size as u32) / 100;
+    let col = (columns - width) / 2 - 2;
+    let row = (lines - height) / 2 - 2;
+
+    [row, col, width, height]
+}
+
+fn render(
+    settings: &SettingsTaskUI,
+    name: &str,
+    buffer: &Buffer,
+    display: &TaskDisplay,
+) -> ::nvim_oxi::Result<Window> {
+    let columns: u32 = api::get_option_value("columns", &OptionOpts::default())?;
+    let lines: u32 = api::get_option_value("lines", &OptionOpts::default())?;
+
     let mut config_builder = WindowConfig::builder();
     let config = match display {
-        TaskDisplay::Float => config_builder
-            .relative(WindowRelativeTo::Editor)
-            .row(10)
-            .col(10)
-            .width(80)
-            .height(30)
-            .style(WindowStyle::Minimal)
-            .border(WindowBorder::Rounded)
-            .build(),
-        TaskDisplay::VSplit => config_builder.split(SplitDirection::Right).width(40).build(),
-        TaskDisplay::HSplit => config_builder.split(SplitDirection::Below).height(10).build(),
+        TaskDisplay::Float => {
+            let [row, col, width, height] = get_float_specs(settings.float.size, lines, columns);
+            config_builder
+                .relative(WindowRelativeTo::Editor)
+                .title(WindowTitle::SimpleString(format!(" {name} ").into()))
+                .footer(WindowTitle::SimpleString(" launch.nvim ".into()))
+                .row(row)
+                .col(col)
+                .width(width)
+                .height(height)
+                .style(WindowStyle::Minimal)
+                .title_pos(WindowTitlePosition::Center) // TODO: move to settings
+                .footer_pos(WindowTitlePosition::Right) // TODO: ...
+                .border(WindowBorder::Rounded) // TODO: ...
+                .zindex(49) // TODO: ...
+                .build()
+        },
+        TaskDisplay::VSplit => {
+            let w = (columns * settings.vsplit_width as u32) / 100;
+            config_builder.split(SplitDirection::Right).width(w).build()
+        },
+        TaskDisplay::HSplit => {
+            let h = (lines * settings.hsplit_height as u32) / 100;
+            config_builder.split(SplitDirection::Below).height(h).build()
+        },
     };
     // ::nvim_oxi::dbg!(&config);
     let window = api::open_win(buffer, true, &config)?;
@@ -48,7 +80,7 @@ pub(crate) fn run(settings: &SettingsTask, config: TaskConfig) -> ::nvim_oxi::Re
     api::create_autocmd(["BufWipeout"], &opts)?;
 
     // open the UI window and load the task buffer
-    let _window = render(&buffer, &config.display)?;
+    let _window = render(&settings.ui, &config.name, &buffer, &config.display)?;
 
     // launch the task in a terminal buffer
     let command = config.command();

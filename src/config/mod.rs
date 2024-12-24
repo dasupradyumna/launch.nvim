@@ -45,7 +45,7 @@ impl<'de> Visitor<'de> for StructVisitor<TaskDisplay> {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub(crate) enum TaskDisplayFloatSize {
     Small = 45,
     Medium = 65,
@@ -83,7 +83,7 @@ impl<'de> Visitor<'de> for StructVisitor<TaskDisplayFloatSize> {
 }
 
 pub(crate) struct TaskConfig {
-    name: String,
+    pub(crate) name: String,
     command: String,
     args: Vec<String>,
     pub(crate) display: TaskDisplay,
@@ -128,17 +128,17 @@ impl TaskConfig {
             })
             .unwrap();
 
-        Object::from(ret)
+        ret.into()
     }
 
     pub(crate) fn term_options(&self) -> Object {
         let env = Dictionary::from_iter(self.env.iter().map(|(k, v)| (k.as_str(), v.as_str())));
-        let ret = Dictionary::from_iter([
-            ("clear_env", Object::from(false)),
-            ("cwd", Object::from(self.cwd.to_str())),
-            ("env", Object::from(env)),
+        let ret = Dictionary::from_iter::<[(_, Object); 3]>([
+            ("clear_env", false.into()),
+            ("cwd", self.cwd.to_str().into()),
+            ("env", env.into()),
         ]);
 
-        Object::from(ret)
+        ret.into()
     }
 }
