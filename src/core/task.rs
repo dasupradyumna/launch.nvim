@@ -5,10 +5,16 @@ use crate::settings::{SettingsTask, SettingsTaskUI};
 use crate::utils::notify;
 use ::nvim_oxi::api::opts::{CreateAutocmdOpts, OptionOpts};
 use ::nvim_oxi::api::types::{
-    Mode, SplitDirection, WindowBorder, WindowConfig, WindowRelativeTo, WindowStyle, WindowTitle,
-    WindowTitlePosition,
+    AutocmdCallbackArgs, Mode, SplitDirection, WindowBorder, WindowConfig, WindowRelativeTo,
+    WindowStyle, WindowTitle, WindowTitlePosition,
 };
 use ::nvim_oxi::api::{self, Buffer, Window};
+use nvim_oxi::Function;
+
+#[derive(Debug)]
+pub(crate) struct ActiveTask {
+    buffer: Buffer,
+}
 
 fn get_float_specs(size: TaskDisplayFloatSize, lines: u32, columns: u32) -> [u32; 4] {
     let width = columns * (size as u32) / 100;
@@ -58,12 +64,17 @@ fn render(
     };
     // ::nvim_oxi::dbg!(&config);
     let window = api::open_win(buffer, true, &config)?;
+    api::set_option_value("winfixbuf", true, &OptionOpts::default())?;
 
     Ok(window)
 }
 
 // TODO: save the window ID as part of the TaskDisplay variant, and save it ActiveTask list
-pub(crate) fn run(settings: &SettingsTask, config: TaskConfig) -> ::nvim_oxi::Result<()> {
+pub(crate) fn run(
+    settings: &SettingsTask,
+    active_tasks: &mut Vec<ActiveTask>,
+    config: TaskConfig,
+) -> ::nvim_oxi::Result<()> {
     // create a new task buffer
     let buffer = api::create_buf(false, true)?;
     let opts = OptionOpts::builder().buffer(buffer.clone()).build();
@@ -71,10 +82,10 @@ pub(crate) fn run(settings: &SettingsTask, config: TaskConfig) -> ::nvim_oxi::Re
     let opts = CreateAutocmdOpts::builder()
         .desc("Remove task from plugin active task list when wiped out")
         .buffer(buffer.clone())
-        .callback(|_| {
+        .callback(Function::from_fn_mut(|_| {
             notify::send!(Warn: "Closing task buffer");
             true
-        })
+        }))
         .group("launch_nvim")
         .build();
     api::create_autocmd(["BufWipeout"], &opts)?;
@@ -83,6 +94,7 @@ pub(crate) fn run(settings: &SettingsTask, config: TaskConfig) -> ::nvim_oxi::Re
     let _window = render(&settings.ui, &config.name, &buffer, &config.display)?;
 
     // launch the task in a terminal buffer
+    // TODO: handle failure here with a default command that displays an error message
     let command = config.command();
     let term_options = config.term_options();
     // ::nvim_oxi::dbg!(&command);
@@ -94,5 +106,6 @@ pub(crate) fn run(settings: &SettingsTask, config: TaskConfig) -> ::nvim_oxi::Re
         api::feedkeys("i", Mode::Normal, false);
     }
 
+    active_tasks.push(ActiveTask { buffer });
     Ok(())
 }

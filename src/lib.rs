@@ -17,5 +17,11 @@ fn launch() -> Dictionary {
         ("setup", Function::from_fn(|settings| unsafe { PLUGIN.setup(settings) })),
         ("task", Function::from_fn(|_| unsafe { PLUGIN.task() })),
         ("debugger", Function::from_fn(|_| unsafe { PLUGIN.debugger() })),
+        (
+            "show_active",
+            Function::from_fn(|_| unsafe {
+                ::nvim_oxi::dbg!(&PLUGIN.active_tasks);
+            }),
+        ),
     ])
 }

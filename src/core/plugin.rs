@@ -7,11 +7,15 @@ use ::nvim_oxi::Object;
 
 pub(crate) struct Plugin {
     pub(crate) settings: Settings,
+    pub(crate) active_tasks: Vec<task::ActiveTask>,
 }
 
 impl Plugin {
     pub(crate) const fn new() -> Self {
-        Self { settings: Settings::new() }
+        Self {
+            settings: Settings::new(),
+            active_tasks: Vec::new(),
+        }
     }
 
     pub(crate) fn setup(&mut self, user_settings: Object) {
@@ -19,7 +23,7 @@ impl Plugin {
         // ::nvim_oxi::dbg!(&self.settings);
     }
 
-    pub(crate) fn task(&self) {
+    pub(crate) fn task(&mut self) {
         ///////////////// testing config ///////////////////////////
         use crate::config::{TaskConfig, TaskDisplay};
         use std::collections::HashMap;
@@ -32,7 +36,7 @@ impl Plugin {
             HashMap::from_iter([("USR".to_string(), "Pradyu".to_string())]),
         );
 
-        match task::run(&self.settings.task, config) {
+        match task::run(&self.settings.task, &mut self.active_tasks, config) {
             Ok(_) => notify::send!(Info: "Task launched!"),
             Err(e) => notify::send!(Warn: {format!("{e}")}),
         };
