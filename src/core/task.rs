@@ -1,7 +1,8 @@
 /*------------------------------------------ TASK RUNNER -----------------------------------------*/
 
+use super::plugin;
 use crate::config::{TaskConfig, TaskDisplay, TaskDisplayFloatSize};
-use crate::settings::{SettingsTask, SettingsTaskUI};
+use crate::settings::SettingsTaskUI;
 use crate::utils::notify;
 use ::nvim_oxi::api::opts::{CreateAutocmdOpts, OptionOpts};
 use ::nvim_oxi::api::types::{
@@ -69,12 +70,10 @@ fn render(
     Ok(window)
 }
 
-// TODO: save the window ID as part of the TaskDisplay variant, and save it ActiveTask list
-pub(crate) fn run(
-    settings: &SettingsTask,
-    active_tasks: &mut Vec<ActiveTask>,
-    config: TaskConfig,
-) -> ::nvim_oxi::Result<()> {
+pub(crate) fn run(config: TaskConfig) -> ::nvim_oxi::Result<()> {
+    let mut state = plugin::state!();
+    let settings = &state.settings.task;
+
     // create a new task buffer
     let buffer = api::create_buf(false, true)?;
     let opts = OptionOpts::builder().buffer(buffer.clone()).build();
@@ -82,8 +81,12 @@ pub(crate) fn run(
     let opts = CreateAutocmdOpts::builder()
         .desc("Remove task from plugin active task list when wiped out")
         .buffer(buffer.clone())
-        .callback(Function::from_fn_mut(|_| {
+        .callback(Function::from_fn_mut(|args: AutocmdCallbackArgs| {
             notify::send!(Warn: "Closing task buffer");
+            let active_tasks = &mut plugin::state!().active_tasks;
+            if let Some(idx) = active_tasks.iter().position(|e| e.buffer == args.buffer) {
+                active_tasks.swap_remove(idx);
+            }
             true
         }))
         .group("launch_nvim")
@@ -106,6 +109,6 @@ pub(crate) fn run(
         api::feedkeys("i", Mode::Normal, false);
     }
 
-    active_tasks.push(ActiveTask { buffer });
+    state.active_tasks.push(ActiveTask { buffer });
     Ok(())
 }

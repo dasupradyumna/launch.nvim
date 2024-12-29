@@ -4,6 +4,15 @@ use super::task;
 use crate::settings::Settings;
 use crate::utils::notify;
 use ::nvim_oxi::Object;
+use std::sync::{LazyLock, Mutex};
+
+pub(crate) static STATE: LazyLock<Mutex<Plugin>> = LazyLock::new(|| Mutex::new(Plugin::new()));
+macro_rules! state {
+    () => {{
+        crate::core::plugin::STATE.lock().unwrap()
+    }};
+}
+pub(crate) use state;
 
 pub(crate) struct Plugin {
     pub(crate) settings: Settings,
@@ -17,32 +26,32 @@ impl Plugin {
             active_tasks: Vec::new(),
         }
     }
+}
 
-    pub(crate) fn setup(&mut self, user_settings: Object) {
-        self.settings.apply(user_settings);
-        // ::nvim_oxi::dbg!(&self.settings);
-    }
+pub(crate) fn setup(user_settings: Object) {
+    state!().settings.apply(user_settings);
+    // ::nvim_oxi::dbg!(&self.settings);
+}
 
-    pub(crate) fn task(&mut self) {
-        ///////////////// testing config ///////////////////////////
-        use crate::config::{TaskConfig, TaskDisplay};
-        use std::collections::HashMap;
-        let config = TaskConfig::new(
-            "Launch Test",
-            "echo",
-            &["\"Hey ${USR:-default_user}", "from India", "at '$PWD'!\""],
-            TaskDisplay::Float,
-            "/home/pradyumna/data/jira",
-            HashMap::from_iter([("USR".to_string(), "Pradyu".to_string())]),
-        );
+pub(crate) fn task() {
+    ///////////////// testing config ///////////////////////////
+    use crate::config::{TaskConfig, TaskDisplay};
+    use std::collections::HashMap;
+    let config = TaskConfig::new(
+        "Launch Test",
+        "echo",
+        &["\"Hey ${USR:-default_user}", "from India", "at '$PWD'!\""],
+        TaskDisplay::Float,
+        "/home/pradyumna/data/jira",
+        HashMap::from_iter([("USR".to_string(), "Pradyu".to_string())]),
+    );
 
-        match task::run(&self.settings.task, &mut self.active_tasks, config) {
-            Ok(_) => notify::send!(Info: "Task launched!"),
-            Err(e) => notify::send!(Warn: {format!("{e}")}),
-        };
-    }
+    match task::run(config) {
+        Ok(_) => notify::send!(Info: "Task launched!"),
+        Err(e) => notify::send!(Warn: {format!("{e}")}),
+    };
+}
 
-    pub(crate) fn debugger(&self) {
-        notify::send!(Info: "Debugger launched!");
-    }
+pub(crate) fn debugger() {
+    notify::send!(Info: "Debugger launched!");
 }
