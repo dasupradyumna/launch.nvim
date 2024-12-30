@@ -15,6 +15,7 @@ use nvim_oxi::Function;
 #[derive(Debug)]
 pub(crate) struct ActiveTask {
     buffer: Buffer,
+    config: TaskConfig,
 }
 
 fn get_float_specs(size: TaskDisplayFloatSize, lines: u32, columns: u32) -> [u32; 4] {
@@ -27,7 +28,7 @@ fn get_float_specs(size: TaskDisplayFloatSize, lines: u32, columns: u32) -> [u32
 }
 
 fn render(
-    settings: &SettingsTaskUI,
+    ui_settings: &SettingsTaskUI,
     name: &str,
     buffer: &Buffer,
     display: &TaskDisplay,
@@ -38,7 +39,7 @@ fn render(
     let mut config_builder = WindowConfig::builder();
     let config = match display {
         TaskDisplay::Float => {
-            let [row, col, width, height] = get_float_specs(settings.float.size, lines, columns);
+            let [row, col, width, height] = get_float_specs(ui_settings.float.size, lines, columns);
             config_builder
                 .relative(WindowRelativeTo::Editor)
                 .title(WindowTitle::SimpleString(format!(" {name} ").into()))
@@ -55,29 +56,30 @@ fn render(
                 .build()
         },
         TaskDisplay::VSplit => {
-            let w = (columns * settings.vsplit_width as u32) / 100;
+            let w = (columns * ui_settings.vsplit_width as u32) / 100;
             config_builder.split(SplitDirection::Right).width(w).build()
         },
         TaskDisplay::HSplit => {
-            let h = (lines * settings.hsplit_height as u32) / 100;
+            let h = (lines * ui_settings.hsplit_height as u32) / 100;
             config_builder.split(SplitDirection::Below).height(h).build()
         },
     };
     // ::nvim_oxi::dbg!(&config);
     let window = api::open_win(buffer, true, &config)?;
-    api::set_option_value("winfixbuf", true, &OptionOpts::default())?;
+    let opts = OptionOpts::builder().win(window.clone()).build();
+    api::set_option_value("winfixbuf", true, &opts)?;
 
     Ok(window)
 }
 
-pub(crate) fn run(config: TaskConfig) -> ::nvim_oxi::Result<()> {
-    let mut state = plugin::state!();
-    let settings = &state.settings.task;
+pub(crate) fn run(config: TaskConfig) -> ::nvim_oxi::Result<ActiveTask> {
+    let task_settings = &plugin::state!().settings.task;
 
     // create a new task buffer
     let buffer = api::create_buf(false, true)?;
     let opts = OptionOpts::builder().buffer(buffer.clone()).build();
     api::set_option_value("filetype", "launch_nvim_task", &opts)?;
+    // TODO: refactor this into ftplugin logic, with exposed internal functions
     let opts = CreateAutocmdOpts::builder()
         .desc("Remove task from plugin active task list when wiped out")
         .buffer(buffer.clone())
@@ -94,7 +96,7 @@ pub(crate) fn run(config: TaskConfig) -> ::nvim_oxi::Result<()> {
     api::create_autocmd(["BufWipeout"], &opts)?;
 
     // open the UI window and load the task buffer
-    let _window = render(&settings.ui, &config.name, &buffer, &config.display)?;
+    let _window = render(&task_settings.ui, &config.name, &buffer, &config.display)?;
 
     // launch the task in a terminal buffer
     // TODO: handle failure here with a default command that displays an error message
@@ -105,10 +107,9 @@ pub(crate) fn run(config: TaskConfig) -> ::nvim_oxi::Result<()> {
     let _job: i32 = api::call_function("termopen", (command, term_options))?;
 
     // enter insert mode after launching the task
-    if settings.insert_mode_on_launch {
+    if task_settings.insert_mode_on_launch {
         api::feedkeys("i", Mode::Normal, false);
     }
 
-    state.active_tasks.push(ActiveTask { buffer });
-    Ok(())
+    Ok(ActiveTask { buffer, config })
 }

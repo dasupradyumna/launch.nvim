@@ -82,6 +82,7 @@ impl<'de> Visitor<'de> for StructVisitor<TaskDisplayFloatSize> {
     }
 }
 
+#[derive(Debug)]
 pub(crate) struct TaskConfig {
     pub(crate) name: String,
     command: String,

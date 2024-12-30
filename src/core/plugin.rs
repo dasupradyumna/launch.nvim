@@ -29,8 +29,10 @@ impl Plugin {
 }
 
 pub(crate) fn setup(user_settings: Object) {
-    state!().settings.apply(user_settings);
-    // ::nvim_oxi::dbg!(&self.settings);
+    let settings = &mut state!().settings;
+
+    settings.apply(user_settings);
+    ::nvim_oxi::dbg!(settings);
 }
 
 pub(crate) fn task() {
@@ -47,7 +49,10 @@ pub(crate) fn task() {
     );
 
     match task::run(config) {
-        Ok(_) => notify::send!(Info: "Task launched!"),
+        Ok(active_task) => {
+            notify::send!(Info: "Task launched!");
+            state!().active_tasks.push(active_task);
+        },
         Err(e) => notify::send!(Warn: {format!("{e}")}),
     };
 }
