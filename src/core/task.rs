@@ -3,14 +3,12 @@
 use super::plugin;
 use crate::config::{TaskConfig, TaskDisplay, TaskDisplayFloatSize};
 use crate::settings::SettingsTaskUI;
-use crate::utils::notify;
-use ::nvim_oxi::api::opts::{CreateAutocmdOpts, OptionOpts};
+use ::nvim_oxi::api::opts::OptionOpts;
 use ::nvim_oxi::api::types::{
-    AutocmdCallbackArgs, Mode, SplitDirection, WindowBorder, WindowConfig, WindowRelativeTo,
-    WindowStyle, WindowTitle, WindowTitlePosition,
+    Mode, SplitDirection, WindowBorder, WindowConfig, WindowRelativeTo, WindowStyle, WindowTitle,
+    WindowTitlePosition,
 };
 use ::nvim_oxi::api::{self, Buffer, Window};
-use nvim_oxi::Function;
 
 #[derive(Debug)]
 pub(crate) struct ActiveTask {
@@ -79,21 +77,6 @@ pub(crate) fn run(config: TaskConfig) -> ::nvim_oxi::Result<ActiveTask> {
     let buffer = api::create_buf(false, true)?;
     let opts = OptionOpts::builder().buffer(buffer.clone()).build();
     api::set_option_value("filetype", "launch_nvim_task", &opts)?;
-    // TODO: refactor this into ftplugin logic, with exposed internal functions
-    let opts = CreateAutocmdOpts::builder()
-        .desc("Remove task from plugin active task list when wiped out")
-        .buffer(buffer.clone())
-        .callback(Function::from_fn_mut(|args: AutocmdCallbackArgs| {
-            notify::send!(Warn: "Closing task buffer");
-            let active_tasks = &mut plugin::state!().active_tasks;
-            if let Some(idx) = active_tasks.iter().position(|e| e.buffer == args.buffer) {
-                active_tasks.swap_remove(idx);
-            }
-            true
-        }))
-        .group("launch_nvim")
-        .build();
-    api::create_autocmd(["BufWipeout"], &opts)?;
 
     // open the UI window and load the task buffer
     let _window = render(&task_settings.ui, &config.name, &buffer, &config.display)?;
@@ -112,4 +95,11 @@ pub(crate) fn run(config: TaskConfig) -> ::nvim_oxi::Result<ActiveTask> {
     }
 
     Ok(ActiveTask { buffer, config })
+}
+
+pub(crate) fn on_bufwipeout(buffer: i32) {
+    let active_tasks = &mut plugin::state!().active_tasks;
+    if let Some(idx) = active_tasks.iter().position(|e| e.buffer.handle() == buffer) {
+        active_tasks.swap_remove(idx);
+    }
 }
