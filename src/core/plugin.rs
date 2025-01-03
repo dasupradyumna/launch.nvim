@@ -1,12 +1,15 @@
 /*--------------------------------------- PLUGIN STATE-API ---------------------------------------*/
 
-use super::task;
+use super::task::{self, ActiveTask};
+use crate::config::TaskDisplay;
 use crate::settings::Settings;
 use crate::utils::notify;
+use ::nvim_oxi::api::Window;
 use ::nvim_oxi::Object;
+use std::collections::HashMap;
 use std::sync::{LazyLock, Mutex};
 
-pub(crate) static STATE: LazyLock<Mutex<Plugin>> = LazyLock::new(|| Mutex::new(Plugin::new()));
+pub(crate) static STATE: LazyLock<Mutex<State>> = LazyLock::new(|| Mutex::new(State::new()));
 macro_rules! state {
     () => {{
         crate::core::plugin::STATE.lock().unwrap()
@@ -14,16 +17,24 @@ macro_rules! state {
 }
 pub(crate) use state;
 
-pub(crate) struct Plugin {
+pub(crate) struct State {
     pub(crate) settings: Settings,
-    pub(crate) active_tasks: Vec<task::ActiveTask>,
+    pub(crate) task: StateTask,
 }
 
-impl Plugin {
-    pub(crate) const fn new() -> Self {
+pub(crate) struct StateTask {
+    pub(crate) active: Vec<ActiveTask>,
+    pub(crate) window: HashMap<TaskDisplay, Window>,
+}
+
+impl State {
+    pub(crate) fn new() -> Self {
         Self {
             settings: Settings::new(),
-            active_tasks: Vec::new(),
+            task: StateTask {
+                active: Vec::new(),
+                window: HashMap::new(),
+            },
         }
     }
 }
@@ -51,7 +62,7 @@ pub(crate) fn task() {
     match task::run(config) {
         Ok(active_task) => {
             notify::send!(Info: "Task launched!");
-            state!().active_tasks.push(active_task);
+            state!().task.active.push(active_task);
         },
         Err(e) => notify::send!(Warn: {format!("{e}")}),
     };

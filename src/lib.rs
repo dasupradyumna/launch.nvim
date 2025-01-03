@@ -20,7 +20,7 @@ fn launch() -> Dictionary {
         (
             "show_active",
             Function::from_fn(|()| {
-                ::nvim_oxi::dbg!(&plugin::state!().active_tasks);
+                ::nvim_oxi::dbg!(&plugin::state!().task.active);
             })
             .into(),
         ),

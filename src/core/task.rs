@@ -98,7 +98,7 @@ pub(crate) fn run(config: TaskConfig) -> ::nvim_oxi::Result<ActiveTask> {
 }
 
 pub(crate) fn on_bufwipeout(buffer: i32) {
-    let active_tasks = &mut plugin::state!().active_tasks;
+    let active_tasks = &mut plugin::state!().task.active;
     if let Some(idx) = active_tasks.iter().position(|e| e.buffer.handle() == buffer) {
         active_tasks.swap_remove(idx);
     }
