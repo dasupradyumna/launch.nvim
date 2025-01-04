@@ -48,22 +48,32 @@ pub(crate) fn setup(user_settings: Object) {
 
 pub(crate) fn task() {
     ///////////////// testing config ///////////////////////////
-    use crate::config::{TaskConfig, TaskDisplay};
-    use std::collections::HashMap;
-    let config = TaskConfig::new(
-        "Launch Test",
-        "echo",
-        &["\"${USR:-default_user}", "in '$PWD'", "at $(date '+%T')\""],
-        TaskDisplay::Float,
-        "/home/pradyumna/data/jira",
-        HashMap::from_iter([("USR".to_string(), "Pradyu".to_string())]),
+    use crate::config::TaskConfigUser;
+    use std::fs::File;
+    use std::io::BufReader;
+
+    let reader = BufReader::new(
+        match File::open("/home/pradyumna/neovim_plugins/launch.nvim/config.json") {
+            Ok(file) => file,
+            Err(e) => {
+                notify::send!(Warn: {format!("reading config - {e}")});
+                return;
+            },
+        },
     );
+    let config = match serde_json::from_reader::<_, TaskConfigUser>(reader) {
+        Ok(user_config) => {
+            ::nvim_oxi::dbg!(&user_config);
+            user_config.convert_to_config()
+        },
+        Err(e) => {
+            notify::send!(Warn: {format!("parsing config - {e}")});
+            return;
+        },
+    };
 
     match task::run(config) {
-        Ok(active_task) => {
-            notify::send!(Info: "Task launched!");
-            state!().task.active_list.push(active_task);
-        },
+        Ok(active_task) => state!().task.active_list.push(active_task),
         Err(e) => notify::send!(Warn: {format!("{e}")}),
     };
 }

@@ -1,5 +1,6 @@
 /*------------------------------------ RUNTIME CONFIGURATIONS ------------------------------------*/
 
+use crate::plugin;
 use crate::utils::serde::StructVisitor;
 use ::nvim_oxi::{Dictionary, Object};
 use ::serde::{de::EnumAccess, de::Error, de::Visitor, Deserialize};
@@ -85,15 +86,31 @@ impl<'de> Visitor<'de> for StructVisitor<TaskDisplayFloatSize> {
     }
 }
 
-#[derive(Debug)]
+// REMOVE: all unwrap() calls with Result<...> as return types
+
+#[derive(Debug, Deserialize)]
 pub(crate) struct TaskConfigUser {
     name: String,
     command: String,
     args: Option<Vec<String>>,
-    display: Option<TaskDisply>,
+    display: Option<TaskDisplay>,
     cwd: Option<PathBuf>,
     env: Option<HashMap<String, String>>,
     // shell: Option<???>
+}
+
+impl TaskConfigUser {
+    pub(crate) fn convert_to_config(self) -> TaskConfig {
+        let settings = &plugin::state!().settings;
+        TaskConfig {
+            name: self.name,
+            command: self.command,
+            args: self.args.unwrap_or_else(Vec::new),
+            display: self.display.unwrap_or(settings.task.ui.display),
+            cwd: self.cwd.unwrap_or_else(|| std::env::current_dir().unwrap()),
+            env: self.env.unwrap_or_else(HashMap::new),
+        }
+    }
 }
 
 #[derive(Debug)]
@@ -108,24 +125,6 @@ pub(crate) struct TaskConfig {
 }
 
 impl TaskConfig {
-    pub(crate) fn new(
-        name: &'static str,
-        command: &'static str,
-        args: &'static [&'static str],
-        display: TaskDisplay,
-        cwd: &'static str,
-        env: HashMap<String, String>,
-    ) -> Self {
-        Self {
-            name: name.to_string(),
-            command: command.to_string(),
-            args: args.iter().map(|e| e.to_string()).collect(),
-            display,
-            cwd: PathBuf::from(cwd),
-            env,
-        }
-    }
-
     pub(crate) fn name(&self) -> &String {
         &self.name
     }
@@ -133,8 +132,6 @@ impl TaskConfig {
     pub(crate) fn display(&self) -> TaskDisplay {
         self.display
     }
-
-    // REMOVE: all unwrap() calls with Result<Object> as return types
 
     pub(crate) fn command(&self) -> Object {
         let mut ret = String::new();
