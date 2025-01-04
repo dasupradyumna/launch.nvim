@@ -39,11 +39,18 @@ impl State {
     }
 }
 
+// WARN: if setup fails, only warning / error notifications are raised
+//       plugin behavior currently does not account for this case
 pub(crate) fn setup(user_settings: Object) {
     let settings = &mut state!().settings;
 
     settings.apply(user_settings);
     ::nvim_oxi::dbg!(settings);
+
+    let data_dir = crate::config::data_dir();
+    ::nvim_oxi::dbg!(data_dir);
+    std::fs::create_dir_all(data_dir)
+        .unwrap_or_else(|err| notify::send!(Error: {format!("creating data dir - {err}")}));
 }
 
 pub(crate) fn task() {
