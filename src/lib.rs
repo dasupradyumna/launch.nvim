@@ -18,9 +18,9 @@ fn launch() -> Dictionary {
         ("task", Function::from_fn(|()| plugin::task()).into()),
         ("debugger", Function::from_fn(|()| plugin::debugger()).into()),
         (
-            "show_active",
+            "task_state",
             Function::from_fn(|()| {
-                ::nvim_oxi::dbg!(&plugin::state!().task.active);
+                ::nvim_oxi::dbg!(&plugin::state!().task);
             })
             .into(),
         ),

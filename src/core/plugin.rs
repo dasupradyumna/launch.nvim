@@ -1,12 +1,10 @@
 /*--------------------------------------- PLUGIN STATE-API ---------------------------------------*/
 
 use super::task::{self, ActiveTask};
-use crate::config::TaskDisplay;
 use crate::settings::Settings;
 use crate::utils::notify;
 use ::nvim_oxi::api::Window;
 use ::nvim_oxi::Object;
-use std::collections::HashMap;
 use std::sync::{LazyLock, Mutex};
 
 pub(crate) static STATE: LazyLock<Mutex<State>> = LazyLock::new(|| Mutex::new(State::new()));
@@ -17,14 +15,16 @@ macro_rules! state {
 }
 pub(crate) use state;
 
+#[derive(Debug)]
 pub(crate) struct State {
     pub(crate) settings: Settings,
     pub(crate) task: StateTask,
 }
 
+#[derive(Debug)]
 pub(crate) struct StateTask {
-    pub(crate) active: Vec<ActiveTask>,
-    pub(crate) window: HashMap<TaskDisplay, Window>,
+    pub(crate) active_list: Vec<ActiveTask>,
+    pub(crate) windows: [Option<Window>; 3],
 }
 
 impl State {
@@ -32,8 +32,8 @@ impl State {
         Self {
             settings: Settings::new(),
             task: StateTask {
-                active: Vec::new(),
-                window: HashMap::new(),
+                active_list: Vec::new(),
+                windows: [const { None }; 3],
             },
         }
     }
@@ -62,7 +62,7 @@ pub(crate) fn task() {
     match task::run(config) {
         Ok(active_task) => {
             notify::send!(Info: "Task launched!");
-            state!().task.active.push(active_task);
+            state!().task.active_list.push(active_task);
         },
         Err(e) => notify::send!(Warn: {format!("{e}")}),
     };

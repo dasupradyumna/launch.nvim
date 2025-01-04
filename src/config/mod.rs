@@ -8,7 +8,8 @@ use std::path::PathBuf;
 
 // TODO: refactor TaskDisplay and TaskDisplayFloatSize into setup_deserializable_structs! macro
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
+#[repr(u8)]
 pub(crate) enum TaskDisplay {
     Float,
     VSplit,
@@ -46,6 +47,7 @@ impl<'de> Visitor<'de> for StructVisitor<TaskDisplay> {
 }
 
 #[derive(Debug, Clone, Copy)]
+#[repr(u8)]
 pub(crate) enum TaskDisplayFloatSize {
     Small = 45,
     Medium = 65,
