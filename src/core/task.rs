@@ -26,7 +26,7 @@ fn get_float_specs(size: TaskDisplayFloatSize, lines: u32, columns: u32) -> [u32
 
 fn render(buffer: &Buffer, config: &TaskConfig) -> ::nvim_oxi::Result<()> {
     let mut state = plugin::state!();
-    let display_id = config.display as usize;
+    let display_id = config.display() as usize;
 
     if let Some(ref window) = state.task.windows[display_id] {
         let opts = OptionOpts::builder().win(window.clone()).build();
@@ -42,12 +42,12 @@ fn render(buffer: &Buffer, config: &TaskConfig) -> ::nvim_oxi::Result<()> {
         let screen_h: u32 = api::get_option_value("lines", &OptionOpts::default())?;
 
         let mut config_builder = WindowConfig::builder();
-        let win_config = match config.display {
+        let win_config = match config.display() {
             TaskDisplay::Float => {
                 let [r, c, w, h] = get_float_specs(ui_settings.float.size, screen_h, screen_w);
                 config_builder
                     .relative(WindowRelativeTo::Editor)
-                    .title(WindowTitle::SimpleString(format!(" {} ", &config.name).into()))
+                    .title(WindowTitle::SimpleString(format!(" {} ", config.name()).into()))
                     .footer(WindowTitle::SimpleString(" launch.nvim ".into()))
                     .row(r)
                     .col(c)

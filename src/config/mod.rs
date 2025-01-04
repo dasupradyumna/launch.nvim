@@ -7,6 +7,7 @@ use std::collections::HashMap;
 use std::path::PathBuf;
 
 // TODO: refactor TaskDisplay and TaskDisplayFloatSize into setup_deserializable_structs! macro
+// or create a separate setup_deserializable_enum! macro, and make the struct macro modular
 
 #[derive(Debug, Clone, Copy)]
 #[repr(u8)]
@@ -85,11 +86,22 @@ impl<'de> Visitor<'de> for StructVisitor<TaskDisplayFloatSize> {
 }
 
 #[derive(Debug)]
+pub(crate) struct TaskConfigUser {
+    name: String,
+    command: String,
+    args: Option<Vec<String>>,
+    display: Option<TaskDisply>,
+    cwd: Option<PathBuf>,
+    env: Option<HashMap<String, String>>,
+    // shell: Option<???>
+}
+
+#[derive(Debug)]
 pub(crate) struct TaskConfig {
-    pub(crate) name: String,
+    name: String,
     command: String,
     args: Vec<String>,
-    pub(crate) display: TaskDisplay,
+    display: TaskDisplay,
     cwd: PathBuf,
     env: HashMap<String, String>,
     // shell: ???
@@ -112,6 +124,14 @@ impl TaskConfig {
             cwd: PathBuf::from(cwd),
             env,
         }
+    }
+
+    pub(crate) fn name(&self) -> &String {
+        &self.name
+    }
+
+    pub(crate) fn display(&self) -> TaskDisplay {
+        self.display
     }
 
     // REMOVE: all unwrap() calls with Result<Object> as return types
