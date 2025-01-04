@@ -10,10 +10,12 @@ use ::nvim_oxi::{Dictionary, Function, Object};
 
 #[nvim_oxi::plugin]
 fn launch() -> Dictionary {
-    let internal =
-        Dictionary::from_iter([("on_task_bufwipeout", Function::from_fn(task::on_bufwipeout))]);
+    let _impl_ = Dictionary::from_iter([
+        ("on_task_bufwipeout", Function::from_fn(task::on_bufwipeout)),
+        ("on_task_winclosed", Function::from_fn(task::on_winclosed)),
+    ]);
 
-    Dictionary::from_iter::<[(&str, Object); 5]>([
+    Dictionary::from_iter::<[(_, Object); 5]>([
         ("setup", Function::from_fn(plugin::setup).into()),
         ("task", Function::from_fn(|()| plugin::task()).into()),
         ("debugger", Function::from_fn(|()| plugin::debugger()).into()),
@@ -24,6 +26,6 @@ fn launch() -> Dictionary {
             })
             .into(),
         ),
-        ("__internal__", internal.into()),
+        ("_impl_", _impl_.into()),
     ])
 }

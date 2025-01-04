@@ -53,7 +53,7 @@ pub(crate) fn task() {
     let config = TaskConfig::new(
         "Launch Test",
         "echo",
-        &["\"Hey ${USR:-default_user}", "from India", "at '$PWD'!\""],
+        &["\"${USR:-default_user}", "in '$PWD'", "at $(date '+%T')\""],
         TaskDisplay::Float,
         "/home/pradyumna/data/jira",
         HashMap::from_iter([("USR".to_string(), "Pradyu".to_string())]),
