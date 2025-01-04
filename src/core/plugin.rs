@@ -48,7 +48,7 @@ pub(crate) fn setup(user_settings: Object) {
 
 pub(crate) fn task() {
     ///////////////// testing config ///////////////////////////
-    use crate::config::TaskConfigUser;
+    use crate::config::TaskConfigJson;
     use std::fs::File;
     use std::io::BufReader;
 
@@ -61,10 +61,10 @@ pub(crate) fn task() {
             },
         },
     );
-    let config = match serde_json::from_reader::<_, TaskConfigUser>(reader) {
-        Ok(user_config) => {
-            ::nvim_oxi::dbg!(&user_config);
-            user_config.convert_to_config()
+    let config = match serde_json::from_reader::<_, TaskConfigJson>(reader) {
+        Ok(json_config) => {
+            ::nvim_oxi::dbg!(&json_config);
+            json_config.into()
         },
         Err(e) => {
             notify::send!(Warn: {format!("parsing config - {e}")});
