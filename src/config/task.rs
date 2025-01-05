@@ -1,6 +1,6 @@
 /*-------------------------------------- TASK CONFIGURATION --------------------------------------*/
 
-use crate::plugin;
+use crate::settings::SettingsTask;
 use crate::utils::serde::StructVisitor;
 use ::nvim_oxi::{Dictionary, Object};
 use ::serde::{de::EnumAccess, de::Error, de::Visitor, Deserialize};
@@ -99,16 +99,15 @@ pub(crate) struct TaskConfigJson {
     // shell: Option<???>
 }
 
-impl Into<TaskConfig> for TaskConfigJson {
-    fn into(self) -> TaskConfig {
-        let settings = &plugin::state!().settings;
+impl TaskConfigJson {
+    pub(crate) fn build_config(&self, settings: &SettingsTask) -> TaskConfig {
         TaskConfig {
-            name: self.name,
-            command: self.command,
-            args: self.args.unwrap_or_default(),
-            display: self.display.unwrap_or(settings.task.ui.display),
-            cwd: self.cwd.unwrap_or_else(|| std::env::current_dir().unwrap()),
-            env: self.env.unwrap_or_default(),
+            name: self.name.clone(),
+            command: self.command.clone(),
+            args: self.args.clone().unwrap_or_default(),
+            display: self.display.unwrap_or(settings.ui.display),
+            cwd: self.cwd.clone().unwrap_or_else(|| std::env::current_dir().unwrap()),
+            env: self.env.clone().unwrap_or_default(),
         }
     }
 }

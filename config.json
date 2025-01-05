@@ -1,8 +1,0 @@
-{
-    "name": "Launch Test",
-    "command": "echo",
-    "args": [ "\"${USR:-default_user}", "in '$PWD'", "at $(date '+%T')\"" ],
-    "display": "float",
-    "cwd": "/home/pradyumna/data/jira",
-    "env": { "USR": "Pradyu" }
-}

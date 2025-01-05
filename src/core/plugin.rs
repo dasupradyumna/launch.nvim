@@ -1,7 +1,7 @@
 /*--------------------------------------- PLUGIN STATE-API ---------------------------------------*/
 
 use super::task::{self, ActiveTask};
-use crate::config;
+use crate::config::{self, TaskConfigJson};
 use crate::settings::Settings;
 use crate::utils::notify;
 use ::nvim_oxi::api::Window;
@@ -22,6 +22,7 @@ pub(crate) struct State {
     pub(crate) runtime_file: File,
     pub(crate) settings: Settings,
     pub(crate) task: StateTask,
+    pub(crate) configs: Vec<TaskConfigJson>,
 }
 
 #[derive(Debug)]
@@ -33,50 +34,41 @@ pub(crate) struct StateTask {
 impl State {
     pub(crate) fn new() -> Self {
         Self {
-            runtime_file: config::read_json_file(),
+            runtime_file: config::open_file(),
             settings: Settings::new(),
             task: StateTask {
                 active_list: Vec::new(),
                 windows: [const { None }; 3],
             },
+            configs: Vec::new(),
         }
     }
 }
 
 pub(crate) fn setup(user_settings: Object) {
-    let settings = &mut state!().settings;
+    let mut state = state!();
 
-    settings.apply(user_settings);
+    state.settings.apply(user_settings);
 
     let data_dir = config::data_dir();
     ::nvim_oxi::dbg!(data_dir);
     std::fs::create_dir_all(data_dir)
         .unwrap_or_else(|err| notify::send!(Error: {format!("creating data dir - {err}")}));
+
+    if let Err(e) = config::load(&mut state) {
+        notify::send!(Warn: {format!("parsing config file - {e}")});
+    }
 }
 
 pub(crate) fn task() {
-    ///////////////// testing config ///////////////////////////
-    use std::io::BufReader;
+    let config;
 
-    let reader = BufReader::new(
-        match File::open("/home/pradyumna/neovim_plugins/launch.nvim/config.json") {
-            Ok(file) => file,
-            Err(e) => {
-                notify::send!(Warn: {format!("reading config - {e}")});
-                return;
-            },
-        },
-    );
-    let config = match serde_json::from_reader::<_, config::TaskConfigJson>(reader) {
-        Ok(json_config) => {
-            ::nvim_oxi::dbg!(&json_config);
-            json_config.into()
-        },
-        Err(e) => {
-            notify::send!(Warn: {format!("parsing config - {e}")});
-            return;
-        },
-    };
+    // HACK: this is due mutex locking issues, design revision is required
+    {
+        let state = state!();
+        let task_settings = &state.settings.task;
+        config = state.configs[0].build_config(task_settings);
+    }
 
     match task::run(config) {
         Ok(active_task) => state!().task.active_list.push(active_task),

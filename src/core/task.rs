@@ -108,7 +108,8 @@ pub(crate) fn run(config: TaskConfig) -> ::nvim_oxi::Result<ActiveTask> {
     let _job: i32 = nvim::call_function("termopen", (command, term_options))?;
 
     // enter insert mode after launching the task
-    if plugin::state!().settings.task.insert_mode_on_launch {
+    let task_settings = &plugin::state!().settings.task;
+    if task_settings.insert_mode_on_launch {
         nvim::feedkeys("i", Mode::Normal, false);
     }
 

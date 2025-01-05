@@ -8,6 +8,7 @@ use crate::core::plugin;
 use ::nvim_oxi::api as nvim;
 use ::regex::Regex;
 use std::fs::File;
+use std::io::BufReader;
 use std::path::PathBuf;
 use std::sync::LazyLock;
 
@@ -23,7 +24,7 @@ pub(crate) fn data_dir() -> &'static PathBuf {
     &DATA_DIR
 }
 
-pub(crate) fn read_json_file() -> File {
+pub(crate) fn open_file() -> File {
     // get the JSON filename for the current working directory
     // CHECK: if below replace() call can be included into regex pattern
     let json_filename = std::env::current_dir().unwrap().to_string_lossy().replace("@", "@@");
@@ -39,3 +40,13 @@ pub(crate) fn read_json_file() -> File {
         File::options().read(true).write(true).open(json_filepath).unwrap()
     }
 }
+
+pub(crate) fn load(state: &mut plugin::State) -> ::serde_json::Result<()> {
+    let configs: Vec<TaskConfigJson> =
+        ::serde_json::from_reader(BufReader::new(&state.runtime_file))?;
+    state.configs = configs;
+
+    Ok(())
+}
+
+// pub(crate) fn save_configs() {}
