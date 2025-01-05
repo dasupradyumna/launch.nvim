@@ -20,9 +20,9 @@ fn launch() -> Dictionary {
         ("task", Function::from_fn(|()| plugin::task()).into()),
         ("debugger", Function::from_fn(|()| plugin::debugger()).into()),
         (
-            "task_state",
+            "plugin_state",
             Function::from_fn(|()| {
-                ::nvim_oxi::dbg!(&plugin::state!().task);
+                ::nvim_oxi::dbg!(&plugin::state!());
             })
             .into(),
         ),

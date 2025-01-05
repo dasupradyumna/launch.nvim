@@ -2,7 +2,7 @@
 
 command! LaunchTask lua require('launch').task()
 command! LaunchDebugger lua require('launch').debugger()
-command! LaunchTaskState lua require('launch').task_state()
+command! LaunchPluginState lua require('launch').plugin_state()
 
 augroup launch_nvim
     autocmd!

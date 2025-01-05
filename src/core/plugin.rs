@@ -1,10 +1,12 @@
 /*--------------------------------------- PLUGIN STATE-API ---------------------------------------*/
 
 use super::task::{self, ActiveTask};
+use crate::config;
 use crate::settings::Settings;
 use crate::utils::notify;
 use ::nvim_oxi::api::Window;
 use ::nvim_oxi::Object;
+use std::fs::File;
 use std::sync::{LazyLock, Mutex};
 
 pub(crate) static STATE: LazyLock<Mutex<State>> = LazyLock::new(|| Mutex::new(State::new()));
@@ -17,6 +19,7 @@ pub(crate) use state;
 
 #[derive(Debug)]
 pub(crate) struct State {
+    pub(crate) runtime_file: File,
     pub(crate) settings: Settings,
     pub(crate) task: StateTask,
 }
@@ -30,6 +33,7 @@ pub(crate) struct StateTask {
 impl State {
     pub(crate) fn new() -> Self {
         Self {
+            runtime_file: config::read_json_file(),
             settings: Settings::new(),
             task: StateTask {
                 active_list: Vec::new(),
@@ -39,15 +43,12 @@ impl State {
     }
 }
 
-// WARN: if setup fails, only warning / error notifications are raised
-//       plugin behavior currently does not account for this case
 pub(crate) fn setup(user_settings: Object) {
     let settings = &mut state!().settings;
 
     settings.apply(user_settings);
-    ::nvim_oxi::dbg!(settings);
 
-    let data_dir = crate::config::data_dir();
+    let data_dir = config::data_dir();
     ::nvim_oxi::dbg!(data_dir);
     std::fs::create_dir_all(data_dir)
         .unwrap_or_else(|err| notify::send!(Error: {format!("creating data dir - {err}")}));
@@ -55,8 +56,6 @@ pub(crate) fn setup(user_settings: Object) {
 
 pub(crate) fn task() {
     ///////////////// testing config ///////////////////////////
-    use crate::config::TaskConfigJson;
-    use std::fs::File;
     use std::io::BufReader;
 
     let reader = BufReader::new(
@@ -68,7 +67,7 @@ pub(crate) fn task() {
             },
         },
     );
-    let config = match serde_json::from_reader::<_, TaskConfigJson>(reader) {
+    let config = match serde_json::from_reader::<_, config::TaskConfigJson>(reader) {
         Ok(json_config) => {
             ::nvim_oxi::dbg!(&json_config);
             json_config.into()

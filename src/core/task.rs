@@ -7,7 +7,7 @@ use ::nvim_oxi::api::types::{
     Mode, SplitDirection, WindowBorder, WindowConfig, WindowRelativeTo, WindowStyle, WindowTitle,
     WindowTitlePosition,
 };
-use ::nvim_oxi::api::{self, Buffer};
+use ::nvim_oxi::api::{self as nvim, Buffer};
 
 #[derive(Debug)]
 pub(crate) struct ActiveTask {
@@ -31,15 +31,15 @@ fn render(buffer: &Buffer, config: &TaskConfig) -> ::nvim_oxi::Result<()> {
     if let Some(ref window) = state.task.windows[display_id] {
         let opts = OptionOpts::builder().win(window.clone()).build();
 
-        api::set_current_win(window)?;
-        api::set_option_value("winfixbuf", false, &opts)?;
-        api::set_current_buf(buffer)?;
-        api::set_option_value("winfixbuf", true, &opts)?;
+        nvim::set_current_win(window)?;
+        nvim::set_option_value("winfixbuf", false, &opts)?;
+        nvim::set_current_buf(buffer)?;
+        nvim::set_option_value("winfixbuf", true, &opts)?;
     } else {
         let ui_settings = &state.settings.task.ui;
 
-        let screen_w: u32 = api::get_option_value("columns", &OptionOpts::default())?;
-        let screen_h: u32 = api::get_option_value("lines", &OptionOpts::default())?;
+        let screen_w: u32 = nvim::get_option_value("columns", &OptionOpts::default())?;
+        let screen_h: u32 = nvim::get_option_value("lines", &OptionOpts::default())?;
 
         let mut config_builder = WindowConfig::builder();
         let win_config = match config.display() {
@@ -71,12 +71,12 @@ fn render(buffer: &Buffer, config: &TaskConfig) -> ::nvim_oxi::Result<()> {
         };
 
         // ::nvim_oxi::dbg!(&config);
-        let mut window = api::open_win(buffer, true, &win_config)?;
+        let mut window = nvim::open_win(buffer, true, &win_config)?;
         let opts = OptionOpts::builder().win(window.clone()).build();
-        api::set_option_value("winfixbuf", true, &opts)?;
+        nvim::set_option_value("winfixbuf", true, &opts)?;
         window.set_var("launch_nvim_taskdisplay", display_id)?;
 
-        api::exec_autocmds(
+        nvim::exec_autocmds(
             ["User"],
             &ExecAutocmdsOpts::builder()
                 .group("launch_nvim")
@@ -92,9 +92,9 @@ fn render(buffer: &Buffer, config: &TaskConfig) -> ::nvim_oxi::Result<()> {
 
 pub(crate) fn run(config: TaskConfig) -> ::nvim_oxi::Result<ActiveTask> {
     // create a new task buffer
-    let buffer = api::create_buf(false, true)?;
+    let buffer = nvim::create_buf(false, true)?;
     let opts = OptionOpts::builder().buffer(buffer.clone()).build();
-    api::set_option_value("filetype", "launch_nvim_task", &opts)?;
+    nvim::set_option_value("filetype", "launch_nvim_task", &opts)?;
 
     // open the UI window and load the task buffer
     render(&buffer, &config)?;
@@ -105,11 +105,11 @@ pub(crate) fn run(config: TaskConfig) -> ::nvim_oxi::Result<ActiveTask> {
     let term_options = config.term_options();
     // ::nvim_oxi::dbg!(&command);
     // ::nvim_oxi::dbg!(&term_options);
-    let _job: i32 = api::call_function("termopen", (command, term_options))?;
+    let _job: i32 = nvim::call_function("termopen", (command, term_options))?;
 
     // enter insert mode after launching the task
     if plugin::state!().settings.task.insert_mode_on_launch {
-        api::feedkeys("i", Mode::Normal, false);
+        nvim::feedkeys("i", Mode::Normal, false);
     }
 
     Ok(ActiveTask { buffer, config })
