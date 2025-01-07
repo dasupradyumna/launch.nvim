@@ -7,8 +7,9 @@ pub(crate) use task::*;
 use crate::core::plugin;
 use ::nvim_oxi::api as nvim;
 use ::regex::Regex;
+use ::serde_json as json;
 use std::fs::File;
-use std::io::BufReader;
+use std::io::{BufReader, BufWriter};
 use std::path::PathBuf;
 use std::sync::LazyLock;
 
@@ -41,13 +42,17 @@ pub(crate) fn open_file() -> File {
     }
 }
 
-pub(crate) fn load() -> ::serde_json::Result<()> {
+pub(crate) fn load() -> json::Result<()> {
     let mut state = plugin::state!();
-    let configs: Vec<TaskConfigJson> =
-        ::serde_json::from_reader(BufReader::new(&state.runtime_file))?;
+    let reader = BufReader::new(&state.runtime_file);
+    let configs = json::from_reader(reader)?;
     state.configs = configs;
 
     Ok(())
 }
 
-// pub(crate) fn save_configs() {}
+pub(crate) fn save() -> json::Result<()> {
+    let state = plugin::state!();
+    let writer = BufWriter::new(&state.runtime_file);
+    json::to_writer(writer, &state.configs)
+}
