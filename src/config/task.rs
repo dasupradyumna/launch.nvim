@@ -1,6 +1,6 @@
 /*-------------------------------------- TASK CONFIGURATION --------------------------------------*/
 
-use crate::settings::SettingsTask;
+use crate::core::plugin;
 use crate::utils::serde::StructVisitor;
 use ::nvim_oxi::{Dictionary, Object};
 use ::serde::{de::EnumAccess, de::Error, de::Visitor, Deserialize};
@@ -88,7 +88,7 @@ impl<'de> Visitor<'de> for StructVisitor<TaskDisplayFloatSize> {
 
 // REMOVE: all unwrap() calls with Result<...> as return types
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Clone, Deserialize)]
 pub(crate) struct TaskConfigJson {
     name: String,
     command: String,
@@ -99,15 +99,16 @@ pub(crate) struct TaskConfigJson {
     // shell: Option<???>
 }
 
-impl TaskConfigJson {
-    pub(crate) fn build_config(&self, settings: &SettingsTask) -> TaskConfig {
+impl Into<TaskConfig> for TaskConfigJson {
+    fn into(self) -> TaskConfig {
+        let task_settings = &plugin::state!().settings.task;
         TaskConfig {
-            name: self.name.clone(),
-            command: self.command.clone(),
-            args: self.args.clone().unwrap_or_default(),
-            display: self.display.unwrap_or(settings.ui.display),
-            cwd: self.cwd.clone().unwrap_or_else(|| std::env::current_dir().unwrap()),
-            env: self.env.clone().unwrap_or_default(),
+            name: self.name,
+            command: self.command,
+            args: self.args.unwrap_or_default(),
+            display: self.display.unwrap_or(task_settings.ui.display),
+            cwd: self.cwd.unwrap_or_else(|| std::env::current_dir().unwrap()),
+            env: self.env.unwrap_or_default(),
         }
     }
 }

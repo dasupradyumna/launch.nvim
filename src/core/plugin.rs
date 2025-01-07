@@ -9,7 +9,7 @@ use ::nvim_oxi::Object;
 use std::fs::File;
 use std::sync::{LazyLock, Mutex};
 
-pub(crate) static STATE: LazyLock<Mutex<State>> = LazyLock::new(|| Mutex::new(State::new()));
+pub(crate) static STATE: LazyLock<Mutex<State>> = LazyLock::new(Mutex::default);
 macro_rules! state {
     () => {{
         crate::core::plugin::STATE.lock().unwrap()
@@ -31,8 +31,8 @@ pub(crate) struct StateTask {
     pub(crate) windows: [Option<Window>; 3],
 }
 
-impl State {
-    pub(crate) fn new() -> Self {
+impl Default for State {
+    fn default() -> Self {
         Self {
             runtime_file: config::open_file(),
             settings: Settings::new(),
@@ -46,32 +46,28 @@ impl State {
 }
 
 pub(crate) fn setup(user_settings: Object) {
-    let mut state = state!();
-
-    state.settings.apply(user_settings);
+    {
+        let settings = &mut state!().settings;
+        settings.apply(user_settings);
+    }
 
     let data_dir = config::data_dir();
     ::nvim_oxi::dbg!(data_dir);
     std::fs::create_dir_all(data_dir)
         .unwrap_or_else(|err| notify::send!(Error: {format!("creating data dir - {err}")}));
 
-    if let Err(e) = config::load(&mut state) {
+    if let Err(e) = config::load() {
         notify::send!(Warn: {format!("parsing config file - {e}")});
     }
 }
 
 pub(crate) fn task() {
-    let config;
+    let config_json = { state!().configs[0].clone() };
 
-    // HACK: this is due mutex locking issues, design revision is required
-    {
-        let state = state!();
-        let task_settings = &state.settings.task;
-        config = state.configs[0].build_config(task_settings);
-    }
-
-    match task::run(config) {
-        Ok(active_task) => state!().task.active_list.push(active_task),
+    match task::run(config_json.into()) {
+        Ok(active_task) => {
+            state!().task.active_list.push(active_task);
+        },
         Err(e) => notify::send!(Warn: {format!("{e}")}),
     };
 }

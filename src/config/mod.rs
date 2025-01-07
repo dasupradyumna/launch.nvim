@@ -41,7 +41,8 @@ pub(crate) fn open_file() -> File {
     }
 }
 
-pub(crate) fn load(state: &mut plugin::State) -> ::serde_json::Result<()> {
+pub(crate) fn load() -> ::serde_json::Result<()> {
+    let mut state = plugin::state!();
     let configs: Vec<TaskConfigJson> =
         ::serde_json::from_reader(BufReader::new(&state.runtime_file))?;
     state.configs = configs;
