@@ -3,7 +3,8 @@
 use crate::core::plugin;
 use crate::utils::serde::StructVisitor;
 use ::nvim_oxi::{Dictionary, Object};
-use ::serde::{de::EnumAccess, de::Error, de::Visitor, Deserialize};
+use ::serde::de::{EnumAccess, Error, Visitor};
+use ::serde::{Deserialize, Deserializer, Serialize, Serializer};
 use std::collections::HashMap;
 use std::path::PathBuf;
 
@@ -18,10 +19,23 @@ pub(crate) enum TaskDisplay {
     HSplit,
 }
 
+impl Serialize for TaskDisplay {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        match self {
+            Self::Float => serializer.serialize_str("float"),
+            Self::HSplit => serializer.serialize_str("hsplit"),
+            Self::VSplit => serializer.serialize_str("vsplit"),
+        }
+    }
+}
+
 impl<'de> Deserialize<'de> for TaskDisplay {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
-        D: serde::Deserializer<'de>,
+        D: Deserializer<'de>,
     {
         deserializer.deserialize_enum("", &[], StructVisitor::<TaskDisplay>::new())
     }
@@ -59,7 +73,7 @@ pub(crate) enum TaskDisplayFloatSize {
 impl<'de> Deserialize<'de> for TaskDisplayFloatSize {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
-        D: serde::Deserializer<'de>,
+        D: Deserializer<'de>,
     {
         deserializer.deserialize_enum("", &[], StructVisitor::<TaskDisplayFloatSize>::new())
     }
@@ -88,7 +102,7 @@ impl<'de> Visitor<'de> for StructVisitor<TaskDisplayFloatSize> {
 
 // REMOVE: all unwrap() calls with Result<...> as return types
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub(crate) struct TaskConfigJson {
     name: String,
     command: String,
