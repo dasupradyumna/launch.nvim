@@ -6,7 +6,7 @@ use crate::settings::Settings;
 use crate::utils::notify;
 use ::nvim_oxi::api::Window;
 use ::nvim_oxi::Object;
-use std::fs::File;
+use std::path::PathBuf;
 use std::sync::{LazyLock, Mutex};
 
 pub(crate) static STATE: LazyLock<Mutex<State>> = LazyLock::new(Mutex::default);
@@ -19,7 +19,7 @@ pub(crate) use state;
 
 #[derive(Debug)]
 pub(crate) struct State {
-    pub(crate) runtime_file: File,
+    pub(crate) runtime_file: PathBuf,
     pub(crate) settings: Settings,
     pub(crate) task: StateTask,
     pub(crate) configs: Vec<TaskConfigJson>,
@@ -34,7 +34,7 @@ pub(crate) struct StateTask {
 impl Default for State {
     fn default() -> Self {
         Self {
-            runtime_file: config::open_file(),
+            runtime_file: config::get_runtime_filepath(),
             settings: Settings::new(),
             task: StateTask {
                 active_list: Vec::new(),
@@ -51,7 +51,7 @@ pub(crate) fn setup(user_settings: Object) {
         settings.apply(user_settings);
     }
 
-    let data_dir = config::data_dir();
+    let data_dir = config::get_data_dir();
     ::nvim_oxi::dbg!(data_dir);
     std::fs::create_dir_all(data_dir)
         .unwrap_or_else(|err| notify::send!(Error: {format!("creating data dir - {err}")}));

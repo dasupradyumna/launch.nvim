@@ -113,16 +113,16 @@ pub(crate) struct TaskConfigJson {
     // shell: Option<???>
 }
 
-impl Into<TaskConfig> for TaskConfigJson {
-    fn into(self) -> TaskConfig {
+impl From<TaskConfigJson> for TaskConfig {
+    fn from(value: TaskConfigJson) -> Self {
         let task_settings = &plugin::state!().settings.task;
         TaskConfig {
-            name: self.name,
-            command: self.command,
-            args: self.args.unwrap_or_default(),
-            display: self.display.unwrap_or(task_settings.ui.display),
-            cwd: self.cwd.unwrap_or_else(|| std::env::current_dir().unwrap()),
-            env: self.env.unwrap_or_default(),
+            name: value.name,
+            command: value.command,
+            args: value.args.unwrap_or_default(),
+            display: value.display.unwrap_or(task_settings.ui.display),
+            cwd: value.cwd.unwrap_or_else(|| std::env::current_dir().unwrap()),
+            env: value.env.unwrap_or_default(),
         }
     }
 }
