@@ -113,6 +113,12 @@ pub(crate) struct TaskConfigJson {
     // shell: Option<???>
 }
 
+impl TaskConfigJson {
+    pub(crate) fn name(&self) -> &String {
+        &self.name
+    }
+}
+
 impl From<TaskConfigJson> for TaskConfig {
     fn from(value: TaskConfigJson) -> Self {
         let task_settings = &plugin::state!().settings.task;

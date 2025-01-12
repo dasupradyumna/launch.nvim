@@ -61,6 +61,10 @@ pub(crate) fn setup(user_settings: Object) {
     }
 }
 
+pub(crate) fn launch() {
+    let _ = crate::launcher::open();
+}
+
 pub(crate) fn task() {
     let config_json = { state!().configs[0].clone() };
 
