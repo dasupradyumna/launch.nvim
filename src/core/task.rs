@@ -10,28 +10,10 @@ use ::nvim_oxi::api::types::{
 };
 use ::nvim_oxi::api::{self as nvim, Buffer, Window};
 
-// TODO: replace with a macro??
-#[derive(Debug)]
-pub(crate) struct State {
-    active_list: Vec<ActiveTask>,
-    windows: [Option<Window>; 3],
-}
-impl Default for State {
-    fn default() -> Self {
-        Self {
-            active_list: Vec::new(),
-            windows: [const { None }; 3],
-        }
-    }
-}
-use std::sync::{LazyLock, Mutex};
-pub(crate) static _STATE: LazyLock<Mutex<State>> = LazyLock::new(Mutex::default);
-macro_rules! state {
-    () => {
-        crate::core::task::_STATE.lock().unwrap()
-    };
-}
-pub(crate) use state;
+crate::utils::setup_module_state!(core::task, {
+    active_list: Vec<ActiveTask> = Vec::new(),
+    windows: [Option<Window>; 3] = [const { None }; 3],
+});
 
 #[derive(Debug)]
 pub(crate) struct ActiveTask {

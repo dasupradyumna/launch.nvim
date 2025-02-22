@@ -9,30 +9,12 @@ use ::regex::Regex;
 use ::serde_json as json;
 use std::fmt;
 use std::path::PathBuf;
-// use std::sync::LazyLock;
+use std::sync::LazyLock;
 
-// TODO: replace with a macro??
-#[derive(Debug)]
-pub(crate) struct State {
-    filepath: PathBuf,
-    pub(crate) list: Vec<TaskConfigJson>,
-}
-impl Default for State {
-    fn default() -> Self {
-        Self {
-            filepath: self::get_runtime_filepath(),
-            list: Vec::new(),
-        }
-    }
-}
-use std::sync::{LazyLock, Mutex};
-pub(crate) static _STATE: LazyLock<Mutex<State>> = LazyLock::new(Mutex::default);
-macro_rules! state {
-    () => {
-        crate::config::_STATE.lock().unwrap()
-    };
-}
-pub(crate) use state;
+crate::utils::setup_module_state!(config, {
+    filepath: PathBuf = self::get_runtime_filepath(),
+    pub(crate) list: Vec<TaskConfigJson> = Vec::new(),
+});
 
 pub(crate) fn get_data_dir() -> &'static PathBuf {
     static DATA_DIR: LazyLock<PathBuf> = LazyLock::new(|| {
