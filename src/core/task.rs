@@ -1,7 +1,7 @@
 /*------------------------------------------ TASK RUNNER -----------------------------------------*/
 
-use super::plugin;
 use crate::config::{TaskConfig, TaskDisplay};
+use crate::settings::state as settings;
 use crate::utils;
 use ::nvim_oxi::api::opts::{ExecAutocmdsOpts, OptionOpts};
 use ::nvim_oxi::api::types::{
@@ -10,7 +10,8 @@ use ::nvim_oxi::api::types::{
 };
 use ::nvim_oxi::api::{self as nvim, Buffer, Window};
 
-crate::utils::setup_module_state!(core::task, {
+crate::utils::setup_module_state!(core::task,
+{
     active_list: Vec<ActiveTask> = Vec::new(),
     windows: [Option<Window>; 3] = [const { None }; 3],
 });
@@ -33,7 +34,7 @@ fn render(buffer: &Buffer, config: &TaskConfig) -> ::nvim_oxi::Result<()> {
         nvim::set_current_buf(buffer)?;
         nvim::set_option_value("winfixbuf", true, &opts)?;
     } else {
-        let ui_settings = &plugin::state!().settings.task.ui;
+        let ui_settings = &settings!().task.ui;
 
         let screen_width: u32 = nvim::get_option_value("columns", &OptionOpts::default())?;
         let screen_height: u32 = nvim::get_option_value("lines", &OptionOpts::default())?;
@@ -109,7 +110,7 @@ pub(crate) fn run(config: TaskConfig) -> ::nvim_oxi::Result<()> {
     let _job: i32 = nvim::call_function("termopen", (command, term_options))?;
 
     // enter insert mode after launching the task
-    let task_settings = &plugin::state!().settings.task;
+    let task_settings = &settings!().task;
     if task_settings.insert_mode_on_launch {
         nvim::feedkeys("i", Mode::Normal, false);
     }

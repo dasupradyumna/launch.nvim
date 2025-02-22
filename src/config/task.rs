@@ -1,6 +1,6 @@
 /*-------------------------------------- TASK CONFIGURATION --------------------------------------*/
 
-use crate::core::plugin;
+use crate::settings::state as settings;
 use crate::utils::serde::StructVisitor;
 use ::nvim_oxi::{Dictionary, Object};
 use ::serde::de::{EnumAccess, Error, Visitor};
@@ -121,7 +121,7 @@ impl TaskConfigJson {
 
 impl From<TaskConfigJson> for TaskConfig {
     fn from(value: TaskConfigJson) -> Self {
-        let task_settings = &plugin::state!().settings.task;
+        let task_settings = &settings!().task;
         TaskConfig {
             name: value.name,
             command: value.command,

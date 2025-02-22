@@ -4,6 +4,7 @@ pub(crate) mod notify;
 pub(crate) mod serde;
 
 macro_rules! setup_module_state {
+
     ( $( $path:ident )::+ , {
         $( $pub:vis $field:ident: $field_type:ty = $field_default:expr ,)+
     } ) => {
@@ -22,6 +23,18 @@ macro_rules! setup_module_state {
 
         // Static state variable definition along with a macro for convenient access
         pub(crate) static _STATE: std::sync::LazyLock<std::sync::Mutex<_State>> =
+            std::sync::LazyLock::new(std::sync::Mutex::default);
+        macro_rules! state {
+            () => { crate::$( $path ::)+_STATE.lock().unwrap() };
+        }
+        pub(crate) use state;
+
+    };
+
+    ( $( $path:ident )::+ , $struct:ty ) => {
+
+        // Static state variable definition along with a macro for convenient access
+        pub(crate) static _STATE: std::sync::LazyLock<std::sync::Mutex<$struct>> =
             std::sync::LazyLock::new(std::sync::Mutex::default);
         macro_rules! state {
             () => { crate::$( $path ::)+_STATE.lock().unwrap() };

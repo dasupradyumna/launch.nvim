@@ -11,7 +11,8 @@ use std::fmt;
 use std::path::PathBuf;
 use std::sync::LazyLock;
 
-crate::utils::setup_module_state!(config, {
+crate::utils::setup_module_state!(config,
+{
     filepath: PathBuf = self::get_runtime_filepath(),
     pub(crate) list: Vec<TaskConfigJson> = Vec::new(),
 });

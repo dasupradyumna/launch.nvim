@@ -31,11 +31,11 @@ macro_rules! setup_deserializable_structs {
             $( $pub2 $field_struct: $field_struct_type ,)*
         }
 
-        impl $struct_name {
-            $pub0 const fn new() -> Self {
+        impl Default for $struct_name {
+            fn default() -> Self {
                 Self {
                     $( $field: $field_default ,)*
-                    $( $field_struct: $field_struct_type::new() ,)*
+                    $( $field_struct: $field_struct_type::default() ,)*
                 }
             }
         }
@@ -76,7 +76,7 @@ macro_rules! setup_deserializable_structs {
 
                 Ok(Self::Value {
                     $( $field: $field.unwrap_or($field_default) ,)*
-                    $( $field_struct: $field_struct.unwrap_or_else($field_struct_type::new) ,)*
+                    $( $field_struct: $field_struct.unwrap_or_else($field_struct_type::default) ,)*
                 })
             }
         }

@@ -6,7 +6,7 @@ mod launcher;
 mod settings;
 mod utils;
 
-use crate::core::{plugin, task};
+use crate::core::task;
 use ::nvim_oxi::{Dictionary, Function, Object};
 
 #[nvim_oxi::plugin]
@@ -16,18 +16,11 @@ fn launch() -> Dictionary {
         ("on_task_winclosed", Function::from_fn(task::on_winclosed)),
     ]);
 
-    Dictionary::from_iter::<[(_, Object); 6]>([
-        ("setup", Function::from_fn(plugin::setup).into()),
-        ("task", Function::from_fn(|()| plugin::task()).into()),
-        ("debugger", Function::from_fn(|()| plugin::debugger()).into()),
-        ("launch", Function::from_fn(|()| plugin::launch()).into()),
-        (
-            "plugin_state",
-            Function::from_fn(|()| {
-                ::nvim_oxi::dbg!(&plugin::state!());
-            })
-            .into(),
-        ),
+    Dictionary::from_iter::<[(_, Object); 5]>([
+        ("setup", Function::from_fn(core::setup).into()),
+        ("task", Function::from_fn(|()| core::task_()).into()),
+        ("debugger", Function::from_fn(|()| core::debugger()).into()),
+        ("launch", Function::from_fn(|()| core::launch()).into()),
         ("_impl_", _impl_.into()),
     ])
 }
