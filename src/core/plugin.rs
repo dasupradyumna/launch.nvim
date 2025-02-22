@@ -1,10 +1,9 @@
 /*--------------------------------------- PLUGIN STATE-API ---------------------------------------*/
 
-use super::task::{self, ActiveTask};
+use super::task::{self};
 use crate::config::{self, TaskConfigJson};
 use crate::settings::Settings;
 use crate::utils::notify;
-use ::nvim_oxi::api::Window;
 use ::nvim_oxi::Object;
 use std::path::PathBuf;
 use std::sync::{LazyLock, Mutex};
@@ -21,14 +20,7 @@ pub(crate) use state;
 pub(crate) struct State {
     pub(crate) runtime_file: PathBuf,
     pub(crate) settings: Settings,
-    pub(crate) task: StateTask,
     pub(crate) configs: Vec<TaskConfigJson>,
-}
-
-#[derive(Debug)]
-pub(crate) struct StateTask {
-    pub(crate) active_list: Vec<ActiveTask>,
-    pub(crate) windows: [Option<Window>; 3],
 }
 
 impl Default for State {
@@ -36,10 +28,6 @@ impl Default for State {
         Self {
             runtime_file: config::get_runtime_filepath(),
             settings: Settings::new(),
-            task: StateTask {
-                active_list: Vec::new(),
-                windows: [const { None }; 3],
-            },
             configs: Vec::new(),
         }
     }
@@ -68,12 +56,9 @@ pub(crate) fn launch() {
 pub(crate) fn task() {
     let config_json = { state!().configs[0].clone() };
 
-    match task::run(config_json.into()) {
-        Ok(active_task) => {
-            state!().task.active_list.push(active_task);
-        },
-        Err(e) => notify::send!(Warn: {format!("{e}")}),
-    };
+    if let Err(e) = task::run(config_json.into()) {
+        notify::send!(Warn: {format!("{e}")});
+    }
 }
 
 pub(crate) fn debugger() {

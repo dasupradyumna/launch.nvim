@@ -8,7 +8,30 @@ use ::nvim_oxi::api::types::{
     Mode, SplitDirection, WindowBorder, WindowConfig, WindowRelativeTo, WindowStyle, WindowTitle,
     WindowTitlePosition,
 };
-use ::nvim_oxi::api::{self as nvim, Buffer};
+use ::nvim_oxi::api::{self as nvim, Buffer, Window};
+
+// TODO: replace with a macro??
+#[derive(Debug)]
+pub(crate) struct State {
+    active_list: Vec<ActiveTask>,
+    windows: [Option<Window>; 3],
+}
+impl Default for State {
+    fn default() -> Self {
+        Self {
+            active_list: Vec::new(),
+            windows: [const { None }; 3],
+        }
+    }
+}
+use std::sync::{LazyLock, Mutex};
+pub(crate) static _STATE: LazyLock<Mutex<State>> = LazyLock::new(Mutex::default);
+macro_rules! state {
+    () => {
+        crate::core::task::_STATE.lock().unwrap()
+    };
+}
+pub(crate) use state;
 
 #[derive(Debug)]
 pub(crate) struct ActiveTask {
@@ -17,10 +40,10 @@ pub(crate) struct ActiveTask {
 }
 
 fn render(buffer: &Buffer, config: &TaskConfig) -> ::nvim_oxi::Result<()> {
-    let mut state = plugin::state!();
+    let task_windows = &mut self::state!().windows;
     let display_id = config.display() as usize;
 
-    if let Some(ref window) = state.task.windows[display_id] {
+    if let Some(ref window) = task_windows[display_id] {
         let opts = OptionOpts::builder().win(window.clone()).build();
 
         nvim::set_current_win(window)?;
@@ -28,7 +51,7 @@ fn render(buffer: &Buffer, config: &TaskConfig) -> ::nvim_oxi::Result<()> {
         nvim::set_current_buf(buffer)?;
         nvim::set_option_value("winfixbuf", true, &opts)?;
     } else {
-        let ui_settings = &state.settings.task.ui;
+        let ui_settings = &plugin::state!().settings.task.ui;
 
         let screen_width: u32 = nvim::get_option_value("columns", &OptionOpts::default())?;
         let screen_height: u32 = nvim::get_option_value("lines", &OptionOpts::default())?;
@@ -80,13 +103,13 @@ fn render(buffer: &Buffer, config: &TaskConfig) -> ::nvim_oxi::Result<()> {
                 .build(),
         )?;
 
-        state.task.windows[display_id] = Some(window);
+        task_windows[display_id] = Some(window);
     }
 
     Ok(())
 }
 
-pub(crate) fn run(config: TaskConfig) -> ::nvim_oxi::Result<ActiveTask> {
+pub(crate) fn run(config: TaskConfig) -> ::nvim_oxi::Result<()> {
     // create a new task buffer
     let buffer = nvim::create_buf(false, true)?;
     let opts = OptionOpts::builder().buffer(buffer.clone()).build();
@@ -109,16 +132,17 @@ pub(crate) fn run(config: TaskConfig) -> ::nvim_oxi::Result<ActiveTask> {
         nvim::feedkeys("i", Mode::Normal, false);
     }
 
-    Ok(ActiveTask { buffer, config })
+    self::state!().active_list.push(ActiveTask { buffer, config });
+    Ok(())
 }
 
 pub(crate) fn on_bufwipeout(buffer: i32) {
-    let active_tasks = &mut plugin::state!().task.active_list;
+    let active_tasks = &mut self::state!().active_list;
     if let Some(idx) = active_tasks.iter().position(|e| e.buffer.handle() == buffer) {
         active_tasks.swap_remove(idx);
     }
 }
 
 pub(crate) fn on_winclosed(display_id: i32) {
-    plugin::state!().task.windows[display_id as usize] = None;
+    self::state!().windows[display_id as usize] = None;
 }
