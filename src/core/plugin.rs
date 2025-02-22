@@ -1,11 +1,10 @@
 /*--------------------------------------- PLUGIN STATE-API ---------------------------------------*/
 
-use super::task::{self};
-use crate::config::{self, TaskConfigJson};
+use super::task;
+use crate::config;
 use crate::settings::Settings;
 use crate::utils::notify;
 use ::nvim_oxi::Object;
-use std::path::PathBuf;
 use std::sync::{LazyLock, Mutex};
 
 pub(crate) static STATE: LazyLock<Mutex<State>> = LazyLock::new(Mutex::default);
@@ -18,18 +17,12 @@ pub(crate) use state;
 
 #[derive(Debug)]
 pub(crate) struct State {
-    pub(crate) runtime_file: PathBuf,
     pub(crate) settings: Settings,
-    pub(crate) configs: Vec<TaskConfigJson>,
 }
 
 impl Default for State {
     fn default() -> Self {
-        Self {
-            runtime_file: config::get_runtime_filepath(),
-            settings: Settings::new(),
-            configs: Vec::new(),
-        }
+        Self { settings: Settings::new() }
     }
 }
 
@@ -54,7 +47,7 @@ pub(crate) fn launch() {
 }
 
 pub(crate) fn task() {
-    let config_json = { state!().configs[0].clone() };
+    let config_json = { config::state!().list[0].clone() };
 
     if let Err(e) = task::run(config_json.into()) {
         notify::send!(Warn: {format!("{e}")});

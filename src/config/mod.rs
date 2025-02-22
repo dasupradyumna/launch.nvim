@@ -4,13 +4,35 @@ mod task;
 
 pub(crate) use task::*;
 
-use crate::core::plugin;
 use ::nvim_oxi::api as nvim;
 use ::regex::Regex;
 use ::serde_json as json;
 use std::fmt;
 use std::path::PathBuf;
-use std::sync::LazyLock;
+// use std::sync::LazyLock;
+
+// TODO: replace with a macro??
+#[derive(Debug)]
+pub(crate) struct State {
+    filepath: PathBuf,
+    pub(crate) list: Vec<TaskConfigJson>,
+}
+impl Default for State {
+    fn default() -> Self {
+        Self {
+            filepath: self::get_runtime_filepath(),
+            list: Vec::new(),
+        }
+    }
+}
+use std::sync::{LazyLock, Mutex};
+pub(crate) static _STATE: LazyLock<Mutex<State>> = LazyLock::new(Mutex::default);
+macro_rules! state {
+    () => {
+        crate::config::_STATE.lock().unwrap()
+    };
+}
+pub(crate) use state;
 
 pub(crate) fn get_data_dir() -> &'static PathBuf {
     static DATA_DIR: LazyLock<PathBuf> = LazyLock::new(|| {
@@ -67,19 +89,19 @@ impl fmt::Display for Error {
 pub(crate) type Result = std::result::Result<(), Error>;
 
 pub(crate) fn load() -> self::Result {
-    let mut state = plugin::state!();
-    if state.runtime_file.is_file() {
-        let config_str = std::fs::read_to_string(&state.runtime_file)?;
-        state.configs = json::from_str(&config_str)?;
+    let mut config = self::state!();
+    if config.filepath.is_file() {
+        let config_str = std::fs::read_to_string(&config.filepath)?;
+        config.list = json::from_str(&config_str)?;
     }
 
     Ok(())
 }
 
 pub(crate) fn save() -> self::Result {
-    let state = plugin::state!();
-    let config_str = json::to_string_pretty(&state.configs)?;
-    std::fs::write(&state.runtime_file, config_str)?;
+    let config = self::state!();
+    let config_str = json::to_string_pretty(&config.list)?;
+    std::fs::write(&config.filepath, config_str)?;
 
     Ok(())
 }

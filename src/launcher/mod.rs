@@ -1,6 +1,6 @@
 /*------------------------------------ CONFIGURATION LAUNCHER ------------------------------------*/
 
-use crate::core::plugin;
+use crate::config;
 use ::nvim_oxi::api as nvim;
 use ::nvim_oxi::api::opts::OptionOpts;
 use ::nvim_oxi::api::types::{
@@ -8,8 +8,7 @@ use ::nvim_oxi::api::types::{
 };
 
 pub(crate) fn open() -> ::nvim_oxi::Result<()> {
-    let state = plugin::state!();
-    let configs = &state.configs;
+    let configs = &config::state!().list;
 
     let mut buffer = nvim::create_buf(false, true)?;
     let opts = OptionOpts::builder().buffer(buffer.clone()).build();
