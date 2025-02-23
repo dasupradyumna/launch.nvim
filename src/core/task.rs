@@ -10,7 +10,7 @@ use ::nvim_oxi::api::types::{
 };
 use ::nvim_oxi::api::{self as nvim, Buffer, Window};
 
-crate::utils::setup_module_state!(core::task,
+utils::setup_module_state!(core::task,
 {
     active_list: Vec<ActiveTask> = Vec::new(),
     windows: [Option<Window>; 3] = [const { None }; 3],

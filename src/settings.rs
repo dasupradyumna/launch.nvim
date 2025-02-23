@@ -1,15 +1,16 @@
 /*---------------------------------------- PLUGIN SETTINGS ---------------------------------------*/
 
 use crate::config::{TaskDisplay, TaskDisplayFloatSize};
+use crate::utils;
 use crate::utils::notify;
 use ::nvim_oxi::serde::Deserializer as NvimOxiDeserializer;
 use ::nvim_oxi::Object;
 
 const WIKI_URL: &str = "https://github.com/dasupradyumna/launch.nvim/wiki/Plugin-Settings";
 
-crate::utils::setup_module_state!(settings, Settings);
+utils::setup_module_state!(settings, Settings);
 
-crate::utils::serde::setup_deserializable_structs! {
+utils::serde::setup_deserializable_structs! {
 
     pub(crate) Settings {
         ---
