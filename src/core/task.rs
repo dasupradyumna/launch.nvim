@@ -4,10 +4,7 @@ use crate::config::{TaskConfig, TaskDisplay};
 use crate::settings::state as settings;
 use crate::utils;
 use ::nvim_oxi::api::opts::{ExecAutocmdsOpts, OptionOpts};
-use ::nvim_oxi::api::types::{
-    Mode, SplitDirection, WindowBorder, WindowConfig, WindowRelativeTo, WindowStyle, WindowTitle,
-    WindowTitlePosition,
-};
+use ::nvim_oxi::api::types::{Mode, SplitDirection, WindowConfig};
 use ::nvim_oxi::api::{self as nvim, Buffer, Window};
 
 utils::setup_module_state!(core::task,
@@ -39,41 +36,33 @@ fn render(buffer: &Buffer, config: &TaskConfig) -> ::nvim_oxi::Result<()> {
         let screen_width: u32 = nvim::get_option_value("columns", &OptionOpts::default())?;
         let screen_height: u32 = nvim::get_option_value("lines", &OptionOpts::default())?;
 
-        let mut config_builder = WindowConfig::builder();
-        let win_config = match config.display() {
+        let mut window = match config.display() {
             TaskDisplay::Float => {
-                let [row, col, width, height] = utils::get_float_position_size(
-                    ui_settings.float.size as u32,
-                    screen_height,
-                    screen_width,
-                );
-                config_builder
-                    .relative(WindowRelativeTo::Editor)
-                    .title(WindowTitle::SimpleString(format!(" {} ", config.name()).into()))
-                    .footer(WindowTitle::SimpleString(" launch.nvim ".into()))
-                    .row(row)
-                    .col(col)
-                    .width(width)
-                    .height(height)
-                    .style(WindowStyle::Minimal)
-                    .title_pos(WindowTitlePosition::Center) // TODO: move to settings
-                    .footer_pos(WindowTitlePosition::Right) // TODO: ...
-                    .border(WindowBorder::Rounded) // TODO: ...
-                    .zindex(49) // TODO: ...
-                    .build()
+                let size = ui_settings.float.size as u32;
+                utils::open_float(
+                    config.name(),
+                    buffer,
+                    screen_width * size / 100,
+                    screen_height * size / 100,
+                )?
             },
             TaskDisplay::VSplit => {
-                let width = (screen_width * ui_settings.vsplit_width as u32) / 100;
-                config_builder.split(SplitDirection::Right).width(width).build()
+                let win_config = WindowConfig::builder()
+                    .split(SplitDirection::Right)
+                    .width(screen_width * ui_settings.vsplit_width as u32 / 100)
+                    .build();
+                nvim::open_win(buffer, true, &win_config)?
             },
             TaskDisplay::HSplit => {
-                let height = (screen_height * ui_settings.hsplit_height as u32) / 100;
-                config_builder.split(SplitDirection::Below).height(height).build()
+                let win_config = WindowConfig::builder()
+                    .split(SplitDirection::Below)
+                    .height(screen_height * ui_settings.hsplit_height as u32 / 100)
+                    .build();
+                nvim::open_win(buffer, true, &win_config)?
             },
         };
 
         // ::nvim_oxi::dbg!(&config);
-        let mut window = nvim::open_win(buffer, true, &win_config)?;
         let opts = OptionOpts::builder().win(window.clone()).build();
         nvim::set_option_value("winfixbuf", true, &opts)?;
         window.set_var("launch_nvim_taskdisplay", display_id)?;

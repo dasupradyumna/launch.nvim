@@ -3,6 +3,9 @@
 pub(crate) mod notify;
 pub(crate) mod serde;
 
+use ::nvim_oxi::api::opts::OptionOpts;
+use ::nvim_oxi::api::{self as nvim, Buffer, Window};
+
 macro_rules! setup_module_state {
 
     ( @state_macro $( $path:ident )::+, $state_struct:tt ) => {
@@ -45,11 +48,43 @@ macro_rules! setup_module_state {
 }
 pub(crate) use setup_module_state;
 
-pub(crate) fn get_float_position_size(size: u32, lines: u32, columns: u32) -> [u32; 4] {
-    let width = columns * size / 100;
-    let height = lines * size / 100;
-    let col = (columns - width) / 2 - 2;
-    let row = (lines - height) / 2 - 2;
+fn get_float_position(width: u32, height: u32) -> ::nvim_oxi::Result<(u32, u32)> {
+    let screen_width: u32 = nvim::get_option_value("columns", &OptionOpts::default())?;
+    let screen_height: u32 = nvim::get_option_value("lines", &OptionOpts::default())?;
+    let col = (screen_width - width) / 2 - 2;
+    let row = (screen_height - height) / 2 - 2;
 
-    [row, col, width, height]
+    Ok((row, col))
+}
+
+pub(crate) fn open_float(
+    title: &str,
+    buffer: &Buffer,
+    width: u32,
+    height: u32,
+) -> ::nvim_oxi::Result<Window> {
+    use ::nvim_oxi::api::types::*;
+
+    let (row, col) = get_float_position(width, height)?;
+
+    let mut config_builder = WindowConfig::builder();
+    let win_config = config_builder
+        .relative(WindowRelativeTo::Editor)
+        .row(row)
+        .col(col)
+        .width(width)
+        .height(height)
+        .title(WindowTitle::SimpleString(format!(" {title} ").into()))
+        .title_pos(WindowTitlePosition::Center)
+        .footer(WindowTitle::SimpleString(" launch.nvim ".into()))
+        .footer_pos(WindowTitlePosition::Right)
+        .border(WindowBorder::Rounded)
+        .style(WindowStyle::Minimal)
+        .zindex(49)
+        .build();
+    let window = nvim::open_win(buffer, true, &win_config)?;
+    let opts = OptionOpts::builder().win(window.clone()).build();
+    nvim::set_option_value("winfixbuf", true, &opts)?;
+
+    Ok(window)
 }
