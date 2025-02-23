@@ -6,25 +6,17 @@ use crate::utils;
 use ::nvim_oxi::api as nvim;
 use ::nvim_oxi::api::opts::{BufDeleteOpts, OptionOpts, SetKeymapOpts};
 use ::nvim_oxi::api::types::Mode;
+use ::nvim_oxi::Array;
 
 fn launch_task() -> ::nvim_oxi::Result<()> {
     let launcher_win = nvim::get_current_win();
-    let index = launcher_win.get_cursor()?.0 - 1;
-
-    let config = {
-        let list = &config::state!().list;
-        if index < 1 || index > list.len() {
-            utils::notify::send!(Warn: {format!("launch_task(): Index out of range = {index}")});
-            return Ok(()); // HACK: remove when navigation keymaps are added
-        }
-
-        list[index - 1].clone()
-    };
+    let index = launcher_win.get_cursor()?.0 - 2;
+    let config = config::state!().list[index].clone().into();
 
     launcher_win.get_buf()?.delete(&BufDeleteOpts::default())?;
     // TODO: add a WinClosed autocommand to wipeout the launcher buffer or cache-reuse buffer ID
     // launcher_win.close(true)?;
-    task::run(config.into())
+    task::run(config)
 }
 
 pub(crate) fn open() -> ::nvim_oxi::Result<()> {
@@ -44,10 +36,12 @@ pub(crate) fn open() -> ::nvim_oxi::Result<()> {
         })
         .build();
     buffer.set_keymap(Mode::Normal, "<CR>", "", &opts)?;
+    buffer.set_var("bounds", Array::from((2, configs.len() as u32 + 1)))?;
 
     let height = configs.len() as u32 + 2;
     let width = configs.iter().map(|c| c.name().len()).max().unwrap() as u32 + 8;
-    utils::open_float("Task Launcher", &buffer, width, height)?;
+    let mut window = utils::open_float("Task Launcher", &buffer, width, height)?;
+    window.set_cursor(2, 0)?;
 
     Ok(())
 }
