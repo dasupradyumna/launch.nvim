@@ -16,10 +16,8 @@ fn launch() -> Dictionary {
         ("on_task_winclosed", Function::from_fn(task::on_winclosed)),
     ]);
 
-    Dictionary::from_iter::<[(_, Object); 5]>([
+    Dictionary::from_iter::<[(_, Object); 3]>([
         ("setup", Function::from_fn(core::setup).into()),
-        ("task", Function::from_fn(|()| core::task_()).into()),
-        ("debugger", Function::from_fn(|()| core::debugger()).into()),
         ("launch", Function::from_fn(|()| core::launch()).into()),
         ("_impl_", _impl_.into()),
     ])

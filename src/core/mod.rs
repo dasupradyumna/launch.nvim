@@ -15,23 +15,10 @@ pub(crate) fn setup(user_settings: Object) {
     std::fs::create_dir_all(data_dir)
         .unwrap_or_else(|err| notify::send!(Error: {format!("creating data dir - {err}")}));
 
-    if let Err(e) = config::load() {
-        notify::send!(Warn: {format!("parsing config file - {e}")});
-    }
+    config::load()
+        .unwrap_or_else(|err| notify::send!(Warn: {format!("parsing config file - {err}")}));
 }
 
 pub(crate) fn launch() {
     let _ = crate::launcher::open();
-}
-
-pub(crate) fn task_() {
-    let config_json = { config::state!().list[0].clone() };
-
-    if let Err(e) = task::run(config_json.into()) {
-        notify::send!(Warn: {format!("{e}")});
-    }
-}
-
-pub(crate) fn debugger() {
-    notify::send!(Info: "Debugger launched!");
 }

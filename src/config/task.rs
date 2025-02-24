@@ -127,7 +127,10 @@ impl From<TaskConfigJson> for TaskConfig {
             command: value.command,
             args: value.args.unwrap_or_default(),
             display: value.display.unwrap_or(task_settings.ui.display),
-            cwd: value.cwd.unwrap_or_else(|| std::env::current_dir().unwrap()),
+            cwd: value
+                .cwd
+                .map(|path| path.canonicalize().unwrap())
+                .unwrap_or_else(|| std::env::current_dir().unwrap()),
             env: value.env.unwrap_or_default(),
         }
     }
@@ -157,16 +160,7 @@ impl TaskConfig {
         let mut ret = String::new();
         ret.push_str(&self.command);
         ret.push(' ');
-        ret += self
-            .args
-            .clone()
-            .iter_mut()
-            .reduce(|acc, e| {
-                acc.push(' ');
-                acc.push_str(e);
-                acc
-            })
-            .unwrap();
+        ret += &self.args.join(" ");
 
         ret.into()
     }

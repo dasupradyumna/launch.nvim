@@ -12,6 +12,7 @@ fn launch_task() -> ::nvim_oxi::Result<()> {
     let launcher_win = nvim::get_current_win();
     let index = launcher_win.get_cursor()?.0 - 2;
     let config = config::state!().list[index].clone().into();
+    ::nvim_oxi::dbg!(&config);
 
     launcher_win.get_buf()?.delete(&BufDeleteOpts::default())?;
     // TODO: add a WinClosed autocommand to wipeout the launcher buffer or cache-reuse buffer ID

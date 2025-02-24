@@ -76,6 +76,7 @@ pub(crate) fn load() -> self::Result {
     if config.filepath.is_file() {
         let config_str = std::fs::read_to_string(&config.filepath)?;
         config.list = json::from_str(&config_str)?;
+        ::nvim_oxi::dbg!(&config.list);
     }
 
     Ok(())
