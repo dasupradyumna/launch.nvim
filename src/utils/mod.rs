@@ -1,7 +1,10 @@
 /*----------------------------------------- UTILITY ITEMS ----------------------------------------*/
 
 pub(crate) mod notify;
+mod result;
 pub(crate) mod serde;
+
+pub(crate) use result::Result;
 
 use ::nvim_oxi::api::opts::OptionOpts;
 use ::nvim_oxi::api::{self as nvim, Buffer, Window};
@@ -48,15 +51,6 @@ macro_rules! setup_module_state {
 }
 pub(crate) use setup_module_state;
 
-fn get_float_position(width: u32, height: u32) -> ::nvim_oxi::Result<(u32, u32)> {
-    let screen_width: u32 = nvim::get_option_value("columns", &OptionOpts::default())?;
-    let screen_height: u32 = nvim::get_option_value("lines", &OptionOpts::default())?;
-    let col = (screen_width - width) / 2 - 2;
-    let row = (screen_height - height) / 2 - 2;
-
-    Ok((row, col))
-}
-
 pub(crate) fn open_float(
     title: &str,
     buffer: &Buffer,
@@ -65,7 +59,11 @@ pub(crate) fn open_float(
 ) -> ::nvim_oxi::Result<Window> {
     use ::nvim_oxi::api::types::*;
 
-    let (row, col) = get_float_position(width, height)?;
+    // Compute top-left row and column for a centered floating window
+    let screen_height: u32 = nvim::get_option_value("lines", &OptionOpts::default())?;
+    let screen_width: u32 = nvim::get_option_value("columns", &OptionOpts::default())?;
+    let row = (screen_height - height) / 2 - 2;
+    let col = (screen_width - width) / 2 - 2;
 
     let mut config_builder = WindowConfig::builder();
     let win_config = config_builder
@@ -83,6 +81,8 @@ pub(crate) fn open_float(
         .zindex(49)
         .build();
     let window = nvim::open_win(buffer, true, &win_config)?;
+
+    // Fix the target buffer
     let opts = OptionOpts::builder().win(window.clone()).build();
     nvim::set_option_value("winfixbuf", true, &opts)?;
 
