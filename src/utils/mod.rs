@@ -4,7 +4,7 @@ pub(crate) mod notify;
 mod result;
 pub(crate) mod serde;
 
-pub(crate) use result::Result;
+pub(crate) use result::{Error, Result};
 
 use ::nvim_oxi::api::opts::OptionOpts;
 use ::nvim_oxi::api::{self as nvim, Buffer, Window};

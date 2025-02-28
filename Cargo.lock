@@ -25,6 +25,7 @@ dependencies = [
  "regex",
  "serde",
  "serde_json",
+ "thiserror",
 ]
 
 [[package]]
@@ -44,6 +45,7 @@ name = "nvim-oxi"
 version = "0.5.1"
 dependencies = [
  "nvim-oxi-api",
+ "nvim-oxi-libuv",
  "nvim-oxi-luajit",
  "nvim-oxi-macros",
  "nvim-oxi-types",
@@ -59,6 +61,14 @@ dependencies = [
  "nvim-oxi-types",
  "serde",
  "serde_repr",
+ "thiserror",
+]
+
+[[package]]
+name = "nvim-oxi-libuv"
+version = "0.5.1"
+dependencies = [
+ "nvim-oxi-luajit",
  "thiserror",
 ]
 
