@@ -15,7 +15,6 @@ fn launch() -> Dictionary {
         ("on_bufwipeout", Function::from_fn(task::on_bufwipeout)),
         ("on_winclosed", Function::from_fn(task::on_winclosed)),
     ]);
-
     let launcher_event_callbacks = Dictionary::from_iter([
         ("on_bufwipeout", Function::from_fn(|()| launcher::on_bufwipeout())),
         ("on_winclosed", Function::from_fn(|()| launcher::on_winclosed())),

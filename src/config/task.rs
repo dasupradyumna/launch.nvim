@@ -106,9 +106,13 @@ impl<'de> Visitor<'de> for StructVisitor<TaskDisplayFloatSize> {
 pub(crate) struct TaskConfigJson {
     name: String,
     command: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
     args: Option<Vec<String>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     display: Option<TaskDisplay>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     cwd: Option<PathBuf>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     env: Option<HashMap<String, String>>,
     // shell: Option<???>
 }

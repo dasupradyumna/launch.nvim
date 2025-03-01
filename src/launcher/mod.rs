@@ -5,8 +5,7 @@ use crate::core::task;
 use crate::utils;
 use ::nvim_oxi::api::opts::{ExecAutocmdsOpts, OptionOpts};
 use ::nvim_oxi::api::{self as nvim, Buffer, Window};
-use ::nvim_oxi::Array;
-use nvim_oxi::{Dictionary, Function};
+use ::nvim_oxi::{Array, Dictionary, Function};
 
 utils::setup_module_state!(launcher,
 {
@@ -14,8 +13,26 @@ utils::setup_module_state!(launcher,
     window: Option<Window> = None,
 });
 
-fn run() -> utils::Result<()> {
-    let index = Window::current().get_cursor()?.0 - 2;
+fn get_config_index() -> utils::Result<usize> {
+    if let Some(ref window) = self::state!().window {
+        Ok(window.get_cursor()?.0 - 2)
+    } else {
+        utils::Error::new("launcher::get_config_index() called when window ID is unset")
+    }
+}
+
+fn delete_config() -> utils::Result<()> {
+    {
+        let index = self::get_config_index()?;
+        config::state!().list.remove(index);
+    }
+    config::save()?;
+
+    Ok(self::open()?)
+}
+
+fn run_config() -> utils::Result<()> {
+    let index = self::get_config_index()?;
     self::close()?;
 
     let config = config::state!().list[index].clone().into();
@@ -25,7 +42,9 @@ fn run() -> utils::Result<()> {
 
 fn close() -> utils::Result<()> {
     let window = unsafe { self::state!().window.clone().unwrap_unchecked() };
-    Ok(window.close(true)?)
+    window.close(true)?;
+
+    Ok(config::save()?)
 }
 
 fn wrap_function(func: fn() -> utils::Result<()>) -> Function<(), ()> {
@@ -43,8 +62,11 @@ pub(crate) fn open() -> utils::Result<()> {
     // Create buffer for launcher UI
     if state.buffer.is_none() {
         let mut buffer = nvim::create_buf(false, true)?;
-        let callback_dict =
-            Dictionary::from_iter([("run", wrap_function(run)), ("close", wrap_function(close))]);
+        let callback_dict = Dictionary::from_iter([
+            ("delete", wrap_function(delete_config)),
+            ("run", wrap_function(run_config)),
+            ("close", wrap_function(close)),
+        ]);
         buffer.set_var("callbacks", callback_dict)?;
 
         let opts = OptionOpts::builder().buffer(buffer.clone()).build();
@@ -63,11 +85,10 @@ pub(crate) fn open() -> utils::Result<()> {
     buffer.set_var("bounds", Array::from((2, n + 1)))?;
 
     // Open a new floating window if it does not exist already
+    let height = n + 2;
+    let width = configs.iter().map(|c| c.name().len()).max().unwrap() as u32 + 8;
     if state.window.is_none() {
-        let height = n + 2;
-        let width = configs.iter().map(|c| c.name().len()).max().unwrap() as u32 + 8;
         state.window = Some(utils::open_float("Task Launcher", &buffer, width, height)?);
-
         nvim::exec_autocmds(
             ["User"],
             &ExecAutocmdsOpts::builder()
@@ -75,9 +96,20 @@ pub(crate) fn open() -> utils::Result<()> {
                 .patterns("LaunchNvimLauncherWindowCreated")
                 .build(),
         )?;
-    }
-    unsafe {
-        state.window.as_mut().unwrap_unchecked().set_cursor(2, 0)?;
+    } else {
+        use ::nvim_oxi::api::types::*;
+
+        let (row, col) = utils::get_float_position(width, height)?;
+        let window = unsafe { state.window.as_mut().unwrap_unchecked() };
+        let win_config = WindowConfig::builder()
+            .relative(WindowRelativeTo::Editor)
+            .row(row)
+            .col(col)
+            .width(width)
+            .height(height)
+            .build();
+        window.set_config(&win_config)?;
+        window.set_cursor(2, 0)?;
     }
 
     Ok(())

@@ -19,7 +19,7 @@ pub(crate) struct ActiveTask {
     config: TaskConfig,
 }
 
-fn render(buffer: &Buffer, config: &TaskConfig) -> ::nvim_oxi::Result<()> {
+fn render(buffer: &Buffer, config: &TaskConfig) -> utils::Result<()> {
     let task_windows = &mut self::state!().windows;
     let display_id = config.display() as usize;
 
@@ -81,7 +81,7 @@ fn render(buffer: &Buffer, config: &TaskConfig) -> ::nvim_oxi::Result<()> {
     Ok(())
 }
 
-pub(crate) fn run(config: TaskConfig) -> ::nvim_oxi::Result<()> {
+pub(crate) fn run(config: TaskConfig) -> utils::Result<()> {
     // create a new task buffer
     let buffer = nvim::create_buf(false, true)?;
     let opts = OptionOpts::builder().buffer(buffer.clone()).build();

@@ -51,22 +51,26 @@ macro_rules! setup_module_state {
 }
 pub(crate) use setup_module_state;
 
-pub(crate) fn open_float(
-    title: &str,
-    buffer: &Buffer,
-    width: u32,
-    height: u32,
-) -> ::nvim_oxi::Result<Window> {
-    use ::nvim_oxi::api::types::*;
-
+pub(crate) fn get_float_position(width: u32, height: u32) -> self::Result<(u32, u32)> {
     // Compute top-left row and column for a centered floating window
     let screen_height: u32 = nvim::get_option_value("lines", &OptionOpts::default())?;
     let screen_width: u32 = nvim::get_option_value("columns", &OptionOpts::default())?;
     let row = (screen_height - height) / 2 - 2;
     let col = (screen_width - width) / 2 - 2;
 
-    let mut config_builder = WindowConfig::builder();
-    let win_config = config_builder
+    Ok((row, col))
+}
+
+pub(crate) fn open_float(
+    title: &str,
+    buffer: &Buffer,
+    width: u32,
+    height: u32,
+) -> self::Result<Window> {
+    use ::nvim_oxi::api::types::*;
+
+    let (row, col) = self::get_float_position(width, height)?;
+    let win_config = WindowConfig::builder()
         .relative(WindowRelativeTo::Editor)
         .row(row)
         .col(col)
@@ -80,7 +84,8 @@ pub(crate) fn open_float(
         .style(WindowStyle::Minimal)
         .zindex(49)
         .build();
-    let window = nvim::open_win(buffer, true, &win_config)?;
+    let mut window = nvim::open_win(buffer, true, &win_config)?;
+    window.set_cursor(2, 0)?;
 
     // Fix the target buffer
     let opts = OptionOpts::builder().win(window.clone()).build();

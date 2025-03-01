@@ -15,11 +15,11 @@ pub(crate) enum Error {
 }
 
 impl Error {
-    pub(crate) fn plugin<M>(message: M) -> Self
+    pub(crate) fn new<M, T>(message: M) -> Result<T>
     where
         M: std::fmt::Display,
     {
-        Self::Plugin(message.to_string())
+        Err(Self::Plugin(message.to_string()))
     }
 }
 
