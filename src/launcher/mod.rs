@@ -15,6 +15,9 @@ utils::setup_module_state!(launcher,
 
 fn get_config_index() -> utils::Result<usize> {
     if let Some(ref window) = self::state!().window {
+        if config::state!().list.is_empty() {
+            return utils::Error::new("No active configurations found.");
+        }
         Ok(window.get_cursor()?.0 - 2)
     } else {
         utils::Error::new("launcher::get_config_index() called when window ID is unset")
@@ -28,7 +31,7 @@ fn delete_config() -> utils::Result<()> {
     }
     config::save()?;
 
-    Ok(self::open()?)
+    self::open()
 }
 
 fn run_config() -> utils::Result<()> {
@@ -37,14 +40,14 @@ fn run_config() -> utils::Result<()> {
 
     let config = config::state!().list[index].clone().into();
     ::nvim_oxi::dbg!(&config);
-    Ok(task::run(config)?)
+    task::run(config)
 }
 
 fn close() -> utils::Result<()> {
     let window = unsafe { self::state!().window.clone().unwrap_unchecked() };
     window.close(true)?;
 
-    Ok(config::save()?)
+    config::save()
 }
 
 fn wrap_function(func: fn() -> utils::Result<()>) -> Function<(), ()> {
@@ -78,17 +81,27 @@ pub(crate) fn open() -> utils::Result<()> {
 
     // Write out configurations in the UI buffer
     let range = 1..buffer.line_count()?;
-    buffer.set_lines(range, true, configs.iter().map(|c| format!("    {}    ", c.name())))?;
+    let lines = if configs.is_empty() {
+        Vec::from_iter([config::NO_CONFIGS_MSG])
+    } else {
+        configs.iter().map(|c| c.name().as_str()).collect()
+    };
+    let opts = OptionOpts::builder().buffer(buffer.clone()).build();
+    nvim::set_option_value("modifiable", true, &opts)?;
+    buffer.set_lines(range, true, lines.iter().map(|s| format!("    {s}    ")))?;
+    nvim::set_option_value("modifiable", false, &opts)?;
 
     // Set UI navigation bounds
-    let n = configs.len() as u32;
+    let n = lines.len() as u32;
     buffer.set_var("bounds", Array::from((2, n + 1)))?;
 
     // Open a new floating window if it does not exist already
     let height = n + 2;
-    let width = configs.iter().map(|c| c.name().len()).max().unwrap() as u32 + 8;
+    let width = lines.iter().map(|l| l.len()).max().unwrap() as u32 + 8;
+    let mut window;
     if state.window.is_none() {
-        state.window = Some(utils::open_float("Task Launcher", &buffer, width, height)?);
+        window = utils::open_float("Task Launcher", &buffer, width, height)?;
+        state.window = Some(window.clone());
         nvim::exec_autocmds(
             ["User"],
             &ExecAutocmdsOpts::builder()
@@ -100,7 +113,7 @@ pub(crate) fn open() -> utils::Result<()> {
         use ::nvim_oxi::api::types::*;
 
         let (row, col) = utils::get_float_position(width, height)?;
-        let window = unsafe { state.window.as_mut().unwrap_unchecked() };
+        window = unsafe { state.window.clone().unwrap_unchecked() };
         let win_config = WindowConfig::builder()
             .relative(WindowRelativeTo::Editor)
             .row(row)
@@ -109,8 +122,11 @@ pub(crate) fn open() -> utils::Result<()> {
             .height(height)
             .build();
         window.set_config(&win_config)?;
-        window.set_cursor(2, 0)?;
-    }
+    };
+
+    window.set_cursor(2, 0)?;
+    let opts = OptionOpts::builder().win(window).build();
+    nvim::set_option_value("cursorline", !configs.is_empty(), &opts)?;
 
     Ok(())
 }

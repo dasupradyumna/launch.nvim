@@ -17,6 +17,8 @@ utils::setup_module_state!(config,
     pub(crate) list: Vec<TaskConfigJson> = Vec::new(),
 });
 
+pub(crate) const NO_CONFIGS_MSG: &str = "-- No active configs --";
+
 pub(crate) fn get_data_dir() -> &'static PathBuf {
     static DATA_DIR: LazyLock<PathBuf> = LazyLock::new(|| {
         let ret: String = nvim::call_function("stdpath", ("data",)).unwrap();
@@ -47,9 +49,9 @@ pub(crate) fn load() -> utils::Result<()> {
     if config.filepath.is_file() {
         let config_str = std::fs::read_to_string(&config.filepath)?;
         config.list = json::from_str(&config_str)?;
-        ::nvim_oxi::dbg!(&config.list);
     }
 
+    ::nvim_oxi::dbg!(&config.list);
     Ok(())
 }
 

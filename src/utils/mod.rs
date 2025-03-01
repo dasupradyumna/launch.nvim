@@ -84,8 +84,7 @@ pub(crate) fn open_float(
         .style(WindowStyle::Minimal)
         .zindex(49)
         .build();
-    let mut window = nvim::open_win(buffer, true, &win_config)?;
-    window.set_cursor(2, 0)?;
+    let window = nvim::open_win(buffer, true, &win_config)?;
 
     // Fix the target buffer
     let opts = OptionOpts::builder().win(window.clone()).build();

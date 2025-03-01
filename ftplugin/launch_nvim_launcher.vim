@@ -4,6 +4,9 @@
 if exists('b:did_ftplugin') | finish | endif
 let b:did_ftplugin = 1
 
+setlocal nomodifiable
+setlocal buftype=nofile
+
 function! s:navigate(up)
     " TODO: change from cursor position to something more robust for navigation
     let cursor = line('.')
