@@ -11,9 +11,18 @@ use ::nvim_oxi::{Dictionary, Function, Object};
 
 #[nvim_oxi::plugin]
 fn launch() -> Dictionary {
+    let task_event_callbacks = Dictionary::from_iter([
+        ("on_bufwipeout", Function::from_fn(task::on_bufwipeout)),
+        ("on_winclosed", Function::from_fn(task::on_winclosed)),
+    ]);
+
+    let launcher_event_callbacks = Dictionary::from_iter([
+        ("on_bufwipeout", Function::from_fn(|()| launcher::on_bufwipeout())),
+        ("on_winclosed", Function::from_fn(|()| launcher::on_winclosed())),
+    ]);
     let _impl_ = Dictionary::from_iter([
-        ("on_task_bufwipeout", Function::from_fn(task::on_bufwipeout)),
-        ("on_task_winclosed", Function::from_fn(task::on_winclosed)),
+        ("task", task_event_callbacks),
+        ("launcher", launcher_event_callbacks),
     ]);
 
     Dictionary::from_iter::<[(_, Object); 3]>([

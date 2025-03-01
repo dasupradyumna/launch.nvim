@@ -9,7 +9,7 @@ pub(crate) enum Error {
     #[error(transparent)]
     Json(#[from] ::serde_json::Error),
     #[error(transparent)]
-    Nvim(::nvim_oxi::Error),
+    Nvim(#[from] ::nvim_oxi::Error),
     #[error("{0}")]
     Plugin(String),
 }

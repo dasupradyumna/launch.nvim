@@ -20,5 +20,7 @@ pub(crate) fn setup(user_settings: Object) {
 }
 
 pub(crate) fn launch() {
-    let _ = crate::launcher::open();
+    if let Err(e) = crate::launcher::open() {
+        notify::send!(Warn: {format!("{e}")});
+    }
 }

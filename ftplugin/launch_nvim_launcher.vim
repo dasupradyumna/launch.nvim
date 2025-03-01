@@ -14,6 +14,10 @@ function! s:navigate(up)
     endif
 endfunction
 
-nnoremap <buffer> q <Cmd>bwipeout<CR>
 nnoremap <buffer> j <Cmd>call <SID>navigate(v:false)<CR>
 nnoremap <buffer> k <Cmd>call <SID>navigate(v:true)<CR>
+
+nnoremap <buffer> q <Cmd>call b:callbacks.close()<CR>
+nnoremap <buffer> <CR> <Cmd>call b:callbacks.run()<CR>
+
+autocmd launch_nvim BufWipeout <buffer> lua require('launch')._impl_.launcher.on_bufwipeout()
