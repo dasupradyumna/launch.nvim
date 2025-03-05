@@ -3,6 +3,7 @@
 mod config;
 mod core;
 mod launcher;
+mod launcher_enum;
 mod settings;
 mod utils;
 
@@ -15,13 +16,13 @@ fn launch() -> Dictionary {
         ("on_bufwipeout", Function::from_fn(task::on_bufwipeout)),
         ("on_winclosed", Function::from_fn(task::on_winclosed)),
     ]);
-    let launcher_event_callbacks = Dictionary::from_iter([
-        ("on_bufwipeout", Function::from_fn(|()| launcher::on_bufwipeout())),
-        ("on_winclosed", Function::from_fn(|()| launcher::on_winclosed())),
-    ]);
+    // let launcher_event_callbacks = Dictionary::from_iter([
+    //     ("on_bufwipeout", Function::from_fn(|()| launcher::on_bufwipeout())),
+    //     ("on_winclosed", Function::from_fn(|()| launcher::on_winclosed())),
+    // ]);
     let _impl_ = Dictionary::from_iter([
         ("task", task_event_callbacks),
-        ("launcher", launcher_event_callbacks),
+        // ("launcher", launcher_event_callbacks),
     ]);
 
     Dictionary::from_iter::<[(_, Object); 3]>([
