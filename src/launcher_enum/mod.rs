@@ -36,10 +36,12 @@ impl Status {
                 let window = utils::open_float("Task Launcher", &buffer, 1, 1)?;
                 select::enter(buffer, window)?;
             },
-            (Select, Closed) => {
-                select::exit();
+            (Select, Closed) => {},
+            _ => {
+                return utils::Error::new(format!(
+                    "Unsupported launcher state transition requested: {self:?} -> {to:?}"
+                ))
             },
-            _ => {},
         }
 
         *self = to;

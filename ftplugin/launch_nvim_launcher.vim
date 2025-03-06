@@ -20,8 +20,17 @@ endfunction
 nnoremap <buffer> <nowait> j <Cmd>call <SID>navigate(v:false)<CR>
 nnoremap <buffer> <nowait> k <Cmd>call <SID>navigate(v:true)<CR>
 
-nnoremap <buffer> q <Cmd>call b:callbacks['q']()<CR>
-"nnoremap <buffer> <nowait> d <Cmd>call b:callbacks.delete()<CR>
-"nnoremap <buffer> <nowait> <CR> <Cmd>call b:callbacks.run()<CR>
+function! s:setup_callbacks()
+    for idx in range(len(b:callbacks))
+        execute printf("nnoremap <buffer> <nowait> %s <Cmd>call b:callbacks[%d][1]()<CR>",
+                    \ b:callbacks[idx][0], idx)
+    endfor
+endfunction
+let b:setup_callbacks = function('s:setup_callbacks')
 
-"autocmd launch_nvim BufWipeout <buffer> lua require('launch')._impl_.launcher.on_bufwipeout()
+function! s:remove_callbacks()
+    for [key, _] in b:callbacks
+        execute 'nunmap <buffer>' key
+    endfor
+endfunction
+let b:remove_callbacks = function('s:remove_callbacks')
