@@ -5,7 +5,7 @@ mod select;
 use crate::utils;
 use ::nvim_oxi::api as nvim;
 
-utils::setup_module_state!(launcher, Status);
+utils::setup_module_state!(launcher, [pub(self)] Status);
 
 #[derive(Debug)]
 enum Status {

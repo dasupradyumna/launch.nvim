@@ -11,7 +11,7 @@ use ::serde_json as json;
 use std::path::PathBuf;
 use std::sync::LazyLock;
 
-utils::setup_module_state!(config,
+utils::setup_module_state!(config, [pub(crate)]
 {
     filepath: PathBuf = self::get_runtime_filepath(),
     pub(crate) list: Vec<TaskConfigJson> = Vec::new(),

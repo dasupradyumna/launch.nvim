@@ -7,7 +7,7 @@ use ::nvim_oxi::api::opts::{ExecAutocmdsOpts, OptionOpts};
 use ::nvim_oxi::api::types::{Mode, SplitDirection, WindowConfig};
 use ::nvim_oxi::api::{self as nvim, Buffer, Window};
 
-utils::setup_module_state!(core::task,
+utils::setup_module_state!(core::task, [pub(crate)]
 {
     active_list: Vec<ActiveTask> = Vec::new(),
     windows: [Option<Window>; 3] = [const { None }; 3],

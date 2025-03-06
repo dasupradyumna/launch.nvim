@@ -8,7 +8,7 @@ use ::nvim_oxi::Object;
 
 const WIKI_URL: &str = "https://github.com/dasupradyumna/launch.nvim/wiki/Plugin-Settings";
 
-utils::setup_module_state!(settings, Settings);
+utils::setup_module_state!(settings, [pub(crate)] Settings);
 
 utils::serde::setup_deserializable_structs! {
 

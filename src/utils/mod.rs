@@ -11,26 +11,26 @@ use ::nvim_oxi::api::{self as nvim, Buffer, Window};
 
 macro_rules! setup_module_state {
 
-    ( @state_macro $( $path:ident )::+, $state_struct:tt ) => {
+    ( @state_macro $pub:vis $( $path:ident )::+, $state_struct:tt ) => {
 
         // Static state variable definition along with a macro for convenient access
-        pub(crate) static _STATE: std::sync::LazyLock<std::sync::Mutex<$state_struct>> =
+        $pub static _STATE: std::sync::LazyLock<std::sync::Mutex<$state_struct>> =
             std::sync::LazyLock::new(std::sync::Mutex::default);
         macro_rules! state {
             () => { crate::$( $path ::)+_STATE.lock().unwrap() };
         }
-        pub(crate) use state;
+        $pub use state;
 
     };
 
-    ( $( $path:ident )::+ , {
-        $( $pub:vis $field:ident: $field_type:ty = $field_default:expr ,)+
+    ( $( $path:ident )::+ , [$pub0:vis] {
+        $( $pub1:vis $field:ident: $field_type:ty = $field_default:expr ,)+
     } ) => {
 
         // Definition of `State` struct with its default initializer
         #[derive(Debug)]
-        pub(crate) struct _State {
-            $( $pub $field: $field_type ,)+
+        $pub0 struct _State {
+            $( $pub1 $field: $field_type ,)+
         }
 
         impl Default for _State {
@@ -39,13 +39,13 @@ macro_rules! setup_module_state {
             }
         }
 
-        crate::utils::setup_module_state!( @state_macro $( $path )::+, _State );
+        crate::utils::setup_module_state!( @state_macro $pub0 $( $path )::+, _State );
 
     };
 
-    ( $( $path:ident )::+ , $struct:ty ) => {
+    ( $( $path:ident )::+ , [$pub:vis] $struct:ty ) => {
 
-        crate::utils::setup_module_state!( @state_macro $( $path )::+, $struct );
+        crate::utils::setup_module_state!( @state_macro $pub $( $path )::+, $struct );
 
     };
 }
