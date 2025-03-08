@@ -72,6 +72,8 @@ impl super::LauncherState for View {
         let callback_dict = Array::from((
             wrap_callback("q", || super::state!().on(Event::Close)),
             wrap_callback("b", || super::state!().on(Event::Back)),
+            wrap_callback("d", || super::state!().on(Event::Delete)),
+            wrap_callback("<CR>", || super::state!().on(Event::Launch)),
         ));
         self.buffer.set_var("callbacks", callback_dict)?;
         nvim::command("call b:setup_callbacks()")?;

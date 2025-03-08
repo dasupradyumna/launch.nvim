@@ -143,6 +143,27 @@ impl Launcher {
                 Self::Select(select)
             },
 
+            (Self::View(View { buffer, window, index }), Event::Delete) => {
+                {
+                    config::state!().list.remove(index);
+                }
+                config::save()?;
+
+                let mut select = Select { buffer, window };
+                select.setup()?;
+                Self::Select(select)
+            },
+
+            (Self::View(View { buffer, index, .. }), Event::Launch) => {
+                self::close(buffer)?;
+
+                let config = config::state!().list[index].clone().into();
+                ::nvim_oxi::dbg!(&config);
+                task::run(config)?;
+
+                Self::Closed
+            },
+
             _ => {
                 return utils::Error::new(format!(
                     "Unsupported transition requested: Event::{event:?} on {self}"
