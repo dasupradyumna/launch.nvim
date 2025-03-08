@@ -3,7 +3,6 @@
 mod config;
 mod core;
 mod launcher;
-mod launcher_s;
 mod settings;
 mod utils;
 
