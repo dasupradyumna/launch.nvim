@@ -18,8 +18,8 @@ fn launch() -> Dictionary {
     let _impl_ = Dictionary::from_iter([("task", task_event_callbacks)]);
 
     Dictionary::from_iter::<[(_, Object); 3]>([
-        ("setup", Function::from_fn(core::setup).into()),
-        ("launch", Function::from_fn(|()| core::launch()).into()),
+        ("setup", Function::from_fn(crate::core::setup).into()),
+        ("launch", Function::from_fn(|()| crate::launcher::open()).into()),
         ("_impl_", _impl_.into()),
     ])
 }

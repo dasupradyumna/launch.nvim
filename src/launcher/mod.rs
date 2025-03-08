@@ -2,24 +2,24 @@
 
 mod select;
 
+use self::select::Select;
 use crate::core::task;
 use crate::{config, utils};
 use ::nvim_oxi::api::opts::{BufDeleteOpts, OptionOpts};
-use ::nvim_oxi::api::{self as nvim, Window};
+use ::nvim_oxi::api::{self as nvim, Buffer, Window};
 use ::nvim_oxi::{Array, Function};
 use std::fmt::Display;
 
 utils::setup_module_state!(launcher, [pub(self)] Launcher);
 
-pub(crate) fn open() -> utils::Result<()> {
-    // TODO: call the close behavior in case of error
-    self::state!().on(Event::Open)
+pub(crate) fn open() {
+    self::handle_result(self::state!().on(Event::Open))
 }
 
 #[derive(Debug)]
 enum Launcher {
     Closed,
-    Select(select::Select),
+    Select(Select),
 }
 
 impl Display for Launcher {
@@ -46,17 +46,26 @@ enum Event {
     Launch,
 }
 
+fn handle_result(result: utils::Result<()>) {
+    if let Err(e) = result {
+        utils::notify::send!(Warn: {format!("{e}")});
+
+        let mut state = self::state!();
+        match &mut *state {
+            Launcher::Select(Select { buffer, .. }) => {
+                let _ = buffer.clone().delete(&BufDeleteOpts::builder().force(true).build());
+                *state = Launcher::Closed;
+            },
+            _ => {},
+        }
+    }
+}
+
 fn wrap_callback<F>(key: &str, func: F) -> Array
 where
     F: Fn() -> utils::Result<()> + 'static,
 {
-    let wrapped = Function::from_fn(move |()| {
-        if let Err(e) = func() {
-            utils::notify::send!(Warn: {format!("{e}")});
-        }
-    });
-
-    Array::from((key, wrapped))
+    Array::from((key, Function::from_fn(move |()| self::handle_result(func()))))
 }
 
 fn get_config_index(window: &Window) -> utils::Result<usize> {
@@ -68,6 +77,11 @@ fn get_config_index(window: &Window) -> utils::Result<usize> {
     Ok(window.get_cursor()?.0 - 2)
 }
 
+fn close(buffer: Buffer) -> utils::Result<()> {
+    buffer.delete(&BufDeleteOpts::builder().force(true).build())?;
+    Ok(config::save()?)
+}
+
 impl Launcher {
     fn on(&mut self, event: Event) -> utils::Result<()> {
         let new_state = match (&self, &event) {
@@ -77,15 +91,13 @@ impl Launcher {
                 nvim::set_option_value("filetype", "launch_nvim_launcher", &opts)?;
                 let window = utils::open_float("Task Launcher", &buffer, 1, 1)?;
 
-                let mut inner = select::Select { buffer, window };
+                let mut inner = Select { buffer, window };
                 inner.setup()?;
 
                 Launcher::Select(inner)
             },
             (Launcher::Select(inner), Event::Close) => {
-                let buffer = inner.buffer.clone();
-                buffer.delete(&BufDeleteOpts::builder().force(true).build())?;
-                config::save()?;
+                self::close(inner.buffer.clone())?;
 
                 Launcher::Closed
             },
@@ -104,10 +116,7 @@ impl Launcher {
             (Launcher::Select(inner), Event::Launch) => {
                 let index = self::get_config_index(&inner.window)?;
 
-                // XXX: refactor into behaviors submodule
-                let buffer = inner.buffer.clone();
-                buffer.delete(&BufDeleteOpts::builder().force(true).build())?;
-                config::save()?;
+                self::close(inner.buffer.clone())?;
 
                 let config = config::state!().list[index].clone().into();
                 ::nvim_oxi::dbg!(&config);

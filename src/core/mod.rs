@@ -18,9 +18,3 @@ pub(crate) fn setup(user_settings: Object) {
     config::load()
         .unwrap_or_else(|err| notify::send!(Warn: {format!("parsing config file - {err}")}));
 }
-
-pub(crate) fn launch() {
-    if let Err(e) = crate::launcher::open() {
-        notify::send!(Warn: {format!("{e}")});
-    }
-}
