@@ -1,13 +1,12 @@
 /*------------------------------------ LAUNCHER : SELECT MODE ------------------------------------*/
 
-use crate::core::task;
 use crate::{config, utils};
 use ::nvim_oxi::api::opts::{BufDeleteOpts, OptionOpts};
 use ::nvim_oxi::api::types::{WindowConfig, WindowRelativeTo};
 use ::nvim_oxi::api::{self as nvim, Buffer, Window};
 use ::nvim_oxi::{Array, Function};
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub(super) struct Select {
     pub(super) buffer: Buffer,
     pub(super) window: Window,
@@ -55,6 +54,17 @@ impl super::LauncherState for Select {
     }
 
     fn update_callbacks(&mut self) -> utils::Result<()> {
+        nvim::command("call b:remove_callbacks()")?;
+
+        use super::{wrap_callback, Event};
+        let callback_dict = Array::from((
+            wrap_callback("q", || super::state!().on(Event::Close)),
+            wrap_callback("<CR>", || super::state!().on(Event::Launch)),
+            wrap_callback("d", || super::state!().on(Event::Delete)),
+        ));
+        self.buffer.set_var("callbacks", callback_dict)?;
+        nvim::command("call b:setup_callbacks()")?;
+
         Ok(())
     }
 }
