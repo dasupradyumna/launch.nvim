@@ -1,5 +1,6 @@
 /*------------------------------------ LAUNCHER : SELECT MODE ------------------------------------*/
 
+use super::{action, LauncherState};
 use crate::{config, utils};
 use ::nvim_oxi::api::opts::OptionOpts;
 use ::nvim_oxi::api::types::{WindowConfig, WindowRelativeTo};
@@ -12,7 +13,20 @@ pub(super) struct Select {
     pub(super) window: Window,
 }
 
-impl super::LauncherState for Select {
+impl TryFrom<super::View> for Select {
+    type Error = utils::Error;
+
+    fn try_from(view: super::View) -> utils::Result<Self> {
+        let mut new = Self {
+            buffer: view.buffer,
+            window: view.window,
+        };
+        new.setup()?;
+        Ok(new)
+    }
+}
+
+impl LauncherState for Select {
     fn update_ui(&mut self) -> utils::Result<()> {
         // Create select-mode buffer content
         let configs = &config::state!().list;
@@ -57,7 +71,7 @@ impl super::LauncherState for Select {
     fn update_callbacks(&mut self) -> utils::Result<()> {
         nvim::command("call b:remove_callbacks()")?;
 
-        use super::{wrap_callback, Event};
+        use action::{wrap_callback, Event};
         let callback_dict = Array::from((
             wrap_callback("q", || super::state!().on(Event::Close)),
             wrap_callback("d", || super::state!().on(Event::Delete)),

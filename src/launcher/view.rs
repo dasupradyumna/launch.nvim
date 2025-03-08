@@ -1,5 +1,6 @@
 /*------------------------------------- LAUNCHER : VIEW MODE -------------------------------------*/
 
+use super::{action, LauncherState};
 use crate::{config, utils};
 use ::nvim_oxi::api::opts::OptionOpts;
 use ::nvim_oxi::api::types::{WindowConfig, WindowRelativeTo};
@@ -13,7 +14,22 @@ pub(super) struct View {
     pub(super) index: usize,
 }
 
-impl super::LauncherState for View {
+impl TryFrom<super::Select> for View {
+    type Error = utils::Error;
+
+    fn try_from(select: super::Select) -> utils::Result<Self> {
+        let index = action::get_config_index(&select.window)?;
+        let mut new = Self {
+            buffer: select.buffer,
+            window: select.window,
+            index,
+        };
+        new.setup()?;
+        Ok(new)
+    }
+}
+
+impl LauncherState for View {
     fn update_ui(&mut self) -> crate::utils::Result<()> {
         // Create view-mode buffer content
         let config = &config::state!().list[self.index];
@@ -68,7 +84,7 @@ impl super::LauncherState for View {
     fn update_callbacks(&mut self) -> crate::utils::Result<()> {
         nvim::command("call b:remove_callbacks()")?;
 
-        use super::{wrap_callback, Event};
+        use action::{wrap_callback, Event};
         let callback_dict = Array::from((
             wrap_callback("q", || super::state!().on(Event::Close)),
             wrap_callback("b", || super::state!().on(Event::Back)),

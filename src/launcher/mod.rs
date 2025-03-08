@@ -1,20 +1,19 @@
 /*------------------------------------ CONFIGURATION LAUNCHER ------------------------------------*/
 
+mod action;
 mod select;
 mod view;
 
 use self::select::Select;
 use self::view::View;
-use crate::core::task;
-use crate::{config, utils};
-use ::nvim_oxi::api::opts::{BufDeleteOpts, OptionOpts};
-use ::nvim_oxi::api::{self as nvim, Buffer, Window};
-use ::nvim_oxi::{Array, Function};
+use crate::utils;
+use ::nvim_oxi::api as nvim;
+use ::nvim_oxi::api::opts::OptionOpts;
 
 utils::setup_module_state!(launcher, [pub(self)] Launcher);
 
 pub(crate) fn open() {
-    self::handle_result(self::state!().on(Event::Open))
+    action::handle_result(self::state!().on(action::Event::Open))
 }
 
 #[derive(Debug)]
@@ -41,54 +40,10 @@ impl Default for Launcher {
     }
 }
 
-#[derive(Debug)]
-enum Event {
-    Close,
-    Open,
-    Delete,
-    Launch,
-    View,
-    Back,
-}
-
-fn handle_result(result: utils::Result<()>) {
-    if let Err(e) = result {
-        utils::notify::send!(Warn: {format!("{e}")});
-
-        let mut state = self::state!();
-        match &mut *state {
-            Launcher::Select(Select { buffer, .. }) | Launcher::View(View { buffer, .. }) => {
-                let _ = buffer.clone().delete(&BufDeleteOpts::builder().force(true).build());
-                *state = Launcher::Closed;
-            },
-            _ => {},
-        }
-    }
-}
-
-fn wrap_callback<F>(key: &str, func: F) -> Array
-where
-    F: Fn() -> utils::Result<()> + 'static,
-{
-    Array::from((key, Function::from_fn(move |()| self::handle_result(func()))))
-}
-
-fn get_config_index(window: &Window) -> utils::Result<usize> {
-    if config::state!().list.is_empty() {
-        // FIX: this should not be an error, since it is a valid state for the launcher
-        return utils::Error::new("No active configurations found.");
-    }
-
-    Ok(window.get_cursor()?.0 - 2)
-}
-
-fn close(buffer: Buffer) -> utils::Result<()> {
-    buffer.delete(&BufDeleteOpts::builder().force(true).build())?;
-    config::save()
-}
-
 impl Launcher {
-    fn on(&mut self, event: Event) -> utils::Result<()> {
+    fn on(&mut self, event: action::Event) -> utils::Result<()> {
+        use action::Event;
+
         let next = match (std::mem::replace(self, Self::Closed), &event) {
             (Self::Closed, Event::Open) => {
                 let buffer = nvim::create_buf(false, true)?;
@@ -103,64 +58,32 @@ impl Launcher {
 
             (Self::Select(Select { buffer, .. }), Event::Close)
             | (Self::View(View { buffer, .. }), Event::Close) => {
-                self::close(buffer)?;
+                action::close(buffer)?;
                 Self::Closed
             },
 
             (Self::Select(mut select), Event::Delete) => {
-                let index = self::get_config_index(&select.window)?;
-                {
-                    config::state!().list.remove(index);
-                }
-                config::save()?;
-
+                action::delete(action::get_config_index(&select.window)?)?;
                 select.setup()?;
                 Self::Select(select)
             },
 
             (Self::Select(Select { buffer, window }), Event::Launch) => {
-                let index = self::get_config_index(&window)?;
-                self::close(buffer)?;
-
-                let config = config::state!().list[index].clone().into();
-                ::nvim_oxi::dbg!(&config);
-                task::run(config)?;
-
+                action::launch(buffer, action::get_config_index(&window)?)?;
                 Self::Closed
             },
 
-            (Self::Select(Select { buffer, window }), Event::View) => {
-                let index = self::get_config_index(&window)?;
+            (Self::Select(select), Event::View) => Self::View(select.try_into()?),
 
-                let mut view = View { buffer, window, index };
-                view.setup()?;
-                Self::View(view)
-            },
+            (Self::View(view), Event::Back) => Self::Select(view.try_into()?),
 
-            (Self::View(View { buffer, window, .. }), Event::Back) => {
-                let mut select = Select { buffer, window };
-                select.setup()?;
-                Self::Select(select)
-            },
-
-            (Self::View(View { buffer, window, index }), Event::Delete) => {
-                {
-                    config::state!().list.remove(index);
-                }
-                config::save()?;
-
-                let mut select = Select { buffer, window };
-                select.setup()?;
-                Self::Select(select)
+            (Self::View(view), Event::Delete) => {
+                action::delete(view.index)?;
+                Self::Select(view.try_into()?)
             },
 
             (Self::View(View { buffer, index, .. }), Event::Launch) => {
-                self::close(buffer)?;
-
-                let config = config::state!().list[index].clone().into();
-                ::nvim_oxi::dbg!(&config);
-                task::run(config)?;
-
+                action::launch(buffer, index)?;
                 Self::Closed
             },
 
