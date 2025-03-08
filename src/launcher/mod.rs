@@ -84,69 +84,65 @@ fn get_config_index(window: &Window) -> utils::Result<usize> {
 
 fn close(buffer: Buffer) -> utils::Result<()> {
     buffer.delete(&BufDeleteOpts::builder().force(true).build())?;
-    Ok(config::save()?)
+    config::save()
 }
 
 impl Launcher {
     fn on(&mut self, event: Event) -> utils::Result<()> {
-        let new_state = match (&self, &event) {
-            (Launcher::Closed, Event::Open) => {
+        let next = match (std::mem::replace(self, Self::Closed), &event) {
+            (Self::Closed, Event::Open) => {
                 let buffer = nvim::create_buf(false, true)?;
                 let opts = OptionOpts::builder().buffer(buffer.clone()).build();
                 nvim::set_option_value("filetype", "launch_nvim_launcher", &opts)?;
                 let window = utils::open_float("Task Launcher", &buffer, 1, 1)?;
 
-                let mut inner = Select { buffer, window };
-                inner.setup()?;
-
-                Launcher::Select(inner)
+                let mut select = Select { buffer, window };
+                select.setup()?;
+                Self::Select(select)
             },
-            (Launcher::Select(Select { buffer, .. }), Event::Close)
-            | (Launcher::View(View { buffer, .. }), Event::Close) => {
-                self::close(buffer.clone())?;
 
-                Launcher::Closed
+            (Self::Select(Select { buffer, .. }), Event::Close)
+            | (Self::View(View { buffer, .. }), Event::Close) => {
+                self::close(buffer)?;
+                Self::Closed
             },
-            (Launcher::Select(inner), Event::Delete) => {
-                let index = self::get_config_index(&inner.window)?;
+
+            (Self::Select(mut select), Event::Delete) => {
+                let index = self::get_config_index(&select.window)?;
                 {
                     config::state!().list.remove(index);
                 }
                 config::save()?;
 
-                let mut inner = inner.clone();
-                inner.setup()?;
-
-                Launcher::Select(inner)
+                select.setup()?;
+                Self::Select(select)
             },
-            (Launcher::Select(inner), Event::Launch) => {
-                let index = self::get_config_index(&inner.window)?;
 
-                self::close(inner.buffer.clone())?;
+            (Self::Select(Select { buffer, window }), Event::Launch) => {
+                let index = self::get_config_index(&window)?;
+                self::close(buffer)?;
 
                 let config = config::state!().list[index].clone().into();
                 ::nvim_oxi::dbg!(&config);
                 task::run(config)?;
 
-                Launcher::Closed
+                Self::Closed
             },
-            (Launcher::Select(inner), Event::View) => {
-                let index = self::get_config_index(&inner.window)?;
-                let buffer = inner.buffer.clone();
-                let window = inner.window.clone();
-                let mut inner = View { buffer, window, index };
-                inner.setup()?;
 
-                Launcher::View(inner)
-            },
-            (Launcher::View(inner), Event::Back) => {
-                let buffer = inner.buffer.clone();
-                let window = inner.window.clone();
-                let mut inner = Select { buffer, window };
-                inner.setup()?;
+            (Self::Select(Select { buffer, window }), Event::View) => {
+                let index = self::get_config_index(&window)?;
 
-                Launcher::Select(inner)
+                let mut view = View { buffer, window, index };
+                view.setup()?;
+                Self::View(view)
             },
+
+            (Self::View(View { buffer, window, .. }), Event::Back) => {
+                let mut select = Select { buffer, window };
+                select.setup()?;
+                Self::Select(select)
+            },
+
             _ => {
                 return utils::Error::new(format!(
                     "Unsupported transition requested: Event::{event:?} on {self}"
@@ -154,7 +150,7 @@ impl Launcher {
             },
         };
 
-        *self = new_state;
+        *self = next;
         Ok(())
     }
 }
