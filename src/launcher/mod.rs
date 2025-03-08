@@ -1,14 +1,15 @@
 /*------------------------------------ CONFIGURATION LAUNCHER ------------------------------------*/
 
 mod select;
+mod view;
 
 use self::select::Select;
+use self::view::View;
 use crate::core::task;
 use crate::{config, utils};
 use ::nvim_oxi::api::opts::{BufDeleteOpts, OptionOpts};
 use ::nvim_oxi::api::{self as nvim, Buffer, Window};
 use ::nvim_oxi::{Array, Function};
-use std::fmt::Display;
 
 utils::setup_module_state!(launcher, [pub(self)] Launcher);
 
@@ -20,15 +21,17 @@ pub(crate) fn open() {
 enum Launcher {
     Closed,
     Select(Select),
+    View(View),
 }
 
-impl Display for Launcher {
+impl std::fmt::Display for Launcher {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let fmt_str = match self {
+        let fmt = match self {
             Self::Closed => "Closed",
             Self::Select(_) => "Select",
+            Self::View(_) => "View",
         };
-        write!(f, "Launcher::{}", fmt_str)
+        write!(f, "Launcher::{}", fmt)
     }
 }
 
@@ -44,6 +47,8 @@ enum Event {
     Open,
     Delete,
     Launch,
+    View,
+    Back,
 }
 
 fn handle_result(result: utils::Result<()>) {
@@ -52,7 +57,7 @@ fn handle_result(result: utils::Result<()>) {
 
         let mut state = self::state!();
         match &mut *state {
-            Launcher::Select(Select { buffer, .. }) => {
+            Launcher::Select(Select { buffer, .. }) | Launcher::View(View { buffer, .. }) => {
                 let _ = buffer.clone().delete(&BufDeleteOpts::builder().force(true).build());
                 *state = Launcher::Closed;
             },
@@ -96,8 +101,9 @@ impl Launcher {
 
                 Launcher::Select(inner)
             },
-            (Launcher::Select(inner), Event::Close) => {
-                self::close(inner.buffer.clone())?;
+            (Launcher::Select(Select { buffer, .. }), Event::Close)
+            | (Launcher::View(View { buffer, .. }), Event::Close) => {
+                self::close(buffer.clone())?;
 
                 Launcher::Closed
             },
@@ -123,6 +129,23 @@ impl Launcher {
                 task::run(config)?;
 
                 Launcher::Closed
+            },
+            (Launcher::Select(inner), Event::View) => {
+                let index = self::get_config_index(&inner.window)?;
+                let buffer = inner.buffer.clone();
+                let window = inner.window.clone();
+                let mut inner = View { buffer, window, index };
+                inner.setup()?;
+
+                Launcher::View(inner)
+            },
+            (Launcher::View(inner), Event::Back) => {
+                let buffer = inner.buffer.clone();
+                let window = inner.window.clone();
+                let mut inner = Select { buffer, window };
+                inner.setup()?;
+
+                Launcher::Select(inner)
             },
             _ => {
                 return utils::Error::new(format!(
