@@ -19,6 +19,17 @@ pub(crate) enum TaskDisplay {
     HSplit,
 }
 
+impl std::fmt::Display for TaskDisplay {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let fmt = match self {
+            Self::Float => "float",
+            Self::HSplit => "hsplit",
+            Self::VSplit => "vsplit",
+        };
+        write!(f, "{}", fmt)
+    }
+}
+
 impl Serialize for TaskDisplay {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
@@ -120,6 +131,21 @@ pub(crate) struct TaskConfigJson {
 impl TaskConfigJson {
     pub(crate) fn name(&self) -> &String {
         &self.name
+    }
+    pub(crate) fn command(&self) -> &String {
+        &self.command
+    }
+    pub(crate) fn args(&self) -> &Option<Vec<String>> {
+        &self.args
+    }
+    pub(crate) fn display(&self) -> &Option<TaskDisplay> {
+        &self.display
+    }
+    pub(crate) fn cwd(&self) -> &Option<PathBuf> {
+        &self.cwd
+    }
+    pub(crate) fn env(&self) -> &Option<HashMap<String, String>> {
+        &self.env
     }
 }
 

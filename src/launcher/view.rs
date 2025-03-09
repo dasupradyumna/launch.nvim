@@ -1,4 +1,4 @@
-/*------------------------------------ LAUNCHER : SELECT MODE ------------------------------------*/
+/*------------------------------------- LAUNCHER : VIEW MODE -------------------------------------*/
 
 use super::{action, LauncherState};
 use crate::{config, utils};
@@ -8,46 +8,62 @@ use ::nvim_oxi::api::{self as nvim, Buffer, Window};
 use ::nvim_oxi::Array;
 
 #[derive(Debug, Clone)]
-pub(super) struct Select {
+pub(super) struct View {
     pub(super) buffer: Buffer,
     pub(super) window: Window,
+    pub(super) index: usize,
 }
 
-impl TryFrom<super::View> for Select {
+impl TryFrom<super::Select> for View {
     type Error = utils::Error;
 
-    fn try_from(view: super::View) -> utils::Result<Self> {
+    fn try_from(select: super::Select) -> utils::Result<Self> {
+        let index = action::get_config_index(&select.window)?;
         let mut new = Self {
-            buffer: view.buffer,
-            window: view.window,
+            buffer: select.buffer,
+            window: select.window,
+            index,
         };
         new.setup()?;
         Ok(new)
     }
 }
 
-impl TryFrom<super::Edit> for Select {
+impl TryFrom<super::Edit> for View {
     type Error = utils::Error;
 
     fn try_from(edit: super::Edit) -> utils::Result<Self> {
         let mut new = Self {
             buffer: edit.buffer,
             window: edit.window,
+            index: edit.index,
         };
         new.setup()?;
         Ok(new)
     }
 }
 
-impl LauncherState for Select {
-    fn update_ui(&mut self) -> utils::Result<()> {
-        // Create select-mode buffer content
-        let configs = &config::state!().list;
-        let lines = if configs.is_empty() {
-            Vec::from_iter([config::NO_CONFIGS_MSG])
-        } else {
-            configs.iter().map(|c| c.name().as_str()).collect()
-        };
+impl LauncherState for View {
+    fn update_ui(&mut self) -> crate::utils::Result<()> {
+        // Create view-mode buffer content
+        let config = &config::state!().list[self.index];
+        let mut lines = Vec::new();
+        lines.push(format!("NAME: {}", config.name()));
+        lines.push(format!("CMD:  {}", config.command()));
+        if let Some(args) = config.args() {
+            lines.push("ARGS:".to_string());
+            lines.extend(args.iter().map(|arg| format!("    - {arg}")));
+        }
+        if let Some(display) = config.display() {
+            lines.push(format!("DISP: {}", display));
+        }
+        if let Some(cwd) = config.cwd() {
+            lines.push(format!("CWD:  {}", cwd.display()));
+        }
+        if let Some(env) = config.env() {
+            lines.push("ENV:".to_string());
+            lines.extend(env.iter().map(|(var, value)| format!("    {var}: {value}")));
+        }
 
         // Display buffer content
         let range = 1..self.buffer.line_count()?;
@@ -75,22 +91,20 @@ impl LauncherState for Select {
             .build();
         self.window.set_config(&win_config)?;
         self.window.set_cursor(2, 0)?;
-        let opts = OptionOpts::builder().win(self.window.clone()).build();
-        nvim::set_option_value("cursorline", !configs.is_empty(), &opts)?;
 
         Ok(())
     }
 
-    fn update_callbacks(&mut self) -> utils::Result<()> {
+    fn update_callbacks(&mut self) -> crate::utils::Result<()> {
         nvim::command("call b:remove_callbacks()")?;
 
         use action::{wrap_callback, Event};
         let callback_dict = Array::from((
+            wrap_callback("b", || super::state!().on(Event::Back)),
             wrap_callback("q", || super::state!().on(Event::Close)),
             wrap_callback("d", || super::state!().on(Event::Delete)),
             wrap_callback("e", || super::state!().on(Event::Edit)),
             wrap_callback("<CR>", || super::state!().on(Event::Launch)),
-            wrap_callback("v", || super::state!().on(Event::View)),
         ));
         self.buffer.set_var("callbacks", callback_dict)?;
         nvim::command("call b:setup_callbacks()")?;

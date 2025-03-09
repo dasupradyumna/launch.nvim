@@ -20,6 +20,10 @@ endfunction
 nnoremap <buffer> <nowait> j <Cmd>call <SID>navigate(v:false)<CR>
 nnoremap <buffer> <nowait> k <Cmd>call <SID>navigate(v:true)<CR>
 
+"--------------------- CALLBACK LOGIC ---------------------"
+
+let b:callbacks = []
+
 function! s:setup_callbacks()
     for idx in range(len(b:callbacks))
         execute printf("nnoremap <buffer> <nowait> %s <Cmd>call b:callbacks[%d][1]()<CR>",
@@ -29,7 +33,7 @@ endfunction
 let b:setup_callbacks = function('s:setup_callbacks')
 
 function! s:remove_callbacks()
-    for [key, _] in b:callbacks
+    for [key; _] in b:callbacks
         execute 'nunmap <buffer>' key
     endfor
 endfunction
