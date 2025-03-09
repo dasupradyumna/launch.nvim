@@ -7,7 +7,7 @@ use ::nvim_oxi::api::types::{WindowConfig, WindowRelativeTo};
 use ::nvim_oxi::api::{self as nvim, Buffer, Window};
 use ::nvim_oxi::Array;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub(super) struct View {
     pub(super) buffer: Buffer,
     pub(super) window: Window,

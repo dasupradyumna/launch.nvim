@@ -16,7 +16,7 @@ pub(crate) fn open() {
     action::handle_result(self::state!().on(action::Event::Open))
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 enum Launcher {
     Closed,
     Select(Select),
@@ -44,7 +44,8 @@ impl Launcher {
     fn on(&mut self, event: action::Event) -> utils::Result<()> {
         use action::Event;
 
-        let next = match (std::mem::replace(self, Self::Closed), &event) {
+        let current = self.clone();
+        let next = match (current, &event) {
             (Self::Closed, Event::Open) => {
                 let buffer = nvim::create_buf(false, true)?;
                 let opts = OptionOpts::builder().buffer(buffer.clone()).build();
