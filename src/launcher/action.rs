@@ -1,6 +1,6 @@
 /*--------------------------------------- LAUNCHER ACTIONS ---------------------------------------*/
 
-use super::{Launcher, Select, View};
+use super::{Edit, Launcher, Select, View};
 use crate::{config, utils};
 use ::nvim_oxi::api::opts::BufDeleteOpts;
 use ::nvim_oxi::api::{Buffer, Window};
@@ -8,12 +8,13 @@ use ::nvim_oxi::{Array, Function};
 
 #[derive(Debug)]
 pub(super) enum Event {
-    Close,
-    Open,
-    Delete,
-    Launch,
-    View,
     Back,
+    Close,
+    Delete,
+    Edit,
+    Launch,
+    Open,
+    View,
 }
 
 /*----------------------------- CALLBACK HELPERS -----------------------------*/
@@ -30,7 +31,9 @@ pub(super) fn handle_result(result: utils::Result<()>) {
         utils::notify::send!(Warn: {format!("{e}")});
 
         match std::mem::replace(&mut *super::state!(), Launcher::Closed) {
-            Launcher::Select(Select { buffer, .. }) | Launcher::View(View { buffer, .. }) => {
+            Launcher::Select(Select { buffer, .. })
+            | Launcher::View(View { buffer, .. })
+            | Launcher::Edit(Edit { buffer, .. }) => {
                 let _ = self::close(buffer);
             },
             _ => {},

@@ -1,9 +1,11 @@
 /*------------------------------------ CONFIGURATION LAUNCHER ------------------------------------*/
 
 mod action;
+mod edit;
 mod select;
 mod view;
 
+use self::edit::Edit;
 use self::select::Select;
 use self::view::View;
 use crate::utils;
@@ -21,6 +23,7 @@ enum Launcher {
     Closed,
     Select(Select),
     View(View),
+    Edit(Edit),
 }
 
 impl std::fmt::Display for Launcher {
@@ -29,6 +32,7 @@ impl std::fmt::Display for Launcher {
             Self::Closed => "Closed",
             Self::Select(_) => "Select",
             Self::View(_) => "View",
+            Self::Edit(_) => "Edit",
         };
         write!(f, "Launcher::{}", fmt)
     }
@@ -58,16 +62,20 @@ impl Launcher {
             },
 
             (Self::Select(Select { buffer, .. }), Event::Close)
-            | (Self::View(View { buffer, .. }), Event::Close) => {
+            | (Self::View(View { buffer, .. }), Event::Close)
+            | (Self::Edit(Edit { buffer, .. }), Event::Close) => {
                 action::close(buffer)?;
                 Self::Closed
             },
 
+            /*-------------------------------- SELECT MODE -------------------------------*/
             (Self::Select(mut select), Event::Delete) => {
                 action::delete(action::get_config_index(&select.window)?)?;
                 select.setup()?;
                 Self::Select(select)
             },
+
+            (Self::Select(select), Event::Edit) => Self::Edit(select.try_into()?),
 
             (Self::Select(Select { buffer, window }), Event::Launch) => {
                 action::launch(buffer, action::get_config_index(&window)?)?;
@@ -76,6 +84,7 @@ impl Launcher {
 
             (Self::Select(select), Event::View) => Self::View(select.try_into()?),
 
+            /*--------------------------------- VIEW MODE --------------------------------*/
             (Self::View(view), Event::Back) => Self::Select(view.try_into()?),
 
             (Self::View(view), Event::Delete) => {
@@ -83,9 +92,20 @@ impl Launcher {
                 Self::Select(view.try_into()?)
             },
 
+            (Self::View(view), Event::Edit) => Self::Edit(view.try_into()?),
+
             (Self::View(View { buffer, index, .. }), Event::Launch) => {
                 action::launch(buffer, index)?;
                 Self::Closed
+            },
+
+            /*--------------------------------- EDIT MODE --------------------------------*/
+            (Self::Edit(edit), Event::Back) => {
+                if edit.from_select {
+                    Self::Select(edit.try_into()?)
+                } else {
+                    Self::View(edit.try_into()?)
+                }
             },
 
             _ => {

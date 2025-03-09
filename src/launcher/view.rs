@@ -29,6 +29,20 @@ impl TryFrom<super::Select> for View {
     }
 }
 
+impl TryFrom<super::Edit> for View {
+    type Error = utils::Error;
+
+    fn try_from(edit: super::Edit) -> utils::Result<Self> {
+        let mut new = Self {
+            buffer: edit.buffer,
+            window: edit.window,
+            index: edit.index,
+        };
+        new.setup()?;
+        Ok(new)
+    }
+}
+
 impl LauncherState for View {
     fn update_ui(&mut self) -> crate::utils::Result<()> {
         // Create view-mode buffer content
@@ -86,9 +100,10 @@ impl LauncherState for View {
 
         use action::{wrap_callback, Event};
         let callback_dict = Array::from((
-            wrap_callback("q", || super::state!().on(Event::Close)),
             wrap_callback("b", || super::state!().on(Event::Back)),
+            wrap_callback("q", || super::state!().on(Event::Close)),
             wrap_callback("d", || super::state!().on(Event::Delete)),
+            wrap_callback("e", || super::state!().on(Event::Edit)),
             wrap_callback("<CR>", || super::state!().on(Event::Launch)),
         ));
         self.buffer.set_var("callbacks", callback_dict)?;
