@@ -31,14 +31,14 @@ pub(crate) fn get_data_dir() -> &'static PathBuf {
     &DATA_DIR
 }
 
-pub(crate) fn get_runtime_filepath() -> PathBuf {
+fn get_runtime_filepath() -> PathBuf {
     // get the JSON filename for the current working directory
     // CHECK: if below replace() call can be included into regex pattern
     let json_filename = std::env::current_dir().unwrap().to_string_lossy().replace("@", "@@");
     let re = Regex::new(r"[\\/:]").unwrap();
     let json_filename = format!("{}.json", re.replace_all(&json_filename, "@"));
 
-    // create if file does not exist and open it
+    // get the full JSON filepath in the plugin data directory
     let json_filepath = self::get_data_dir().join(json_filename);
     ::nvim_oxi::dbg!(&json_filepath);
     json_filepath

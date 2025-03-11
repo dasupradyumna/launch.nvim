@@ -48,21 +48,21 @@ impl LauncherState for View {
         // Create view-mode buffer content
         let config = &config::state!().list[self.index];
         let mut lines = Vec::new();
-        lines.push(format!("NAME: {}", config.name()));
-        lines.push(format!("CMD:  {}", config.command()));
+        lines.push(format!("NAME : {}", config.name()));
+        lines.push(format!("CMD  : {}", config.command()));
         if let Some(args) = config.args() {
-            lines.push("ARGS:".to_string());
-            lines.extend(args.iter().map(|arg| format!("    - {arg}")));
+            lines.push("ARGS  :".to_string());
+            lines.extend(args.iter().map(|arg| format!("  - {arg}")));
         }
         if let Some(display) = config.display() {
-            lines.push(format!("DISP: {}", display));
+            lines.push(format!("DISP : {}", display));
         }
         if let Some(cwd) = config.cwd() {
-            lines.push(format!("CWD:  {}", cwd.display()));
+            lines.push(format!("CWD  : {}", cwd.display()));
         }
         if let Some(env) = config.env() {
-            lines.push("ENV:".to_string());
-            lines.extend(env.iter().map(|(var, value)| format!("    {var}: {value}")));
+            lines.push("ENV  :".to_string());
+            lines.extend(env.iter().map(|(var, value)| format!("  {var}={value}")));
         }
 
         // Display buffer content

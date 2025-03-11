@@ -50,25 +50,30 @@ impl LauncherState for Edit {
     fn update_ui(&mut self) -> utils::Result<()> {
         // Create edit-mode buffer content
         let config = &config::state!().list[self.index];
+        const NONE: &str = "---";
         let mut lines = Vec::new();
-        lines.push(format!("NAME: {}", config.name()));
-        lines.push(format!("CMD:  {}", config.command()));
+        lines.push(format!("NAME : {}", config.name()));
+        lines.push(format!("CMD  : {}", config.command()));
+        lines.push("ARGS :".to_string());
         if let Some(args) = config.args() {
-            lines.push("ARGS:".to_string());
-            lines.extend(args.iter().map(|arg| format!("    - {arg}")));
-            lines.push("    + Add new".to_string());
+            lines.extend(args.iter().map(|arg| format!("  - {arg}")));
         }
-        if let Some(display) = config.display() {
-            lines.push(format!("DISP: {}", display));
-        }
-        if let Some(cwd) = config.cwd() {
-            lines.push(format!("CWD:  {}", cwd.display()));
-        }
+        lines.push("  + Add new".to_string());
+        let fmt = match config.display() {
+            Some(d) => d.to_string(),
+            None => NONE.to_string(),
+        };
+        lines.push(format!("DISP : {fmt}"));
+        let fmt = match config.cwd() {
+            Some(d) => d.display().to_string(),
+            None => NONE.to_string(),
+        };
+        lines.push(format!("CWD  : {fmt}"));
+        lines.push("ENV  :".to_string());
         if let Some(env) = config.env() {
-            lines.push("ENV:".to_string());
-            lines.extend(env.iter().map(|(var, value)| format!("    {var}: {value}")));
-            lines.push("    + Add new".to_string());
+            lines.extend(env.iter().map(|(var, value)| format!("  {var}={value}")));
         }
+        lines.push("  + Add new".to_string());
 
         // Display buffer content
         let range = 1..self.buffer.line_count()?;
