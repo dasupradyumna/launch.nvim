@@ -108,6 +108,11 @@ impl Launcher {
                 }
             },
 
+            (Self::Edit(edit), Event::Edit) => {
+                action::edit(edit.clone())?;
+                Self::Edit(edit)
+            },
+
             _ => {
                 return utils::Error::new(format!(
                     "Unsupported transition requested: Event::{event:?} on {self}"

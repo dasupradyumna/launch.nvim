@@ -6,7 +6,6 @@ pub(crate) use task::*;
 
 use crate::utils;
 use ::nvim_oxi::api as nvim;
-use ::regex::Regex;
 use ::serde_json as json;
 use std::path::PathBuf;
 use std::sync::LazyLock;
@@ -35,7 +34,7 @@ fn get_runtime_filepath() -> PathBuf {
     // get the JSON filename for the current working directory
     // CHECK: if below replace() call can be included into regex pattern
     let json_filename = std::env::current_dir().unwrap().to_string_lossy().replace("@", "@@");
-    let re = Regex::new(r"[\\/:]").unwrap();
+    let re = ::regex::Regex::new(r"[\\/:]").unwrap();
     let json_filename = format!("{}.json", re.replace_all(&json_filename, "@"));
 
     // get the full JSON filepath in the plugin data directory

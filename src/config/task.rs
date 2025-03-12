@@ -147,6 +147,12 @@ impl TaskConfigJson {
     pub(crate) fn env(&self) -> &Option<HashMap<String, String>> {
         &self.env
     }
+    pub(crate) fn set_name(&mut self, name: String) {
+        self.name = name;
+    }
+    pub(crate) fn set_command(&mut self, command: String) {
+        self.command = command;
+    }
 }
 
 impl From<TaskConfigJson> for TaskConfig {

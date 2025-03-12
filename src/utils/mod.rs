@@ -8,6 +8,7 @@ pub(crate) use result::{Error, Result};
 
 use ::nvim_oxi::api::opts::OptionOpts;
 use ::nvim_oxi::api::{self as nvim, Buffer, Window};
+use ::nvim_oxi::Function;
 
 macro_rules! setup_module_state {
 
@@ -87,6 +88,39 @@ pub(crate) fn open_float(
     let window = nvim::open_win(buffer, true, &win_config)?;
 
     // Fix the target buffer
+    let opts = OptionOpts::builder().win(window.clone()).build();
+    nvim::set_option_value("winfixbuf", true, &opts)?;
+
+    Ok(window)
+}
+
+pub(crate) fn open_popup(
+    prompt: &str,
+    row: u32,
+    col: u32,
+    callback: Function<::nvim_oxi::String, ()>,
+) -> self::Result<Window> {
+    let mut buffer = nvim::create_buf(false, true)?;
+    buffer.set_var("prompt", prompt)?;
+    buffer.set_var("callback", callback)?;
+    let opts = OptionOpts::builder().buffer(buffer.clone()).build();
+    nvim::set_option_value("filetype", "launch_nvim_popup_prompt", &opts)?;
+
+    use ::nvim_oxi::api::types::*;
+    let (width, height) = (40, 1);
+    let win_config = WindowConfig::builder()
+        .relative(WindowRelativeTo::Editor)
+        .row(row)
+        .col(col)
+        .width(width)
+        .height(height)
+        .border(WindowBorder::Rounded)
+        .style(WindowStyle::Minimal)
+        .zindex(49)
+        .build();
+    let window = nvim::open_win(&buffer, true, &win_config)?;
+
+    // Fix the prompt buffer
     let opts = OptionOpts::builder().win(window.clone()).build();
     nvim::set_option_value("winfixbuf", true, &opts)?;
 
