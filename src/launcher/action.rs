@@ -80,7 +80,7 @@ pub(super) fn launch(buffer: Buffer, index: usize) -> utils::Result<()> {
     crate::core::task::run(config)
 }
 
-fn update_config(index: usize, field: &str, value: String) {
+fn set_config_field(index: usize, field: &str, value: String) {
     let config = &mut config::state!().list[index];
     match field {
         "NAME" => config.set_name(value),
@@ -89,28 +89,37 @@ fn update_config(index: usize, field: &str, value: String) {
     }
 }
 
-pub(super) fn edit(mut edit: Edit) -> utils::Result<()> {
-    // let win_config = edit.window.get_position()?;
-    // ::nvim_oxi::dbg!(&win_config);
-    // let r = unsafe { win_config.row.unwrap_unchecked() as u32 + 2 };
-    // let c = unsafe {
-    //     win_config.col.unwrap_unchecked() as u32 + win_config.width.unwrap_unchecked() + 2
-    // };
+fn get_config_field(index: usize, field: &str) -> String {
+    let config = &config::state!().list[index];
+    match field.trim_ascii_end() {
+        "NAME" => config.name().to_string(),
+        "CMD" => config.command().to_string(),
+        _ => String::new(),
+    }
+}
 
-    let re = ::regex::Regex::new(r"^\s+([A-Z]+\s+): .*$").unwrap();
+pub(super) fn edit(mut edit: Edit) -> utils::Result<()> {
+    let (row, col) = edit.window.get_position()?;
+    let offset = edit.window.get_cursor()?.0 as u32 - 1;
+    let width = edit.window.get_width()?;
+    let row = row as u32 + offset;
+    let col = col as u32 + width + 2;
+
+    let re = ::regex::Regex::new(r"^\s+([A-Z]+\s+):.*$").unwrap();
     let line = nvim::get_current_line()?;
+    // TODO: Support other lines as well
     let field = if let Some(caps) = re.captures(&line) {
-        // TODO: Only for lines with field: syntax
-        caps.get(1).unwrap().as_str()
+        caps.get(1).unwrap().as_str().trim_ascii_end()
     } else {
         return Ok(());
     };
-    match field.trim_ascii_end() {
-        field @ ("NAME" | "CMD") => {
+    let value = self::get_config_field(edit.index, field);
+    match field {
+        "NAME" | "CMD" => {
             let f = field.to_string();
             let callback = self::wrap_callback_(move |input: ::nvim_oxi::String| {
                 if !input.is_empty() {
-                    self::update_config(edit.index, &f, input.to_string());
+                    self::set_config_field(edit.index, &f, input.to_string());
                     config::save()?;
                     // FIX: resets cursor to top of window
                     edit.update_ui()?;
@@ -118,7 +127,7 @@ pub(super) fn edit(mut edit: Edit) -> utils::Result<()> {
 
                 Ok(())
             });
-            utils::open_popup(field, 30, 150, callback)?;
+            utils::open_popup(field, value.as_str(), row, col, callback)?;
         },
         _ => {},
     }

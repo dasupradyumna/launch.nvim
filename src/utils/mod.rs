@@ -96,12 +96,14 @@ pub(crate) fn open_float(
 
 pub(crate) fn open_popup(
     prompt: &str,
+    default: &str,
     row: u32,
     col: u32,
     callback: Function<::nvim_oxi::String, ()>,
 ) -> self::Result<Window> {
     let mut buffer = nvim::create_buf(false, true)?;
     buffer.set_var("prompt", prompt)?;
+    buffer.set_var("default", default)?;
     buffer.set_var("callback", callback)?;
     let opts = OptionOpts::builder().buffer(buffer.clone()).build();
     nvim::set_option_value("filetype", "launch_nvim_popup_prompt", &opts)?;

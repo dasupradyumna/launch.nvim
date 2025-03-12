@@ -24,4 +24,4 @@ inoremap <buffer> <Esc> <NOP>
 inoremap <buffer> <C-O> <NOP>
 
 " start insert mode
-call nvim_feedkeys('i', 'n', v:false)
+call nvim_feedkeys(printf('i%s', b:default), 'n', v:false)
