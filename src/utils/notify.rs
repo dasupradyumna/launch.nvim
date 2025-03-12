@@ -1,6 +1,6 @@
 /*------------------------------------- NOTIFICATION HELPERS -------------------------------------*/
 
-use ::nvim_oxi::api;
+use ::nvim_oxi::api as nvim;
 
 pub(crate) trait NotifyInput {
     fn handle(&self) -> String;
@@ -33,8 +33,8 @@ where
     }
 }
 
-pub(crate) fn _send(level: api::types::LogLevel, msg: String) {
-    let _ = api::notify(&format!("[launch.nvim] {msg}"), level, &api::opts::NotifyOpts::default());
+pub(crate) fn _send(level: nvim::types::LogLevel, msg: String) {
+    let _ = nvim::notify(&format!("[launch.nvim] {msg}"), level, &::nvim_oxi::Dictionary::new());
 }
 
 macro_rules! input(

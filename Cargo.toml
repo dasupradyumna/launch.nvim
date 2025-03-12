@@ -10,11 +10,13 @@ authors = ["Dasu Pradyumna"]
 name = "launch"
 crate-type = ["cdylib"]
 
+[dependencies.nvim-oxi]
+git = "https://github.com/noib3/nvim-oxi"
+rev = "6a2483cb4dee72272a8f08d8807ba96d07f33947"
+features = ["neovim-nightly", "libuv"]
+
 [dependencies]
-# CHECK: wait for v0.5.2, refer to "https://github.com/noib3/nvim-oxi/issues/202"
-# nvim-oxi = { version = "0.5", features = ["neovim-nightly"] }
-nvim-oxi = { path = "/home/pradyumna/foss/nvim-oxi", features = ["neovim-nightly", "libuv"] }
-regex = { version = "1" }
+regex = "1"
 serde = { version = "1.0", features = ["derive"] }
-serde_json = { version = "1.0" }
-thiserror = { version = "2.0" }
+serde_json = "1.0"
+thiserror = "2.0"
