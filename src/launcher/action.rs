@@ -85,6 +85,7 @@ fn set_config_field(index: usize, field: &str, value: String) {
     match field {
         "NAME" => config.set_name(value),
         "CMD" => config.set_command(value),
+        "CWD" => config.set_cwd(value),
         _ => {},
     }
 }
@@ -94,6 +95,9 @@ fn get_config_field(index: usize, field: &str) -> String {
     match field.trim_ascii_end() {
         "NAME" => config.name().to_string(),
         "CMD" => config.command().to_string(),
+        "CWD" if config.cwd().is_some() => unsafe {
+            config.cwd().as_ref().unwrap_unchecked().to_string_lossy().to_string()
+        },
         _ => String::new(),
     }
 }
@@ -107,25 +111,22 @@ pub(super) fn edit(mut edit: Edit) -> utils::Result<()> {
 
     let re = ::regex::Regex::new(r"^\s+([A-Z]+\s+):.*$").unwrap();
     let line = nvim::get_current_line()?;
-    // TODO: Support other lines as well
+    // TODO: Support other line patterns as well
     let field = if let Some(caps) = re.captures(&line) {
         caps.get(1).unwrap().as_str().trim_ascii_end()
     } else {
         return Ok(());
     };
     let value = self::get_config_field(edit.index, field);
+
     match field {
-        "NAME" | "CMD" => {
+        "NAME" | "CMD" | "CWD" => {
             let f = field.to_string();
             let callback = self::wrap_callback_(move |input: ::nvim_oxi::String| {
-                if !input.is_empty() {
-                    self::set_config_field(edit.index, &f, input.to_string());
-                    config::save()?;
-                    // FIX: resets cursor to top of window
-                    edit.update_ui()?;
-                }
-
-                Ok(())
+                self::set_config_field(edit.index, &f, input.to_string());
+                config::save()?;
+                // FIX: resets cursor to top of window
+                edit.update_ui()
             });
             utils::open_popup(field, value.as_str(), row, col, callback)?;
         },

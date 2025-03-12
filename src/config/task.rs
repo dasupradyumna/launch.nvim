@@ -148,10 +148,13 @@ impl TaskConfigJson {
         &self.env
     }
     pub(crate) fn set_name(&mut self, name: String) {
-        self.name = name;
+        self.name = if !name.is_empty() { name } else { return };
     }
     pub(crate) fn set_command(&mut self, command: String) {
-        self.command = command;
+        self.command = if !command.is_empty() { command } else { return };
+    }
+    pub(crate) fn set_cwd(&mut self, cwd: String) {
+        self.cwd = if cwd.is_empty() { None } else { Some(PathBuf::from(cwd)) };
     }
 }
 
