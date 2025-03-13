@@ -47,12 +47,19 @@ impl LauncherState for View {
     fn update_ui(&mut self) -> crate::utils::Result<()> {
         // Create view-mode buffer content
         let config = &config::state!().list[self.index];
+
         let mut lines = Vec::new();
         lines.push(format!("NAME : {}", config.name()));
         lines.push(format!("CMD  : {}", config.command()));
         if let Some(args) = config.args() {
-            lines.push("ARGS  :".to_string());
-            lines.extend(args.iter().map(|arg| format!("  - {arg}")));
+            lines.push("ARGS :".to_string());
+            lines.extend(args.iter().enumerate().map(|(i, arg)| {
+                if args.len() < 10 {
+                    format!("  {}: {arg}", i + 1)
+                } else {
+                    format!("  {:>2}: {arg}", i + 1)
+                }
+            }));
         }
         if let Some(display) = config.display() {
             lines.push(format!("DISP : {}", display));

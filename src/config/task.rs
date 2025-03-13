@@ -1,6 +1,7 @@
 /*-------------------------------------- TASK CONFIGURATION --------------------------------------*/
 
 use crate::settings::state as settings;
+use crate::utils::notify;
 use crate::utils::serde::StructVisitor;
 use ::nvim_oxi::{Dictionary, Object};
 use ::serde::de::{EnumAccess, Error, Visitor};
@@ -152,6 +153,23 @@ impl TaskConfigJson {
     }
     pub(crate) fn set_command(&mut self, command: String) {
         self.command = if !command.is_empty() { command } else { return };
+    }
+    pub(crate) fn set_arg(&mut self, index: usize, arg: String) {
+        match self.args {
+            None if index != 0 => {
+                notify::send!(Warn: "TaskConfigJson.set_args() called on None and idx>0")
+            },
+            None if !arg.is_empty() => self.args = Some(vec![arg]),
+            Some(ref mut args) if index < args.len() && arg.is_empty() => {
+                args.remove(index);
+                if args.is_empty() {
+                    self.args = None
+                }
+            },
+            Some(ref mut args) if index < args.len() && !arg.is_empty() => args[index] = arg,
+            Some(ref mut args) if index == args.len() && !arg.is_empty() => args.push(arg),
+            _ => {},
+        }
     }
     pub(crate) fn set_cwd(&mut self, cwd: String) {
         self.cwd = if cwd.is_empty() { None } else { Some(PathBuf::from(cwd)) };

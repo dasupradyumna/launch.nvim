@@ -51,12 +51,19 @@ impl LauncherState for Edit {
         // Create edit-mode buffer content
         let config = &config::state!().list[self.index];
         const NONE: &str = "---";
+
         let mut lines = Vec::new();
         lines.push(format!("NAME : {}", config.name()));
         lines.push(format!("CMD  : {}", config.command()));
         lines.push("ARGS :".to_string());
         if let Some(args) = config.args() {
-            lines.extend(args.iter().map(|arg| format!("  - {arg}")));
+            lines.extend(args.iter().enumerate().map(|(i, arg)| {
+                if args.len() < 10 {
+                    format!("  {}: {arg}", i + 1)
+                } else {
+                    format!("  {:>2}: {arg}", i + 1)
+                }
+            }));
         }
         lines.push("  + Add new".to_string());
         let fmt = match config.display() {

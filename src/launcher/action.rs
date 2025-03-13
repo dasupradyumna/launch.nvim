@@ -36,17 +36,18 @@ where
 }
 
 pub(super) fn handle_result(result: utils::Result<()>) {
-    if let Err(e) = result {
-        utils::notify::send!(Warn: {format!("{e}")});
+    let Err(err_msg) = result else {
+        return;
+    };
+    utils::notify::send!(Warn: {format!("{err_msg}")});
 
-        match std::mem::replace(&mut *super::state!(), Launcher::Closed) {
-            Launcher::Select(Select { buffer, .. })
-            | Launcher::View(View { buffer, .. })
-            | Launcher::Edit(Edit { buffer, .. }) => {
-                let _ = self::close(buffer);
-            },
-            _ => {},
-        }
+    match std::mem::replace(&mut *super::state!(), Launcher::Closed) {
+        Launcher::Select(Select { buffer, .. })
+        | Launcher::View(View { buffer, .. })
+        | Launcher::Edit(Edit { buffer, .. }) => {
+            let _ = self::close(buffer);
+        },
+        _ => {},
     }
 }
 
@@ -86,17 +87,30 @@ fn set_config_field(index: usize, field: &str, value: String) {
         "NAME" => config.set_name(value),
         "CMD" => config.set_command(value),
         "CWD" => config.set_cwd(value),
+        arg_index if field.parse::<usize>().is_ok() => unsafe {
+            let index = arg_index.parse::<usize>().unwrap_unchecked();
+            config.set_arg(index - 1, value)
+        },
         _ => {},
     }
 }
 
 fn get_config_field(index: usize, field: &str) -> String {
     let config = &config::state!().list[index];
-    match field.trim_ascii_end() {
+    match field {
         "NAME" => config.name().to_string(),
         "CMD" => config.command().to_string(),
         "CWD" if config.cwd().is_some() => unsafe {
-            config.cwd().as_ref().unwrap_unchecked().to_string_lossy().to_string()
+            config.cwd().as_ref().unwrap_unchecked().display().to_string()
+        },
+        arg_index if field.parse::<usize>().is_ok() => unsafe {
+            let index = arg_index.parse::<usize>().unwrap_unchecked();
+            let args = config.args();
+            if index == 1 + args.as_ref().map_or(0, |args| args.len()) {
+                String::new()
+            } else {
+                args.as_ref().unwrap_unchecked()[index - 1].clone()
+            }
         },
         _ => String::new(),
     }
@@ -109,18 +123,28 @@ pub(super) fn edit(mut edit: Edit) -> utils::Result<()> {
     let row = row as u32 + offset;
     let col = col as u32 + width + 2;
 
-    let re = ::regex::Regex::new(r"^\s+([A-Z]+\s+):.*$").unwrap();
+    let re_scalar = ::regex::Regex::new(r"^\s+([A-Z]+)\s+:.*$").unwrap();
+    let re_array = ::regex::Regex::new(r"^\s+(\d+):.*$").unwrap();
+    let re_array_new = ::regex::Regex::new(r"^\s+\+ Add new\s+$").unwrap();
     let line = nvim::get_current_line()?;
     // TODO: Support other line patterns as well
-    let field = if let Some(caps) = re.captures(&line) {
-        caps.get(1).unwrap().as_str().trim_ascii_end()
+    let field = if let Some(caps) = re_scalar.captures(&line) {
+        unsafe { caps.get(1).unwrap_unchecked().as_str().to_string() }
+    } else if let Some(caps) = re_array.captures(&line) {
+        unsafe { caps.get(1).unwrap_unchecked().as_str().to_string() }
+    } else if re_array_new.is_match(&line) {
+        let config = &config::state!().list[edit.index];
+        let index = 1 + config.args().as_ref().map_or(0, |args| args.len());
+        index.to_string()
     } else {
         return Ok(());
     };
+    let field = field.as_str();
     let value = self::get_config_field(edit.index, field);
 
     match field {
-        "NAME" | "CMD" | "CWD" => {
+        "ARGS" | "ENV" | "DISP" => {},
+        _ => {
             let f = field.to_string();
             let callback = self::wrap_callback_(move |input: ::nvim_oxi::String| {
                 self::set_config_field(edit.index, &f, input.to_string());
@@ -130,7 +154,6 @@ pub(super) fn edit(mut edit: Edit) -> utils::Result<()> {
             });
             utils::open_popup(field, value.as_str(), row, col, callback)?;
         },
-        _ => {},
     }
 
     Ok(())
