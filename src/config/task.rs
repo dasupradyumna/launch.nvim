@@ -148,29 +148,34 @@ impl TaskConfigJson {
         &self.env
     }
     pub(crate) fn set_name(&mut self, name: String) {
-        self.name = if !name.is_empty() { name } else { return };
+        self.name = name;
     }
     pub(crate) fn set_command(&mut self, command: String) {
-        self.command = if !command.is_empty() { command } else { return };
+        self.command = command;
     }
     pub(crate) fn set_arg(&mut self, index: usize, arg: String) {
         if index < self.args.len() {
-            if arg.is_empty() {
-                self.args.remove(index);
-            } else {
-                self.args[index] = arg;
-            }
-        } else if !arg.is_empty() {
+            self.args[index] = arg;
+        } else {
             self.args.push(arg);
         }
     }
     pub(crate) fn set_cwd(&mut self, cwd: String) {
-        self.cwd = if cwd.is_empty() { None } else { Some(PathBuf::from(cwd)) };
+        self.cwd.replace(cwd.into());
     }
     pub(crate) fn set_env(&mut self, old_var: &str, new_var_value: String) {
         self.env.remove(old_var);
         let (new_var, value) = unsafe { new_var_value.split_once('=').unwrap_unchecked() };
         self.env.insert(new_var.into(), value.into());
+    }
+    pub(crate) fn del_arg(&mut self, index: usize) {
+        self.args.remove(index);
+    }
+    pub(crate) fn del_cwd(&mut self) {
+        self.cwd = None;
+    }
+    pub(crate) fn del_env(&mut self, var: &str) {
+        self.env.remove(var);
     }
 }
 

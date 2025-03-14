@@ -116,6 +116,7 @@ impl LauncherState for Edit {
         let callback_dict = Array::from((
             wrap_callback("b", || super::state!().on(Event::Back)),
             wrap_callback("q", || super::state!().on(Event::Close)),
+            wrap_callback("d", || super::state!().on(Event::Delete)),
             wrap_callback("<CR>", || super::state!().on(Event::Edit)),
         ));
         self.buffer.set_var("callbacks", callback_dict)?;

@@ -108,8 +108,13 @@ impl Launcher {
                 }
             },
 
+            (Self::Edit(mut edit), Event::Delete) => {
+                action::delete_field(&mut edit)?;
+                Self::Edit(edit)
+            },
+
             (Self::Edit(edit), Event::Edit) => {
-                action::edit(edit.clone())?;
+                action::edit_field(edit.clone())?;
                 Self::Edit(edit)
             },
 

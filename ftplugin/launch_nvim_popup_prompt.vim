@@ -8,6 +8,8 @@ let b:did_ftplugin = 1
 setlocal buftype=prompt
 
 function! s:callback(input)
+    if a:input->empty() | return | endif
+
     call b:callback(a:input)
     if !exists('b:env_var') | bwipeout! | endif
 endfunction

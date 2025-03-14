@@ -113,7 +113,7 @@ fn get_config_field(index: usize, field: &str) -> String {
     }
 }
 
-pub(super) fn edit(mut edit: Edit) -> utils::Result<()> {
+pub(super) fn edit_field(mut edit: Edit) -> utils::Result<()> {
     let (row, col) = edit.window.get_position()?;
     let offset = edit.window.get_cursor()?.0 as u32 - 1;
     let width = edit.window.get_width()?;
@@ -146,10 +146,6 @@ pub(super) fn edit(mut edit: Edit) -> utils::Result<()> {
         env_var if field.ends_with('=') => {
             let f = field.to_string();
             let callback = self::wrap_callback_(move |input: ::nvim_oxi::String| {
-                if input.is_empty() {
-                    return Ok(());
-                }
-
                 let callback = self::wrap_callback_(move |input: ::nvim_oxi::String| {
                     let mut buffer = nvim::get_current_buf();
                     let env_var: String = buffer.get_var("env_var")?;
@@ -183,4 +179,37 @@ pub(super) fn edit(mut edit: Edit) -> utils::Result<()> {
     }
 
     Ok(())
+}
+
+fn del_config_field(index: usize, field: &str) {
+    let config = &mut config::state!().list[index];
+    match field {
+        "CWD" => config.del_cwd(),
+        arg_index if field.parse::<usize>().is_ok() => unsafe {
+            config.del_arg(arg_index.parse::<usize>().unwrap_unchecked() - 1);
+        },
+        env_var if field.ends_with('=') => config.del_env(env_var.trim_end_matches('=')),
+        _ => {},
+    }
+}
+
+pub(super) fn delete_field(edit: &mut Edit) -> utils::Result<()> {
+    let re_scalar = ::regex::Regex::new(r"^\ +([A-Z]+)\ +:").unwrap();
+    let re_array = ::regex::Regex::new(r"^\ +([0-9]+):").unwrap();
+    let re_dict = ::regex::Regex::new(r"^\ +([a-zA-Z_][[:word:]]+=)").unwrap();
+    let line = nvim::get_current_line()?;
+    // TODO: merge all regexes or use RegexSet?
+    let field = if let Some(caps) = re_scalar.captures(&line) {
+        unsafe { caps.get(1).unwrap_unchecked().as_str() }
+    } else if let Some(caps) = re_array.captures(&line) {
+        unsafe { caps.get(1).unwrap_unchecked().as_str() }
+    } else if let Some(caps) = re_dict.captures(&line) {
+        unsafe { caps.get(1).unwrap_unchecked().as_str() }
+    } else {
+        return Ok(());
+    };
+
+    self::del_config_field(edit.index, field);
+    config::save()?;
+    edit.update_ui()
 }
