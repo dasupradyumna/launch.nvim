@@ -105,12 +105,7 @@ fn get_config_field(index: usize, field: &str) -> String {
         },
         arg_index if field.parse::<usize>().is_ok() => unsafe {
             let index = arg_index.parse::<usize>().unwrap_unchecked();
-            let args = config.args();
-            if index == 1 + args.as_ref().map_or(0, |args| args.len()) {
-                String::new()
-            } else {
-                args.as_ref().unwrap_unchecked()[index - 1].clone()
-            }
+            config.args().get(index - 1).map_or_else(String::new, |a| a.into())
         },
         _ => String::new(),
     }
@@ -133,8 +128,7 @@ pub(super) fn edit(mut edit: Edit) -> utils::Result<()> {
     } else if let Some(caps) = re_array.captures(&line) {
         unsafe { caps.get(1).unwrap_unchecked().as_str().to_string() }
     } else if re_array_new.is_match(&line) {
-        let config = &config::state!().list[edit.index];
-        let index = 1 + config.args().as_ref().map_or(0, |args| args.len());
+        let index = 1 + config::state!().list[edit.index].args().len();
         index.to_string()
     } else {
         return Ok(());

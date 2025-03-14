@@ -1,7 +1,6 @@
 /*-------------------------------------- TASK CONFIGURATION --------------------------------------*/
 
 use crate::settings::state as settings;
-use crate::utils::notify;
 use crate::utils::serde::StructVisitor;
 use ::nvim_oxi::{Dictionary, Object};
 use ::serde::de::{EnumAccess, Error, Visitor};
@@ -118,14 +117,14 @@ impl<'de> Visitor<'de> for StructVisitor<TaskDisplayFloatSize> {
 pub(crate) struct TaskConfigJson {
     name: String,
     command: String,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    args: Option<Vec<String>>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    args: Vec<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     display: Option<TaskDisplay>,
     #[serde(skip_serializing_if = "Option::is_none")]
     cwd: Option<PathBuf>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    env: Option<HashMap<String, String>>,
+    #[serde(default, skip_serializing_if = "HashMap::is_empty")]
+    env: HashMap<String, String>,
     // shell: Option<???>
 }
 
@@ -136,7 +135,7 @@ impl TaskConfigJson {
     pub(crate) fn command(&self) -> &String {
         &self.command
     }
-    pub(crate) fn args(&self) -> &Option<Vec<String>> {
+    pub(crate) fn args(&self) -> &Vec<String> {
         &self.args
     }
     pub(crate) fn display(&self) -> &Option<TaskDisplay> {
@@ -145,7 +144,7 @@ impl TaskConfigJson {
     pub(crate) fn cwd(&self) -> &Option<PathBuf> {
         &self.cwd
     }
-    pub(crate) fn env(&self) -> &Option<HashMap<String, String>> {
+    pub(crate) fn env(&self) -> &HashMap<String, String> {
         &self.env
     }
     pub(crate) fn set_name(&mut self, name: String) {
@@ -155,20 +154,14 @@ impl TaskConfigJson {
         self.command = if !command.is_empty() { command } else { return };
     }
     pub(crate) fn set_arg(&mut self, index: usize, arg: String) {
-        match self.args {
-            None if index != 0 => {
-                notify::send!(Warn: "TaskConfigJson.set_args() called on None and idx>0")
-            },
-            None if !arg.is_empty() => self.args = Some(vec![arg]),
-            Some(ref mut args) if index < args.len() && arg.is_empty() => {
-                args.remove(index);
-                if args.is_empty() {
-                    self.args = None
-                }
-            },
-            Some(ref mut args) if index < args.len() && !arg.is_empty() => args[index] = arg,
-            Some(ref mut args) if index == args.len() && !arg.is_empty() => args.push(arg),
-            _ => {},
+        if index < self.args.len() {
+            if arg.is_empty() {
+                self.args.remove(index);
+            } else {
+                self.args[index] = arg;
+            }
+        } else if !arg.is_empty() {
+            self.args.push(arg);
         }
     }
     pub(crate) fn set_cwd(&mut self, cwd: String) {
@@ -182,13 +175,13 @@ impl From<TaskConfigJson> for TaskConfig {
         TaskConfig {
             name: value.name,
             command: value.command,
-            args: value.args.unwrap_or_default(),
+            args: value.args,
             display: value.display.unwrap_or(task_settings.ui.display),
             cwd: value
                 .cwd
                 .map(|path| path.canonicalize().unwrap())
                 .unwrap_or_else(|| std::env::current_dir().unwrap()),
-            env: value.env.unwrap_or_default(),
+            env: value.env,
         }
     }
 }

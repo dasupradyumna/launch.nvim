@@ -51,8 +51,9 @@ impl LauncherState for View {
         let mut lines = Vec::new();
         lines.push(format!("NAME : {}", config.name()));
         lines.push(format!("CMD  : {}", config.command()));
-        if let Some(args) = config.args() {
+        if !config.args().is_empty() {
             lines.push("ARGS :".to_string());
+            let args = config.args();
             lines.extend(args.iter().enumerate().map(|(i, arg)| {
                 if args.len() < 10 {
                     format!("  {}: {arg}", i + 1)
@@ -67,9 +68,9 @@ impl LauncherState for View {
         if let Some(cwd) = config.cwd() {
             lines.push(format!("CWD  : {}", cwd.display()));
         }
-        if let Some(env) = config.env() {
+        if !config.env().is_empty() {
             lines.push("ENV  :".to_string());
-            lines.extend(env.iter().map(|(var, value)| format!("  {var}={value}")));
+            lines.extend(config.env().iter().map(|(var, value)| format!("  {var}={value}")));
         }
 
         // Display buffer content

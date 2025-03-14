@@ -56,15 +56,14 @@ impl LauncherState for Edit {
         lines.push(format!("NAME : {}", config.name()));
         lines.push(format!("CMD  : {}", config.command()));
         lines.push("ARGS :".to_string());
-        if let Some(args) = config.args() {
-            lines.extend(args.iter().enumerate().map(|(i, arg)| {
-                if args.len() < 10 {
-                    format!("  {}: {arg}", i + 1)
-                } else {
-                    format!("  {:>2}: {arg}", i + 1)
-                }
-            }));
-        }
+        let args = config.args();
+        lines.extend(args.iter().enumerate().map(|(i, arg)| {
+            if args.len() < 10 {
+                format!("  {}: {arg}", i + 1)
+            } else {
+                format!("  {:>2}: {arg}", i + 1)
+            }
+        }));
         lines.push("  + Add new".to_string());
         let fmt = match config.display() {
             Some(d) => d.to_string(),
@@ -77,9 +76,7 @@ impl LauncherState for Edit {
         };
         lines.push(format!("CWD  : {fmt}"));
         lines.push("ENV  :".to_string());
-        if let Some(env) = config.env() {
-            lines.extend(env.iter().map(|(var, value)| format!("  {var}={value}")));
-        }
+        lines.extend(config.env().iter().map(|(var, value)| format!("  {var}={value}")));
         lines.push("  + Add new".to_string());
 
         // Display buffer content
