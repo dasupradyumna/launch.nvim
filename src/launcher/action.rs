@@ -108,7 +108,10 @@ fn get_config_field(index: usize, field: &str) -> String {
             let index = arg_index.parse::<usize>().unwrap_unchecked();
             config.args().get(index - 1).map_or_else(String::new, |a| a.into())
         },
-        env_var if field.ends_with('=') => config.env()[env_var.trim_end_matches('=')].clone(),
+        env_var if field.ends_with('=') => config
+            .env()
+            .get(env_var.trim_end_matches('='))
+            .map_or_else(String::new, |v| v.clone()),
         _ => String::new(),
     }
 }
@@ -124,6 +127,7 @@ pub(super) fn edit_field(mut edit: Edit) -> utils::Result<()> {
     let re_array = ::regex::Regex::new(r"^\ +([0-9]+):").unwrap();
     let re_array_new = ::regex::Regex::new(r"^\ +\+ New Arg").unwrap();
     let re_dict = ::regex::Regex::new(r"^\ +([a-zA-Z_][[:word:]]+=)").unwrap();
+    let re_dict_new = ::regex::Regex::new(r"^\ +\+ New Var").unwrap();
     let line = nvim::get_current_line()?;
     // TODO: merge all regexes or use RegexSet?
     let field = if let Some(caps) = re_scalar.captures(&line) {
@@ -135,6 +139,8 @@ pub(super) fn edit_field(mut edit: Edit) -> utils::Result<()> {
         index.to_string()
     } else if let Some(caps) = re_dict.captures(&line) {
         unsafe { caps.get(1).unwrap_unchecked().as_str().to_string() }
+    } else if re_dict_new.is_match(&line) {
+        "=".into()
     } else {
         return Ok(());
     };
