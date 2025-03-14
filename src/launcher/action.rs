@@ -148,7 +148,24 @@ pub(super) fn edit_field(mut edit: Edit) -> utils::Result<()> {
     let value = self::get_config_field(edit.index, field);
 
     match field {
-        "ARGS" | "ENV" | "DISP" => {},
+        "ARGS" | "ENV" => {},
+        "DISP" => {
+            let callback = self::wrap_callback_(move |()| {
+                use config::TaskDisplay::*;
+                let choice = match nvim::get_current_line()?.trim_ascii() {
+                    "float" => Float,
+                    "hsplit" => HSplit,
+                    "vsplit" => VSplit,
+                    _ => return Ok(()),
+                };
+                {
+                    config::state!().list[edit.index].set_disp(choice);
+                }
+                config::save()?;
+                edit.update_ui()
+            });
+            utils::open_select(vec!["float", "hsplit", "vsplit"], row, col, callback)?;
+        },
         env_var if field.ends_with('=') => {
             let f = field.to_string();
             let callback = self::wrap_callback_(move |input: ::nvim_oxi::String| {
@@ -170,7 +187,7 @@ pub(super) fn edit_field(mut edit: Edit) -> utils::Result<()> {
                 buffer.set_var("callback", callback)?;
                 Ok(nvim::command("call b:update_prompt()")?)
             });
-            utils::open_popup("VAR", env_var.trim_end_matches('='), row, col, callback)?;
+            utils::open_prompt("VAR", env_var.trim_end_matches('='), row, col, callback)?;
         },
         _ => {
             let f = field.to_string();
@@ -180,7 +197,7 @@ pub(super) fn edit_field(mut edit: Edit) -> utils::Result<()> {
                 // FIX: resets cursor to top of window
                 edit.update_ui()
             });
-            utils::open_popup(field, value.as_str(), row, col, callback)?;
+            utils::open_prompt(field, value.as_str(), row, col, callback)?;
         },
     }
 
@@ -191,6 +208,7 @@ fn del_config_field(index: usize, field: &str) {
     let config = &mut config::state!().list[index];
     match field {
         "CWD" => config.del_cwd(),
+        "DISP" => config.del_disp(),
         arg_index if field.parse::<usize>().is_ok() => unsafe {
             config.del_arg(arg_index.parse::<usize>().unwrap_unchecked() - 1);
         },

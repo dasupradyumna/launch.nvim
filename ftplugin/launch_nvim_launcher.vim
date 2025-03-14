@@ -5,7 +5,6 @@ if exists('b:did_ftplugin') | finish | endif
 let b:did_ftplugin = 1
 
 setlocal nomodifiable
-setlocal buftype=nofile
 
 function! s:navigate(up)
     " TODO: change from cursor position to something more robust for navigation
@@ -19,6 +18,8 @@ endfunction
 
 nnoremap <buffer> <nowait> j <Cmd>call <SID>navigate(v:false)<CR>
 nnoremap <buffer> <nowait> k <Cmd>call <SID>navigate(v:true)<CR>
+" disable window navigation
+nnoremap <buffer> <C-W> <NOP>
 
 "--------------------- CALLBACK LOGIC ---------------------"
 

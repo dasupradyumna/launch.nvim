@@ -64,7 +64,7 @@ impl LauncherState for Select {
 
         // Modify window size to match current config list
         let height = n + 2;
-        let width = lines.iter().map(|l| l.len()).max().unwrap() as u32 + 8;
+        let width = lines.iter().map(|l| l.len() + 8).max().unwrap() as u32;
         let (row, col) = utils::get_float_position(width, height)?;
         let win_config = WindowConfig::builder()
             .relative(WindowRelativeTo::Editor)

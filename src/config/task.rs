@@ -160,6 +160,9 @@ impl TaskConfigJson {
             self.args.push(arg);
         }
     }
+    pub(crate) fn set_disp(&mut self, disp: TaskDisplay) {
+        self.display.replace(disp);
+    }
     pub(crate) fn set_cwd(&mut self, cwd: String) {
         self.cwd.replace(cwd.into());
     }
@@ -170,6 +173,9 @@ impl TaskConfigJson {
     }
     pub(crate) fn del_arg(&mut self, index: usize) {
         self.args.remove(index);
+    }
+    pub(crate) fn del_disp(&mut self) {
+        self.display = None;
     }
     pub(crate) fn del_cwd(&mut self) {
         self.cwd = None;

@@ -94,25 +94,24 @@ pub(crate) fn open_float(
     Ok(window)
 }
 
-pub(crate) fn open_popup(
+pub(crate) fn open_prompt(
     prompt: &str,
     default: &str,
     row: u32,
     col: u32,
     callback: Function<::nvim_oxi::String, ()>,
-) -> self::Result<Window> {
+) -> self::Result<()> {
     let mut buffer = nvim::create_buf(false, true)?;
     let opts = OptionOpts::builder().buffer(buffer.clone()).build();
     nvim::set_option_value("filetype", "launch_nvim_popup_prompt", &opts)?;
 
     use ::nvim_oxi::api::types::*;
-    let (width, height) = (40, 1);
     let win_config = WindowConfig::builder()
         .relative(WindowRelativeTo::Editor)
         .row(row)
         .col(col)
-        .width(width)
-        .height(height)
+        .width(40)
+        .height(1)
         .border(WindowBorder::Rounded)
         .style(WindowStyle::Minimal)
         .zindex(49)
@@ -129,5 +128,38 @@ pub(crate) fn open_popup(
     buffer.set_var("callback", callback)?;
     nvim::command("call b:update_prompt()")?;
 
-    Ok(window)
+    Ok(())
+}
+
+pub(crate) fn open_select(
+    items: Vec<&str>,
+    row: u32,
+    col: u32,
+    callback: Function<(), ()>,
+) -> self::Result<()> {
+    let mut buffer = nvim::create_buf(false, true)?;
+    buffer.set_lines(0..1, true, items.iter().map(|i| format!("  {i}  ")))?;
+    buffer.set_var("callback", callback)?;
+    let opts = OptionOpts::builder().buffer(buffer.clone()).build();
+    nvim::set_option_value("filetype", "launch_nvim_popup_select", &opts)?;
+
+    use ::nvim_oxi::api::types::*;
+    let win_config = WindowConfig::builder()
+        .relative(WindowRelativeTo::Editor)
+        .row(row)
+        .col(col)
+        .width(items.iter().map(|i| i.len() + 4).max().unwrap() as u32)
+        .height(items.len() as u32)
+        .border(WindowBorder::Rounded)
+        .style(WindowStyle::Minimal)
+        .zindex(49)
+        .build();
+    let window = nvim::open_win(&buffer, true, &win_config)?;
+
+    // Fix the prompt buffer
+    let opts = OptionOpts::builder().win(window.clone()).build();
+    nvim::set_option_value("winfixbuf", true, &opts)?;
+    nvim::set_option_value("cursorline", true, &opts)?;
+
+    Ok(())
 }
