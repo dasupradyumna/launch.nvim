@@ -167,6 +167,11 @@ impl TaskConfigJson {
     pub(crate) fn set_cwd(&mut self, cwd: String) {
         self.cwd = if cwd.is_empty() { None } else { Some(PathBuf::from(cwd)) };
     }
+    pub(crate) fn set_env(&mut self, old_var: &str, new_var_value: String) {
+        self.env.remove(old_var);
+        let (new_var, value) = unsafe { new_var_value.split_once('=').unwrap_unchecked() };
+        self.env.insert(new_var.into(), value.into());
+    }
 }
 
 impl From<TaskConfigJson> for TaskConfig {

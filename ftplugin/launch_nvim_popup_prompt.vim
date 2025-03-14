@@ -4,16 +4,20 @@
 if exists('b:did_ftplugin') | finish | endif
 let b:did_ftplugin = 1
 
-function! s:callback(input)
-    call b:callback(a:input)
-    bwipeout!
-endfunction
-
 " setup buffer as prompt
 setlocal buftype=prompt
-let buffer = bufnr()
-call prompt_setprompt(buffer, printf(' %s > ', b:prompt))
-call prompt_setcallback(buffer, function('s:callback'))
+
+function! s:callback(input)
+    call b:callback(a:input)
+    if !exists('b:env_var') | bwipeout! | endif
+endfunction
+call prompt_setcallback(bufnr(), function('s:callback'))
+
+function! s:update_prompt()
+    call prompt_setprompt(bufnr(), printf(' %s > ', b:prompt))
+    call feedkeys(b:default, 't')
+endfunction
+let b:update_prompt = function('s:update_prompt')
 
 " cancel prompt and exit
 inoremap <buffer> <C-C> <Cmd>bwipeout!<CR>
@@ -24,4 +28,4 @@ inoremap <buffer> <Esc> <NOP>
 inoremap <buffer> <C-O> <NOP>
 
 " start insert mode
-call nvim_feedkeys(printf('i%s', b:default), 'n', v:false)
+call feedkeys('i')

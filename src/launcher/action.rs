@@ -91,6 +91,7 @@ fn set_config_field(index: usize, field: &str, value: String) {
             let index = arg_index.parse::<usize>().unwrap_unchecked();
             config.set_arg(index - 1, value)
         },
+        env_var if field.ends_with('=') => config.set_env(env_var.trim_end_matches('='), value),
         _ => {},
     }
 }
@@ -107,6 +108,7 @@ fn get_config_field(index: usize, field: &str) -> String {
             let index = arg_index.parse::<usize>().unwrap_unchecked();
             config.args().get(index - 1).map_or_else(String::new, |a| a.into())
         },
+        env_var if field.ends_with('=') => config.env()[env_var.trim_end_matches('=')].clone(),
         _ => String::new(),
     }
 }
@@ -118,11 +120,12 @@ pub(super) fn edit(mut edit: Edit) -> utils::Result<()> {
     let row = row as u32 + offset;
     let col = col as u32 + width + 2;
 
-    let re_scalar = ::regex::Regex::new(r"^\s+([A-Z]+)\s+:.*$").unwrap();
-    let re_array = ::regex::Regex::new(r"^\s+(\d+):.*$").unwrap();
-    let re_array_new = ::regex::Regex::new(r"^\s+\+ Add new\s+$").unwrap();
+    let re_scalar = ::regex::Regex::new(r"^\ +([A-Z]+)\ +:").unwrap();
+    let re_array = ::regex::Regex::new(r"^\ +([0-9]+):").unwrap();
+    let re_array_new = ::regex::Regex::new(r"^\ +\+ New Arg").unwrap();
+    let re_dict = ::regex::Regex::new(r"^\ +([a-zA-Z_][[:word:]]+=)").unwrap();
     let line = nvim::get_current_line()?;
-    // TODO: Support other line patterns as well
+    // TODO: merge all regexes or use RegexSet?
     let field = if let Some(caps) = re_scalar.captures(&line) {
         unsafe { caps.get(1).unwrap_unchecked().as_str().to_string() }
     } else if let Some(caps) = re_array.captures(&line) {
@@ -130,6 +133,8 @@ pub(super) fn edit(mut edit: Edit) -> utils::Result<()> {
     } else if re_array_new.is_match(&line) {
         let index = 1 + config::state!().list[edit.index].args().len();
         index.to_string()
+    } else if let Some(caps) = re_dict.captures(&line) {
+        unsafe { caps.get(1).unwrap_unchecked().as_str().to_string() }
     } else {
         return Ok(());
     };
@@ -138,6 +143,33 @@ pub(super) fn edit(mut edit: Edit) -> utils::Result<()> {
 
     match field {
         "ARGS" | "ENV" | "DISP" => {},
+        env_var if field.ends_with('=') => {
+            let f = field.to_string();
+            let callback = self::wrap_callback_(move |input: ::nvim_oxi::String| {
+                if input.is_empty() {
+                    return Ok(());
+                }
+
+                let callback = self::wrap_callback_(move |input: ::nvim_oxi::String| {
+                    let mut buffer = nvim::get_current_buf();
+                    let env_var: String = buffer.get_var("env_var")?;
+                    buffer.del_var("env_var")?;
+
+                    self::set_config_field(edit.index, &f, format!("{env_var}={input}"));
+                    config::save()?;
+                    edit.update_ui()
+                });
+
+                let mut buffer = nvim::get_current_buf();
+                // TODO: input must be a valid enviroment variable name
+                buffer.set_var("env_var", input)?;
+                buffer.set_var("prompt", "VALUE")?;
+                buffer.set_var("default", value.as_str())?;
+                buffer.set_var("callback", callback)?;
+                Ok(nvim::command("call b:update_prompt()")?)
+            });
+            utils::open_popup("VAR", env_var.trim_end_matches('='), row, col, callback)?;
+        },
         _ => {
             let f = field.to_string();
             let callback = self::wrap_callback_(move |input: ::nvim_oxi::String| {
