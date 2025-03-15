@@ -82,6 +82,35 @@ pub(super) fn launch(buffer: Buffer, index: usize) -> utils::Result<()> {
     crate::core::task::run(config)
 }
 
+fn get_popup_pos(window: &Window) -> utils::Result<(u32, u32)> {
+    let (row, col) = window.get_position()?;
+    let offset = window.get_cursor()?.0 as u32 - 1;
+    let width = window.get_width()?;
+    let row = row as u32 + offset;
+    let col = col as u32 + width + 2;
+
+    Ok((row, col))
+}
+
+fn match_field_regex() -> utils::Result<String> {
+    let line = nvim::get_current_line()?;
+    let patterns = [
+        r"^\ +([A-Z]+)\ +:",
+        r"^\ +([0-9]+):",
+        r"^\ +(\+) New Arg...",
+        r"^\ +([a-zA-Z_][[:word:]]+=)",
+        r"^\ +\+ New Var(=)...",
+    ];
+    let mat = ::regex::Regex::new(&patterns.join("|"))
+        .unwrap()
+        .captures(&line)
+        .unwrap()
+        .iter()
+        .flatten()
+        .nth(1);
+    Ok(mat.unwrap().as_str().to_string())
+}
+
 fn set_config_field(index: usize, field: &str, value: String) {
     let config = &mut config::state!().list[index];
     match field {
@@ -118,38 +147,16 @@ fn get_config_field(index: usize, field: &str) -> String {
 }
 
 pub(super) fn edit_field(mut edit: Edit) -> utils::Result<()> {
-    let (row, col) = edit.window.get_position()?;
-    let offset = edit.window.get_cursor()?.0 as u32 - 1;
-    let width = edit.window.get_width()?;
-    let row = row as u32 + offset;
-    let col = col as u32 + width + 2;
-
-    let re_scalar = ::regex::Regex::new(r"^\ +([A-Z]+)\ +:").unwrap();
-    let re_array = ::regex::Regex::new(r"^\ +([0-9]+):").unwrap();
-    let re_array_new = ::regex::Regex::new(r"^\ +\+ New Arg").unwrap();
-    let re_dict = ::regex::Regex::new(r"^\ +([a-zA-Z_][[:word:]]+=)").unwrap();
-    let re_dict_new = ::regex::Regex::new(r"^\ +\+ New Var").unwrap();
-    let line = nvim::get_current_line()?;
-    // TODO: merge all regexes or use RegexSet?
-    let field = if let Some(caps) = re_scalar.captures(&line) {
-        unsafe { caps.get(1).unwrap_unchecked().as_str().to_string() }
-    } else if let Some(caps) = re_array.captures(&line) {
-        unsafe { caps.get(1).unwrap_unchecked().as_str().to_string() }
-    } else if re_array_new.is_match(&line) {
-        let index = 1 + config::state!().list[edit.index].args().len();
-        index.to_string()
-    } else if let Some(caps) = re_dict.captures(&line) {
-        unsafe { caps.get(1).unwrap_unchecked().as_str().to_string() }
-    } else if re_dict_new.is_match(&line) {
-        "=".into()
-    } else {
-        return Ok(());
+    let (row, col) = self::get_popup_pos(&edit.window)?;
+    let mut field = self::match_field_regex()?;
+    if field == "+" {
+        field = (config::state!().list[edit.index].args().len() + 1).to_string();
     };
     let field = field.as_str();
     let value = self::get_config_field(edit.index, field);
 
     match field {
-        "ARGS" | "ENV" => Ok(()),
+        "ARGS" | "ENV" | "" => Ok(()),
         "DISP" => {
             let callback = self::wrap_callback_(move |()| {
                 use config::TaskDisplay::*;
@@ -203,7 +210,7 @@ pub(super) fn edit_field(mut edit: Edit) -> utils::Result<()> {
     }
 }
 
-fn del_config_field(index: usize, field: &str) {
+fn del_config_field(index: usize, field: &str) -> bool {
     let config = &mut config::state!().list[index];
     match field {
         "CWD" => config.del_cwd(),
@@ -211,48 +218,29 @@ fn del_config_field(index: usize, field: &str) {
         arg_index if field.parse::<usize>().is_ok() => unsafe {
             config.del_arg(arg_index.parse::<usize>().unwrap_unchecked() - 1);
         },
-        env_var if field.ends_with('=') => config.del_env(env_var.trim_end_matches('=')),
-        _ => {},
+        env_var if field.ends_with('=') && env_var != "=" => {
+            config.del_env(env_var.trim_end_matches('='))
+        },
+        _ => return false,
     }
+    true
 }
 
 pub(super) fn delete_field(edit: &mut Edit) -> utils::Result<()> {
-    let re_scalar = ::regex::Regex::new(r"^\ +([A-Z]+)\ +:").unwrap();
-    let re_array = ::regex::Regex::new(r"^\ +([0-9]+):").unwrap();
-    let re_dict = ::regex::Regex::new(r"^\ +([a-zA-Z_][[:word:]]+=)").unwrap();
-    let line = nvim::get_current_line()?;
-    // TODO: merge all regexes or use RegexSet?
-    let field = if let Some(caps) = re_scalar.captures(&line) {
-        unsafe { caps.get(1).unwrap_unchecked().as_str() }
-    } else if let Some(caps) = re_array.captures(&line) {
-        unsafe { caps.get(1).unwrap_unchecked().as_str() }
-    } else if let Some(caps) = re_dict.captures(&line) {
-        unsafe { caps.get(1).unwrap_unchecked().as_str() }
-    } else {
+    let field = self::match_field_regex()?;
+    if !self::del_config_field(edit.index, field.as_str()) {
         return Ok(());
-    };
-
-    self::del_config_field(edit.index, field);
+    }
     config::save()?;
     edit.update_ui()
 }
 
 pub(super) fn insert_arg(mut edit: Edit) -> utils::Result<()> {
-    let (row, col) = edit.window.get_position()?;
-    let offset = edit.window.get_cursor()?.0 as u32 - 1;
-    let width = edit.window.get_width()?;
-    let row = row as u32 + offset;
-    let col = col as u32 + width + 2;
-
-    let re_array = ::regex::Regex::new(r"^\ +([0-9]+):").unwrap();
-    let line = nvim::get_current_line()?;
-    let field = if let Some(caps) = re_array.captures(&line) {
-        unsafe { caps.get(1).unwrap_unchecked().as_str() }
-    } else {
+    let (row, col) = self::get_popup_pos(&edit.window)?;
+    let field = self::match_field_regex()?;
+    let Ok(index) = field.parse::<usize>() else {
         return Ok(());
     };
-
-    let index = unsafe { field.parse::<usize>().unwrap_unchecked() };
     let callback = self::wrap_callback_(move |input: ::nvim_oxi::String| {
         {
             let config = &mut config::state!().list[edit.index];
@@ -262,5 +250,5 @@ pub(super) fn insert_arg(mut edit: Edit) -> utils::Result<()> {
         edit.update_ui()
     });
 
-    utils::open_prompt(format!("{field}-ins").as_str(), "", row, col, callback)
+    utils::open_prompt(format!("{field}-new").as_str(), "", row, col, callback)
 }

@@ -64,7 +64,7 @@ impl LauncherState for Edit {
                 format!("  {:>2}: {arg}", i + 1)
             }
         }));
-        lines.push("  + New Arg".to_string());
+        lines.push("  + New Arg...".to_string());
         let fmt = match config.display() {
             Some(d) => d.to_string(),
             None => NONE.to_string(),
@@ -77,7 +77,7 @@ impl LauncherState for Edit {
         lines.push(format!("CWD  : {fmt}"));
         lines.push("ENV  :".to_string());
         lines.extend(config.env().iter().map(|(var, value)| format!("  {var}={value}")));
-        lines.push("  + New Var".to_string());
+        lines.push("  + New Var=...".to_string());
 
         // Display buffer content
         let range = 1..self.buffer.line_count()?;

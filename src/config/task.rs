@@ -172,7 +172,9 @@ impl TaskConfigJson {
         self.env.insert(new_var.into(), value.into());
     }
     pub(crate) fn del_arg(&mut self, index: usize) {
-        self.args.remove(index);
+        if index < self.args.len() {
+            self.args.remove(index);
+        }
     }
     pub(crate) fn del_disp(&mut self) {
         self.display = None;
