@@ -13,6 +13,7 @@ pub(super) enum Event {
     Close,
     Delete,
     Edit,
+    InsertArg,
     Launch,
     Open,
     View,
@@ -148,7 +149,7 @@ pub(super) fn edit_field(mut edit: Edit) -> utils::Result<()> {
     let value = self::get_config_field(edit.index, field);
 
     match field {
-        "ARGS" | "ENV" => {},
+        "ARGS" | "ENV" => Ok(()),
         "DISP" => {
             let callback = self::wrap_callback_(move |()| {
                 use config::TaskDisplay::*;
@@ -164,7 +165,7 @@ pub(super) fn edit_field(mut edit: Edit) -> utils::Result<()> {
                 config::save()?;
                 edit.update_ui()
             });
-            utils::open_select(vec!["float", "hsplit", "vsplit"], row, col, callback)?;
+            utils::open_select(vec!["float", "hsplit", "vsplit"], row, col, callback)
         },
         env_var if field.ends_with('=') => {
             let f = field.to_string();
@@ -187,7 +188,7 @@ pub(super) fn edit_field(mut edit: Edit) -> utils::Result<()> {
                 buffer.set_var("callback", callback)?;
                 Ok(nvim::command("call b:update_prompt()")?)
             });
-            utils::open_prompt("VAR", env_var.trim_end_matches('='), row, col, callback)?;
+            utils::open_prompt("VAR", env_var.trim_end_matches('='), row, col, callback)
         },
         _ => {
             let f = field.to_string();
@@ -197,11 +198,9 @@ pub(super) fn edit_field(mut edit: Edit) -> utils::Result<()> {
                 // FIX: resets cursor to top of window
                 edit.update_ui()
             });
-            utils::open_prompt(field, value.as_str(), row, col, callback)?;
+            utils::open_prompt(field, value.as_str(), row, col, callback)
         },
     }
-
-    Ok(())
 }
 
 fn del_config_field(index: usize, field: &str) {
@@ -236,4 +235,32 @@ pub(super) fn delete_field(edit: &mut Edit) -> utils::Result<()> {
     self::del_config_field(edit.index, field);
     config::save()?;
     edit.update_ui()
+}
+
+pub(super) fn insert_arg(mut edit: Edit) -> utils::Result<()> {
+    let (row, col) = edit.window.get_position()?;
+    let offset = edit.window.get_cursor()?.0 as u32 - 1;
+    let width = edit.window.get_width()?;
+    let row = row as u32 + offset;
+    let col = col as u32 + width + 2;
+
+    let re_array = ::regex::Regex::new(r"^\ +([0-9]+):").unwrap();
+    let line = nvim::get_current_line()?;
+    let field = if let Some(caps) = re_array.captures(&line) {
+        unsafe { caps.get(1).unwrap_unchecked().as_str() }
+    } else {
+        return Ok(());
+    };
+
+    let index = unsafe { field.parse::<usize>().unwrap_unchecked() };
+    let callback = self::wrap_callback_(move |input: ::nvim_oxi::String| {
+        {
+            let config = &mut config::state!().list[edit.index];
+            config.insert_arg(index - 1, input.to_string());
+        }
+        config::save()?;
+        edit.update_ui()
+    });
+
+    utils::open_prompt(format!("{field}-ins").as_str(), "", row, col, callback)
 }

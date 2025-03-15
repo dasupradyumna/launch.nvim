@@ -183,6 +183,9 @@ impl TaskConfigJson {
     pub(crate) fn del_env(&mut self, var: &str) {
         self.env.remove(var);
     }
+    pub(crate) fn insert_arg(&mut self, index: usize, arg: String) {
+        self.args.insert(index, arg);
+    }
 }
 
 impl From<TaskConfigJson> for TaskConfig {

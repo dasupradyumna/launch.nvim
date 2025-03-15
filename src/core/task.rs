@@ -87,6 +87,7 @@ impl ActiveTask {
             // ::nvim_oxi::dbg!(&self.config);
             let opts = OptionOpts::builder().win(window.clone()).build();
             nvim::set_option_value("winfixbuf", true, &opts)?;
+            nvim::set_option_value("signcolumn", "yes:1", &opts)?;
             window.set_var("launch_nvim_taskdisplay", display_id)?;
 
             nvim::exec_autocmds(

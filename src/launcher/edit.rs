@@ -118,6 +118,7 @@ impl LauncherState for Edit {
             wrap_callback("q", || super::state!().on(Event::Close)),
             wrap_callback("d", || super::state!().on(Event::Delete)),
             wrap_callback("<CR>", || super::state!().on(Event::Edit)),
+            wrap_callback("i", || super::state!().on(Event::InsertArg)),
         ));
         self.buffer.set_var("callbacks", callback_dict)?;
         nvim::command("call b:setup_callbacks()")?;
