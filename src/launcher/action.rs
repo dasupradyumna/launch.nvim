@@ -5,7 +5,7 @@ use crate::launcher::LauncherState;
 use crate::{config, utils};
 use ::nvim_oxi::api::opts::BufDeleteOpts;
 use ::nvim_oxi::api::{self as nvim, Buffer, Window};
-use ::nvim_oxi::{Array, Function};
+use ::nvim_oxi::Function;
 
 #[derive(Debug)]
 pub(super) enum Event {
@@ -21,14 +21,26 @@ pub(super) enum Event {
 
 /*----------------------------- CALLBACK HELPERS -----------------------------*/
 
-pub(super) fn wrap_callback<F>(key: &str, func: F) -> Array
+macro_rules! map_events {
+    { $( ($key:expr, $event: ident) ,)* } => {{
+        use crate::launcher::{action, state};
+        use ::nvim_oxi::Array;
+        Array::from((
+            $( Array::from(($key, action::wrap_cb(|()| state!().on(action::Event::$event)))) ),+
+        ))
+    }};
+}
+pub(crate) use map_events;
+
+pub(super) fn wrap_cb<F, T>(func: F) -> Function<T, ()>
 where
-    F: Fn() -> utils::Result<()> + 'static,
+    F: Fn(T) -> utils::Result<()> + 'static,
+    T: ::nvim_oxi::lua::Poppable,
 {
-    Array::from((key, Function::from_fn(move |()| self::handle_result(func()))))
+    Function::from_fn(move |arg: T| self::handle_result(func(arg)))
 }
 
-pub(super) fn wrap_callback_<F, T>(func: F) -> Function<T, ()>
+pub(super) fn wrap_cb_once<F, T>(func: F) -> Function<T, ()>
 where
     F: FnOnce(T) -> utils::Result<()> + 'static,
     T: ::nvim_oxi::lua::Poppable,
@@ -158,15 +170,9 @@ pub(super) fn edit_field(mut edit: Edit) -> utils::Result<()> {
     match field {
         "ARGS" | "ENV" | "" => Ok(()),
         "DISP" => {
-            let callback = self::wrap_callback_(move |()| {
-                use config::TaskDisplay::*;
-                let choice = match nvim::get_current_line()?.trim_ascii() {
-                    "float" => Float,
-                    "hsplit" => HSplit,
-                    "vsplit" => VSplit,
-                    _ => return Ok(()),
-                };
+            let callback = self::wrap_cb_once(move |()| {
                 {
+                    let choice = nvim::get_current_line()?.trim_ascii().into();
                     config::state!().list[edit.index].set_disp(choice);
                 }
                 config::save()?;
@@ -176,8 +182,8 @@ pub(super) fn edit_field(mut edit: Edit) -> utils::Result<()> {
         },
         env_var if field.ends_with('=') => {
             let f = field.to_string();
-            let callback = self::wrap_callback_(move |input: ::nvim_oxi::String| {
-                let callback = self::wrap_callback_(move |input: ::nvim_oxi::String| {
+            let callback = self::wrap_cb_once(move |input: ::nvim_oxi::String| {
+                let callback = self::wrap_cb_once(move |input: ::nvim_oxi::String| {
                     let mut buffer = nvim::get_current_buf();
                     let env_var: String = buffer.get_var("env_var")?;
                     buffer.del_var("env_var")?;
@@ -199,7 +205,7 @@ pub(super) fn edit_field(mut edit: Edit) -> utils::Result<()> {
         },
         _ => {
             let f = field.to_string();
-            let callback = self::wrap_callback_(move |input: ::nvim_oxi::String| {
+            let callback = self::wrap_cb_once(move |input: ::nvim_oxi::String| {
                 self::set_config_field(edit.index, &f, input.to_string());
                 config::save()?;
                 // FIX: resets cursor to top of window
@@ -241,7 +247,7 @@ pub(super) fn insert_arg(mut edit: Edit) -> utils::Result<()> {
     let Ok(index) = field.parse::<usize>() else {
         return Ok(());
     };
-    let callback = self::wrap_callback_(move |input: ::nvim_oxi::String| {
+    let callback = self::wrap_cb_once(move |input: ::nvim_oxi::String| {
         {
             let config = &mut config::state!().list[edit.index];
             config.insert_arg(index - 1, input.to_string());

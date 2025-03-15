@@ -106,15 +106,14 @@ impl LauncherState for View {
     fn update_callbacks(&mut self) -> crate::utils::Result<()> {
         nvim::command("call b:remove_callbacks()")?;
 
-        use action::{wrap_callback, Event};
-        let callback_dict = Array::from((
-            wrap_callback("b", || super::state!().on(Event::Back)),
-            wrap_callback("q", || super::state!().on(Event::Close)),
-            wrap_callback("d", || super::state!().on(Event::Delete)),
-            wrap_callback("e", || super::state!().on(Event::Edit)),
-            wrap_callback("<CR>", || super::state!().on(Event::Launch)),
-        ));
-        self.buffer.set_var("callbacks", callback_dict)?;
+        let action_list = action::map_events! {
+            ("b", Back),
+            ("q", Close),
+            ("d", Delete),
+            ("e", Edit),
+            ("<CR>", Launch),
+        };
+        self.buffer.set_var("callbacks", action_list)?;
         nvim::command("call b:setup_callbacks()")?;
 
         Ok(())

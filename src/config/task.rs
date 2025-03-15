@@ -10,6 +10,7 @@ use std::path::PathBuf;
 
 // TODO: refactor TaskDisplay and TaskDisplayFloatSize into setup_deserializable_structs! macro
 // or create a separate setup_deserializable_enum! macro, and make the struct macro modular
+// - is there some way to make all of the below TaskDisplay logic more compact?
 
 #[derive(Debug, Clone, Copy)]
 #[repr(u8)]
@@ -17,6 +18,17 @@ pub(crate) enum TaskDisplay {
     Float,
     VSplit,
     HSplit,
+}
+
+impl From<&str> for TaskDisplay {
+    fn from(value: &str) -> Self {
+        match value {
+            "float" => Self::Float,
+            "hsplit" => Self::HSplit,
+            "vsplit" => Self::VSplit,
+            _ => Self::Float,
+        }
+    }
 }
 
 impl std::fmt::Display for TaskDisplay {
