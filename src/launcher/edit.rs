@@ -2,10 +2,7 @@
 
 use super::{action, LauncherState};
 use crate::{config, utils};
-use ::nvim_oxi::api::opts::OptionOpts;
-use ::nvim_oxi::api::types::{WindowConfig, WindowRelativeTo};
 use ::nvim_oxi::api::{self as nvim, Buffer, Window};
-use ::nvim_oxi::Array;
 
 #[derive(Debug, Clone)]
 pub(super) struct Edit {
@@ -47,8 +44,9 @@ impl TryFrom<super::View> for Edit {
 }
 
 impl LauncherState for Edit {
-    fn update_ui(&mut self) -> utils::Result<()> {
-        // Create edit-mode buffer content
+    super::setup_getters!();
+
+    fn create_contents(&self) -> utils::Result<Vec<String>> {
         let config = &config::state!().list[self.index];
         const NONE: &str = "---";
 
@@ -79,49 +77,14 @@ impl LauncherState for Edit {
         lines.extend(config.env().iter().map(|(var, value)| format!("  {var}={value}")));
         lines.push("  + New Var=...".to_string());
 
-        // Display buffer content
-        let range = 1..self.buffer.line_count()?;
-        let opts = OptionOpts::builder().buffer(self.buffer.clone()).build();
-        nvim::set_option_value("modifiable", true, &opts)?;
-        self.buffer
-            .set_lines(range, true, lines.iter().map(|s| format!("    {s}    ")))?;
-        nvim::set_option_value("modifiable", false, &opts)?;
-
-        // Set navigation bounds
-        let n = lines.len() as u32;
-        // FIX: handle other navigation keymaps like wW, eE, bB etc.
-        self.buffer.set_var("bounds", Array::from((2, n + 1)))?;
-
-        // Modify window size to match current config list
-        let height = n + 2;
-        let width = lines.iter().map(|l| l.len()).max().unwrap() as u32 + 8;
-        let (row, col) = utils::get_float_position(width, height)?;
-        let win_config = WindowConfig::builder()
-            .relative(WindowRelativeTo::Editor)
-            .row(row)
-            .col(col)
-            .width(width)
-            .height(height)
-            .build();
-        self.window.set_config(&win_config)?;
-        self.window.set_cursor(2, 0)?;
-
-        Ok(())
+        Ok(lines)
     }
 
-    fn update_callbacks(&mut self) -> utils::Result<()> {
-        nvim::command("call b:remove_callbacks()")?;
-
-        let action_list = action::map_events! {
-            ("b", Back),
-            ("q", Close),
-            ("d", Delete),
-            ("<CR>", Edit),
-            ("i", InsertArg),
-        };
-        self.buffer.set_var("callbacks", action_list)?;
-        nvim::command("call b:setup_callbacks()")?;
-
-        Ok(())
+    super::setup_callbacks! {
+        ("b", Back),
+        ("q", Close),
+        ("d", Delete),
+        ("<CR>", Edit),
+        ("i", InsertArg),
     }
 }

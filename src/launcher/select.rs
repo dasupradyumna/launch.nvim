@@ -1,11 +1,9 @@
 /*------------------------------------ LAUNCHER : SELECT MODE ------------------------------------*/
 
-use super::{action, LauncherState};
+use super::LauncherState;
 use crate::{config, utils};
 use ::nvim_oxi::api::opts::OptionOpts;
-use ::nvim_oxi::api::types::{WindowConfig, WindowRelativeTo};
 use ::nvim_oxi::api::{self as nvim, Buffer, Window};
-use ::nvim_oxi::Array;
 
 #[derive(Debug, Clone)]
 pub(super) struct Select {
@@ -22,6 +20,8 @@ impl TryFrom<super::View> for Select {
             window: view.window,
         };
         new.setup()?;
+        let opts = OptionOpts::builder().win(new.window.clone()).build();
+        nvim::set_option_value("cursorline", !config::state!().list.is_empty(), &opts)?;
         Ok(new)
     }
 }
@@ -40,60 +40,24 @@ impl TryFrom<super::Edit> for Select {
 }
 
 impl LauncherState for Select {
-    fn update_ui(&mut self) -> utils::Result<()> {
-        // Create select-mode buffer content
+    super::setup_getters!();
+
+    fn create_contents(&self) -> utils::Result<Vec<String>> {
         let configs = &config::state!().list;
         let lines = if configs.is_empty() {
-            Vec::from_iter([config::NO_CONFIGS_MSG])
+            Vec::from_iter([config::NO_CONFIGS_MSG.into()])
         } else {
-            configs.iter().map(|c| c.name().as_str()).collect()
+            configs.iter().map(|c| c.name().into()).collect()
         };
 
-        // Display buffer content
-        let range = 1..self.buffer.line_count()?;
-        let opts = OptionOpts::builder().buffer(self.buffer.clone()).build();
-        nvim::set_option_value("modifiable", true, &opts)?;
-        self.buffer
-            .set_lines(range, true, lines.iter().map(|s| format!("    {s}    ")))?;
-        nvim::set_option_value("modifiable", false, &opts)?;
-
-        // Set navigation bounds
-        let n = lines.len() as u32;
-        // FIX: handle other navigation keymaps like wW, eE, bB etc.
-        self.buffer.set_var("bounds", Array::from((2, n + 1)))?;
-
-        // Modify window size to match current config list
-        let height = n + 2;
-        let width = lines.iter().map(|l| l.len() + 8).max().unwrap() as u32;
-        let (row, col) = utils::get_float_position(width, height)?;
-        let win_config = WindowConfig::builder()
-            .relative(WindowRelativeTo::Editor)
-            .row(row)
-            .col(col)
-            .width(width)
-            .height(height)
-            .build();
-        self.window.set_config(&win_config)?;
-        self.window.set_cursor(2, 0)?;
-        let opts = OptionOpts::builder().win(self.window.clone()).build();
-        nvim::set_option_value("cursorline", !configs.is_empty(), &opts)?;
-
-        Ok(())
+        Ok(lines)
     }
 
-    fn update_callbacks(&mut self) -> utils::Result<()> {
-        nvim::command("call b:remove_callbacks()")?;
-
-        let action_list = action::map_events! {
-            ("q", Close),
-            ("d", Delete),
-            ("e", Edit),
-            ("<CR>", Launch),
-            ("v", View),
-        };
-        self.buffer.set_var("callbacks", action_list)?;
-        nvim::command("call b:setup_callbacks()")?;
-
-        Ok(())
+    super::setup_callbacks! {
+        ("q", Close),
+        ("d", Delete),
+        ("e", Edit),
+        ("<CR>", Launch),
+        ("v", View),
     }
 }

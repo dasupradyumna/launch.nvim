@@ -21,17 +21,6 @@ pub(super) enum Event {
 
 /*----------------------------- CALLBACK HELPERS -----------------------------*/
 
-macro_rules! map_events {
-    { $( ($key:expr, $event: ident) ,)* } => {{
-        use crate::launcher::{action, state};
-        use ::nvim_oxi::Array;
-        Array::from((
-            $( Array::from(($key, action::wrap_cb(|()| state!().on(action::Event::$event)))) ),+
-        ))
-    }};
-}
-pub(crate) use map_events;
-
 pub(super) fn wrap_cb<F, T>(func: F) -> Function<T, ()>
 where
     F: Fn(T) -> utils::Result<()> + 'static,

@@ -8,9 +8,10 @@ mod view;
 use self::edit::Edit;
 use self::select::Select;
 use self::view::View;
-use crate::utils;
-use ::nvim_oxi::api as nvim;
+use crate::{config, utils};
 use ::nvim_oxi::api::opts::OptionOpts;
+use ::nvim_oxi::api::{self as nvim, Buffer, Window};
+use ::nvim_oxi::Array;
 
 utils::setup_module_state!(launcher, [pub(self)] Launcher);
 
@@ -58,6 +59,8 @@ impl Launcher {
 
                 let mut select = Select { buffer, window };
                 select.setup()?;
+                let opts = OptionOpts::builder().win(select.window.clone()).build();
+                nvim::set_option_value("cursorline", !config::state!().list.is_empty(), &opts)?;
                 Self::Select(select)
             },
 
@@ -72,6 +75,8 @@ impl Launcher {
             (Self::Select(mut select), Event::Delete) => {
                 action::delete(action::get_config_index(&select.window)?)?;
                 select.setup()?;
+                let opts = OptionOpts::builder().win(select.window.clone()).build();
+                nvim::set_option_value("cursorline", !config::state!().list.is_empty(), &opts)?;
                 Self::Select(select)
             },
 
@@ -136,14 +141,82 @@ impl Launcher {
 }
 
 trait LauncherState {
-    // This method should not be re-implemented by structs
+    fn buffer(&mut self) -> &mut Buffer;
+    fn window(&mut self) -> &mut Window;
+    fn create_contents(&self) -> utils::Result<Vec<String>>;
+    fn update_callbacks(&mut self) -> utils::Result<()>;
+
+    /*---------------- BELOW METHODS SHOULD NOT BE RE-IMPLEMENTED ----------------*/
+
     fn setup(&mut self) -> utils::Result<()> {
         self.update_ui()?;
-        self.update_callbacks()?;
+        self.window().set_cursor(2, 0)?;
+        self.update_callbacks()
+    }
+
+    fn update_ui(&mut self) -> utils::Result<()> {
+        let lines = self.create_contents()?;
+
+        // Display buffer content
+        let range = 1..self.buffer().line_count()?;
+        let opts = OptionOpts::builder().buffer(self.buffer().clone()).build();
+        nvim::set_option_value("modifiable", true, &opts)?;
+        self.buffer()
+            .set_lines(range, true, lines.iter().map(|s| format!("    {s}    ")))?;
+        nvim::set_option_value("modifiable", false, &opts)?;
+
+        // Set navigation bounds
+        let n = lines.len() as u32;
+        // FIX: handle other navigation keymaps like wW, eE, bB etc.
+        self.buffer().set_var("bounds", Array::from((2, n + 1)))?;
+
+        // Modify window size to match current config list
+        use ::nvim_oxi::api::types::*;
+        let height = n + 2;
+        let width = lines.iter().map(|l| l.len() + 8).max().unwrap() as u32;
+        let (row, col) = utils::get_float_position(width, height)?;
+        let win_config = WindowConfig::builder()
+            .relative(WindowRelativeTo::Editor)
+            .row(row)
+            .col(col)
+            .width(width)
+            .height(height)
+            .build();
+        self.window().set_config(&win_config)?;
 
         Ok(())
     }
-
-    fn update_ui(&mut self) -> utils::Result<()>;
-    fn update_callbacks(&mut self) -> utils::Result<()>;
 }
+
+macro_rules! setup_getters {
+    () => {
+        fn buffer(&mut self) -> &mut Buffer {
+            &mut self.buffer
+        }
+
+        fn window(&mut self) -> &mut Window {
+            &mut self.window
+        }
+    };
+}
+use setup_getters;
+
+macro_rules! setup_callbacks {
+    { $( ($key:expr, $event: ident) ,)* } => {
+
+        fn update_callbacks(&mut self) -> crate::utils::Result<()> {
+            use crate::launcher::{action::{wrap_cb, Event}, state};
+            use ::nvim_oxi::Array;
+
+            nvim::command("call b:remove_callbacks()")?;
+            let action_list = Array::from((
+                $( Array::from(($key, wrap_cb(|()| state!().on(Event::$event)))) ),+
+            ));
+            self.buffer.set_var("callbacks", action_list)?;
+            nvim::command("call b:setup_callbacks()")?;
+
+            Ok(())
+        }
+    };
+}
+use setup_callbacks;
