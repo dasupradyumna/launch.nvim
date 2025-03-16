@@ -17,8 +17,7 @@ utils::setup_module_state!(launcher, [pub(self)] Launcher);
 
 pub(crate) fn open() {
     if let Err(e) = config::setup_buffer_and_configs() {
-        utils::notify::send!(Warn: {format!("config::load failed - {e}")});
-        return;
+        utils::notify::send!(Warn: {format!("config::setup_buffer_and_configs failed - {e}")});
     }
 
     action::handle_result(self::state!().on(action::Event::Open))
@@ -77,6 +76,18 @@ impl Launcher {
             },
 
             /*-------------------------------- SELECT MODE -------------------------------*/
+            (Self::Select(select), Event::Add) => {
+                let index = { config::state!().list.len() };
+                action::add_config()?;
+                Self::Edit(select.into_edit(index)?)
+            },
+
+            (Self::Select(select), Event::Copy) => {
+                let index = { config::state!().list.len() };
+                action::copy_config(action::get_config_index(&select.window)?)?;
+                Self::Edit(select.into_edit(index)?)
+            },
+
             (Self::Select(mut select), Event::Delete) => {
                 action::delete(action::get_config_index(&select.window)?)?;
                 select.setup()?;
@@ -85,24 +96,36 @@ impl Launcher {
                 Self::Select(select)
             },
 
-            (Self::Select(select), Event::Edit) => Self::Edit(select.try_into()?),
+            (Self::Select(select), Event::Edit) => {
+                let index = action::get_config_index(&select.window)?;
+                Self::Edit(select.into_edit(index)?)
+            },
 
             (Self::Select(Select { buffer, window }), Event::Launch) => {
                 action::launch(buffer, action::get_config_index(&window)?)?;
                 Self::Closed
             },
 
-            (Self::Select(select), Event::View) => Self::View(select.try_into()?),
+            (Self::Select(select), Event::View) => Self::View(select.into_view()?),
 
             /*--------------------------------- VIEW MODE --------------------------------*/
-            (Self::View(view), Event::Back) => Self::Select(view.try_into()?),
+            (Self::View(view), Event::Back) => Self::Select(view.into_select()?),
+
+            (Self::View(view), Event::Copy) => {
+                let index = { config::state!().list.len() };
+                action::copy_config(action::get_config_index(&view.window)?)?;
+                Self::Edit(view.into_edit(index)?)
+            },
 
             (Self::View(view), Event::Delete) => {
                 action::delete(view.index)?;
-                Self::Select(view.try_into()?)
+                Self::Select(view.into_select()?)
             },
 
-            (Self::View(view), Event::Edit) => Self::Edit(view.try_into()?),
+            (Self::View(view), Event::Edit) => {
+                let index = action::get_config_index(&view.window)?;
+                Self::Edit(view.into_edit(index)?)
+            },
 
             (Self::View(View { buffer, index, .. }), Event::Launch) => {
                 action::launch(buffer, index)?;
@@ -110,12 +133,17 @@ impl Launcher {
             },
 
             /*--------------------------------- EDIT MODE --------------------------------*/
-            (Self::Edit(edit), Event::Back) => {
-                config::write_buffer()?;
+            (Self::Edit(edit), event @ (Event::Back | Event::Save)) => {
+                match event {
+                    Event::Save => config::write_buffer()?,
+                    Event::Back => config::load_configs_from_json()?,
+                    _ => (),
+                }
+
                 if edit.from_select {
-                    Self::Select(edit.try_into()?)
+                    Self::Select(edit.into_select()?)
                 } else {
-                    Self::View(edit.try_into()?)
+                    Self::View(edit.into_view()?)
                 }
             },
 

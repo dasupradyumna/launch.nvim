@@ -1,6 +1,6 @@
 /*------------------------------------- LAUNCHER : EDIT MODE -------------------------------------*/
 
-use super::{action, LauncherState};
+use super::LauncherState;
 use crate::{config, utils};
 use ::nvim_oxi::api::{self as nvim, Buffer, Window};
 
@@ -12,34 +12,24 @@ pub(super) struct Edit {
     pub(super) from_select: bool,
 }
 
-impl TryFrom<super::Select> for Edit {
-    type Error = utils::Error;
-
-    fn try_from(select: super::Select) -> utils::Result<Self> {
-        let index = action::get_config_index(&select.window)?;
-        let mut new = Self {
-            buffer: select.buffer,
-            window: select.window,
-            index,
-            from_select: true,
+impl Edit {
+    pub(super) fn into_select(self) -> utils::Result<super::Select> {
+        let mut select = super::Select {
+            buffer: self.buffer,
+            window: self.window,
         };
-        new.setup()?;
-        Ok(new)
+        select.setup()?;
+        Ok(select)
     }
-}
 
-impl TryFrom<super::View> for Edit {
-    type Error = utils::Error;
-
-    fn try_from(view: super::View) -> utils::Result<Self> {
-        let mut new = Self {
-            buffer: view.buffer,
-            window: view.window,
-            index: view.index,
-            from_select: false,
+    pub(super) fn into_view(self) -> utils::Result<super::View> {
+        let mut view = super::View {
+            buffer: self.buffer,
+            window: self.window,
+            index: self.index,
         };
-        new.setup()?;
-        Ok(new)
+        view.setup()?;
+        Ok(view)
     }
 }
 
@@ -86,5 +76,6 @@ impl LauncherState for Edit {
         ("d", Delete),
         ("<CR>", Edit),
         ("i", InsertArg),
+        ("s", Save),
     }
 }

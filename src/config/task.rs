@@ -140,6 +140,19 @@ pub(crate) struct TaskConfigJson {
     // shell: Option<???>
 }
 
+impl Default for TaskConfigJson {
+    fn default() -> Self {
+        Self {
+            name: "New Config".into(),
+            command: "echo 'hello'".into(),
+            args: vec![],
+            display: None,
+            cwd: None,
+            env: HashMap::new(),
+        }
+    }
+}
+
 impl TaskConfigJson {
     pub(crate) fn name(&self) -> &String {
         &self.name

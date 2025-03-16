@@ -8,16 +8,16 @@ use ::nvim_oxi::Function;
 
 #[derive(Debug)]
 pub(super) enum Event {
-    // Add,
+    Add,
     Back,
     Close,
-    // Copy,
+    Copy,
     Delete,
     Edit,
     InsertArg,
     Launch,
     Open,
-    // Save,
+    Save,
     View,
 }
 
@@ -64,6 +64,18 @@ pub(super) fn get_config_index(window: &Window) -> utils::Result<usize> {
     }
 
     Ok(window.get_cursor()?.0 - 2)
+}
+
+pub(super) fn add_config() -> utils::Result<()> {
+    config::state!().list.push(config::TaskConfigJson::default());
+    Ok(())
+}
+
+pub(super) fn copy_config(index: usize) -> utils::Result<()> {
+    let configs = &mut config::state!().list;
+    let copied = configs[index].clone();
+    configs.push(copied);
+    Ok(())
 }
 
 pub(super) fn close(buffer: Buffer) -> utils::Result<()> {

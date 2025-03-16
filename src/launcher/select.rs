@@ -1,8 +1,7 @@
 /*------------------------------------ LAUNCHER : SELECT MODE ------------------------------------*/
 
-use super::LauncherState;
+use super::{action, LauncherState};
 use crate::{config, utils};
-use ::nvim_oxi::api::opts::OptionOpts;
 use ::nvim_oxi::api::{self as nvim, Buffer, Window};
 
 #[derive(Debug, Clone)]
@@ -11,31 +10,27 @@ pub(super) struct Select {
     pub(super) window: Window,
 }
 
-impl TryFrom<super::View> for Select {
-    type Error = utils::Error;
-
-    fn try_from(view: super::View) -> utils::Result<Self> {
-        let mut new = Self {
-            buffer: view.buffer,
-            window: view.window,
+impl Select {
+    pub(super) fn into_view(self) -> utils::Result<super::View> {
+        let index = action::get_config_index(&self.window)?;
+        let mut view = super::View {
+            buffer: self.buffer,
+            window: self.window,
+            index,
         };
-        new.setup()?;
-        let opts = OptionOpts::builder().win(new.window.clone()).build();
-        nvim::set_option_value("cursorline", !config::state!().list.is_empty(), &opts)?;
-        Ok(new)
+        view.setup()?;
+        Ok(view)
     }
-}
 
-impl TryFrom<super::Edit> for Select {
-    type Error = utils::Error;
-
-    fn try_from(edit: super::Edit) -> utils::Result<Self> {
-        let mut new = Self {
-            buffer: edit.buffer,
-            window: edit.window,
+    pub(super) fn into_edit(self, index: usize) -> utils::Result<super::Edit> {
+        let mut edit = super::Edit {
+            buffer: self.buffer,
+            window: self.window,
+            index,
+            from_select: true,
         };
-        new.setup()?;
-        Ok(new)
+        edit.setup()?;
+        Ok(edit)
     }
 }
 
@@ -54,7 +49,9 @@ impl LauncherState for Select {
     }
 
     super::setup_callbacks! {
+        ("a", Add),
         ("q", Close),
+        ("c", Copy),
         ("d", Delete),
         ("e", Edit),
         ("<CR>", Launch),
