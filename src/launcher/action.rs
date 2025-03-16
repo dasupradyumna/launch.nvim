@@ -3,19 +3,21 @@
 use super::{Edit, Launcher, Select, View};
 use crate::launcher::LauncherState;
 use crate::{config, utils};
-use ::nvim_oxi::api::opts::BufDeleteOpts;
 use ::nvim_oxi::api::{self as nvim, Buffer, Window};
 use ::nvim_oxi::Function;
 
 #[derive(Debug)]
 pub(super) enum Event {
+    // Add,
     Back,
     Close,
+    // Copy,
     Delete,
     Edit,
     InsertArg,
     Launch,
     Open,
+    // Save,
     View,
 }
 
@@ -47,7 +49,7 @@ pub(super) fn handle_result(result: utils::Result<()>) {
         Launcher::Select(Select { buffer, .. })
         | Launcher::View(View { buffer, .. })
         | Launcher::Edit(Edit { buffer, .. }) => {
-            let _ = self::close(buffer);
+            _ = self::close(buffer);
         },
         _ => {},
     }
@@ -65,14 +67,16 @@ pub(super) fn get_config_index(window: &Window) -> utils::Result<usize> {
 }
 
 pub(super) fn close(buffer: Buffer) -> utils::Result<()> {
-    Ok(buffer.delete(&BufDeleteOpts::builder().force(true).build())?)
+    buffer.delete(&nvim::opts::BufDeleteOpts::default())?;
+    config::close_buffer()
 }
 
 pub(super) fn delete(index: usize) -> utils::Result<()> {
     {
         config::state!().list.remove(index);
     }
-    config::save()
+    config::update_buffer()?;
+    config::write_buffer()
 }
 
 pub(super) fn launch(buffer: Buffer, index: usize) -> utils::Result<()> {
@@ -164,7 +168,7 @@ pub(super) fn edit_field(mut edit: Edit) -> utils::Result<()> {
                     let choice = nvim::get_current_line()?.trim_ascii().into();
                     config::state!().list[edit.index].set_disp(choice);
                 }
-                config::save()?;
+                config::update_buffer()?;
                 edit.update_ui()
             });
             utils::open_select(vec!["float", "hsplit", "vsplit"], row, col, callback)
@@ -178,7 +182,7 @@ pub(super) fn edit_field(mut edit: Edit) -> utils::Result<()> {
                     buffer.del_var("env_var")?;
 
                     self::set_config_field(edit.index, &f, format!("{env_var}={input}"));
-                    config::save()?;
+                    config::update_buffer()?;
                     edit.update_ui()
                 });
 
@@ -196,7 +200,7 @@ pub(super) fn edit_field(mut edit: Edit) -> utils::Result<()> {
             let f = field.to_string();
             let callback = self::wrap_cb_once(move |input: ::nvim_oxi::String| {
                 self::set_config_field(edit.index, &f, input.to_string());
-                config::save()?;
+                config::update_buffer()?;
                 // FIX: resets cursor to top of window
                 edit.update_ui()
             });
@@ -226,7 +230,7 @@ pub(super) fn delete_field(edit: &mut Edit) -> utils::Result<()> {
     if !self::del_config_field(edit.index, field.as_str()) {
         return Ok(());
     }
-    config::save()?;
+    config::update_buffer()?;
     edit.update_ui()
 }
 
@@ -241,7 +245,7 @@ pub(super) fn insert_arg(mut edit: Edit) -> utils::Result<()> {
             let config = &mut config::state!().list[edit.index];
             config.insert_arg(index - 1, input.to_string());
         }
-        config::save()?;
+        config::update_buffer()?;
         edit.update_ui()
     });
 

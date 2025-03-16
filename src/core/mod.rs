@@ -14,7 +14,4 @@ pub(crate) fn setup(user_settings: Object) {
     ::nvim_oxi::dbg!(data_dir);
     std::fs::create_dir_all(data_dir)
         .unwrap_or_else(|err| notify::send!(Error: {format!("creating data dir - {err}")}));
-
-    config::load()
-        .unwrap_or_else(|err| notify::send!(Warn: {format!("parsing config file - {err}")}));
 }

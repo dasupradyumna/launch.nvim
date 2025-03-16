@@ -5,7 +5,7 @@ mod task;
 pub(crate) use task::*;
 
 use crate::utils;
-use ::nvim_oxi::api as nvim;
+use ::nvim_oxi::api::{self as nvim, Buffer};
 use ::serde_json as json;
 use std::path::PathBuf;
 use std::sync::LazyLock;
@@ -13,6 +13,7 @@ use std::sync::LazyLock;
 utils::setup_module_state!(config, [pub(crate)]
 {
     filepath: PathBuf = self::get_runtime_filepath(),
+    buffer: Buffer = Buffer::from(0),
     pub(crate) list: Vec<TaskConfigJson> = Vec::new(),
 });
 
@@ -38,26 +39,49 @@ fn get_runtime_filepath() -> PathBuf {
     let json_filename = format!("{}.json", re.replace_all(&json_filename, "@"));
 
     // get the full JSON filepath in the plugin data directory
-    let json_filepath = self::get_data_dir().join(json_filename);
-    ::nvim_oxi::dbg!(&json_filepath);
-    json_filepath
+    self::get_data_dir().join(json_filename)
 }
 
-pub(crate) fn load() -> utils::Result<()> {
+pub(crate) fn setup_buffer_and_configs() -> utils::Result<()> {
+    {
+        let mut config = self::state!();
+        let mut buffer = nvim::create_buf(false, false)?;
+        buffer.set_name(&config.filepath)?;
+        config.buffer = buffer;
+        ::nvim_oxi::dbg!(&config);
+    }
+    self::load_configs_from_json()
+}
+
+pub(crate) fn update_buffer() -> utils::Result<()> {
     let mut config = self::state!();
-    if config.filepath.is_file() {
-        let config_str = std::fs::read_to_string(&config.filepath)?;
+    let config_str = json::to_string_pretty(&config.list)?;
+    let range = 0..config.buffer.line_count()?;
+    Ok(config.buffer.set_lines(range, true, config_str.split('\n'))?)
+}
+
+pub(crate) fn write_buffer() -> utils::Result<()> {
+    let buffer = &self::state!().buffer;
+    Ok(buffer.call(|_| -> utils::Result<()> { Ok(nvim::command("write")?) })?)
+}
+
+pub(crate) fn load_configs_from_json() -> utils::Result<()> {
+    let mut config = self::state!();
+    let buffer = &config.buffer;
+    () = buffer.call(|_| -> utils::Result<()> { Ok(nvim::command("edit! | set nobuflisted")?) })?;
+
+    let config_str = buffer
+        .get_lines(0..buffer.line_count()?, true)?
+        .fold(String::new(), |acc, line| acc + &line.to_string() + "\n");
+    if !config_str.is_empty() {
         config.list = json::from_str(&config_str)?;
     }
-
-    ::nvim_oxi::dbg!(&config.list);
     Ok(())
 }
 
-pub(crate) fn save() -> utils::Result<()> {
-    let config = self::state!();
-    let config_str = json::to_string_pretty(&config.list)?;
-    std::fs::write(&config.filepath, config_str)?;
-
-    Ok(())
+pub(crate) fn close_buffer() -> utils::Result<()> {
+    let config = &mut self::state!();
+    let buffer = config.buffer.clone();
+    config.buffer = Buffer::from(0);
+    Ok(buffer.delete(&nvim::opts::BufDeleteOpts::default())?)
 }

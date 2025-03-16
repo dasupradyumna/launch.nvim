@@ -16,6 +16,11 @@ use ::nvim_oxi::Array;
 utils::setup_module_state!(launcher, [pub(self)] Launcher);
 
 pub(crate) fn open() {
+    if let Err(e) = config::setup_buffer_and_configs() {
+        utils::notify::send!(Warn: {format!("config::load failed - {e}")});
+        return;
+    }
+
     action::handle_result(self::state!().on(action::Event::Open))
 }
 
@@ -106,6 +111,7 @@ impl Launcher {
 
             /*--------------------------------- EDIT MODE --------------------------------*/
             (Self::Edit(edit), Event::Back) => {
+                config::write_buffer()?;
                 if edit.from_select {
                     Self::Select(edit.try_into()?)
                 } else {

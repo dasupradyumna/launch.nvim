@@ -34,7 +34,7 @@ where
 }
 
 pub(crate) fn _send(level: nvim::types::LogLevel, msg: String) {
-    let _ = nvim::notify(&format!("[launch.nvim] {msg}"), level, &::nvim_oxi::Dictionary::new());
+    _ = nvim::notify(&format!("[launch.nvim] {msg}"), level, &::nvim_oxi::Dictionary::new());
 }
 
 macro_rules! input(
