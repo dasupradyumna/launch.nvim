@@ -96,7 +96,7 @@ pub(crate) fn select(
         .relative(WindowRelativeTo::Editor)
         .row(row)
         .col(col)
-        .width(items.iter().map(|i| i.len() + 4).max().unwrap() as u32)
+        .width(unsafe { items.iter().map(|i| i.len() + 4).max().unwrap_unchecked() as u32 })
         .height(items.len() as u32)
         .border(WindowBorder::Rounded)
         .style(WindowStyle::Minimal)

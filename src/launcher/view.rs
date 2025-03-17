@@ -45,7 +45,7 @@ impl LauncherState for View {
 
         let mut lines = Vec::new();
         lines.push(format!("NAME : {}", config.name()));
-        lines.push(format!("CMD  : {}", config.command()));
+        lines.push(format!("CMD  : {}", config.cmd()));
         if !config.args().is_empty() {
             lines.push("ARGS :".to_string());
             let args = config.args();
@@ -57,7 +57,7 @@ impl LauncherState for View {
                 }
             }));
         }
-        if let Some(display) = config.display() {
+        if let Some(display) = config.disp() {
             lines.push(format!("DISP : {}", display));
         }
         if let Some(cwd) = config.cwd() {

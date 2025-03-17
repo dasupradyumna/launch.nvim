@@ -206,7 +206,7 @@ trait LauncherState {
         // Modify window size to match current config list
         use ::nvim_oxi::api::types::*;
         let height = n + 2;
-        let width = lines.iter().map(|l| l.len() + 8).max().unwrap() as u32;
+        let width = unsafe { lines.iter().map(|l| l.len() + 8).max().unwrap_unchecked() as u32 };
         let (row, col) = float::get_position(width, height)?;
         let win_config = WindowConfig::builder()
             .relative(WindowRelativeTo::Editor)

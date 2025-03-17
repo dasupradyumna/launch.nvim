@@ -6,13 +6,13 @@ pub(crate) type Result<T> = std::result::Result<T, Error>;
 
 #[derive(Debug, thiserror::Error)]
 pub(crate) enum Error {
-    #[error("ERROR (std::io): {0}")]
+    #[error("(std::io): {0}")]
     Io(#[from] std::io::Error),
-    #[error("ERROR (serde_json): {0}")]
+    #[error("(serde_json): {0}")]
     Json(#[from] ::serde_json::Error),
-    #[error("ERROR (nvim_oxi): {0}")]
+    #[error("(nvim_oxi): {0}")]
     Nvim(#[from] ::nvim_oxi::Error),
-    #[error("ERROR (internal): {0}")]
+    #[error("(internal): {0}")]
     Internal(String),
 }
 

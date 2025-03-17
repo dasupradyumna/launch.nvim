@@ -95,7 +95,7 @@ pub(super) fn delete_config(index: usize) -> Result<()> {
 pub(super) fn launch_config(buffer: Buffer, index: usize) -> Result<()> {
     self::close_launcher(buffer)?;
 
-    let config = config::state!().list[index].clone().into();
+    let config = config::state!().list[index].clone().try_into()?;
     ::nvim_oxi::dbg!(&config);
     crate::core::task::run(config)
 }
@@ -119,21 +119,17 @@ fn match_field_regex() -> Result<String> {
         r"^\ +([a-zA-Z_][[:word:]]+=)",
         r"^\ +\+ New Var(=)...",
     ];
-    let mat = ::regex::Regex::new(&patterns.join("|"))
-        .unwrap()
-        .captures(&line)
-        .unwrap()
-        .iter()
-        .flatten()
-        .nth(1);
-    Ok(mat.unwrap().as_str().to_string())
+    let re = unsafe { ::regex::Regex::new(&patterns.join("|")).unwrap_unchecked() };
+    let r#match = unsafe { re.captures(&line).unwrap_unchecked().iter().flatten().nth(1) };
+    let field = unsafe { r#match.unwrap_unchecked().as_str().to_string() };
+    Ok(field)
 }
 
 fn set_config_field(index: usize, field: &str, value: String) {
     let config = &mut config::state!().list[index];
     match field {
         "NAME" => config.set_name(value),
-        "CMD" => config.set_command(value),
+        "CMD" => config.set_cmd(value),
         "CWD" => config.set_cwd(value),
         arg_index if field.parse::<usize>().is_ok() => unsafe {
             let index = arg_index.parse::<usize>().unwrap_unchecked();
@@ -148,7 +144,7 @@ fn get_config_field(index: usize, field: &str) -> String {
     let config = &config::state!().list[index];
     match field {
         "NAME" => config.name().to_string(),
-        "CMD" => config.command().to_string(),
+        "CMD" => config.cmd().to_string(),
         "CWD" if config.cwd().is_some() => unsafe {
             config.cwd().as_ref().unwrap_unchecked().display().to_string()
         },

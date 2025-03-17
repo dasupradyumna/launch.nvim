@@ -123,16 +123,14 @@ impl<'de> Visitor<'de> for StructVisitor<TaskDisplayFloatSize> {
     }
 }
 
-// REMOVE: all unwrap() calls with Result<...> as return types
-
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub(crate) struct TaskConfigJson {
     name: String,
-    command: String,
+    cmd: String,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     args: Vec<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    display: Option<TaskDisplay>,
+    disp: Option<TaskDisplay>,
     #[serde(skip_serializing_if = "Option::is_none")]
     cwd: Option<PathBuf>,
     #[serde(default, skip_serializing_if = "HashMap::is_empty")]
@@ -144,9 +142,9 @@ impl Default for TaskConfigJson {
     fn default() -> Self {
         Self {
             name: "New Config".into(),
-            command: "echo 'hello'".into(),
+            cmd: "echo 'hello'".into(),
             args: vec![],
-            display: None,
+            disp: None,
             cwd: None,
             env: HashMap::new(),
         }
@@ -157,14 +155,14 @@ impl TaskConfigJson {
     pub(crate) fn name(&self) -> &String {
         &self.name
     }
-    pub(crate) fn command(&self) -> &String {
-        &self.command
+    pub(crate) fn cmd(&self) -> &String {
+        &self.cmd
     }
     pub(crate) fn args(&self) -> &Vec<String> {
         &self.args
     }
-    pub(crate) fn display(&self) -> &Option<TaskDisplay> {
-        &self.display
+    pub(crate) fn disp(&self) -> &Option<TaskDisplay> {
+        &self.disp
     }
     pub(crate) fn cwd(&self) -> &Option<PathBuf> {
         &self.cwd
@@ -175,8 +173,8 @@ impl TaskConfigJson {
     pub(crate) fn set_name(&mut self, name: String) {
         self.name = name;
     }
-    pub(crate) fn set_command(&mut self, command: String) {
-        self.command = command;
+    pub(crate) fn set_cmd(&mut self, cmd: String) {
+        self.cmd = cmd;
     }
     pub(crate) fn set_arg(&mut self, index: usize, arg: String) {
         if index < self.args.len() {
@@ -186,7 +184,7 @@ impl TaskConfigJson {
         }
     }
     pub(crate) fn set_disp(&mut self, disp: TaskDisplay) {
-        self.display.replace(disp);
+        self.disp.replace(disp);
     }
     pub(crate) fn set_cwd(&mut self, cwd: String) {
         self.cwd.replace(cwd.into());
@@ -202,7 +200,7 @@ impl TaskConfigJson {
         }
     }
     pub(crate) fn del_disp(&mut self) {
-        self.display = None;
+        self.disp = None;
     }
     pub(crate) fn del_cwd(&mut self) {
         self.cwd = None;
@@ -215,29 +213,32 @@ impl TaskConfigJson {
     }
 }
 
-impl From<TaskConfigJson> for TaskConfig {
-    fn from(value: TaskConfigJson) -> Self {
+impl TryFrom<TaskConfigJson> for TaskConfig {
+    type Error = crate::utils::Error;
+
+    fn try_from(config: TaskConfigJson) -> crate::utils::Result<Self> {
         let task_settings = &settings!().task;
-        TaskConfig {
-            name: value.name,
-            command: value.command,
-            args: value.args,
-            display: value.display.unwrap_or(task_settings.ui.display),
-            cwd: value
-                .cwd
-                .map(|path| path.canonicalize().unwrap())
-                .unwrap_or_else(|| std::env::current_dir().unwrap()),
-            env: value.env,
-        }
+        let cwd = match config.cwd.map(|path| path.canonicalize()) {
+            Some(path) => path?,
+            None => std::env::current_dir()?,
+        };
+        Ok(TaskConfig {
+            name: config.name,
+            cmd: config.cmd,
+            args: config.args,
+            disp: config.disp.unwrap_or(task_settings.ui.display),
+            cwd,
+            env: config.env,
+        })
     }
 }
 
 #[derive(Debug)]
 pub(crate) struct TaskConfig {
     name: String,
-    command: String,
+    cmd: String,
     args: Vec<String>,
-    display: TaskDisplay,
+    disp: TaskDisplay,
     cwd: PathBuf,
     env: HashMap<String, String>,
     // shell: ???
@@ -248,13 +249,13 @@ impl TaskConfig {
         &self.name
     }
 
-    pub(crate) fn display(&self) -> TaskDisplay {
-        self.display
+    pub(crate) fn disp(&self) -> TaskDisplay {
+        self.disp
     }
 
     pub(crate) fn command(&self) -> Object {
         let mut ret = String::new();
-        ret.push_str(&self.command);
+        ret.push_str(&self.cmd);
         ret.push(' ');
         ret += &self.args.join(" ");
 

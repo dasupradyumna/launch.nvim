@@ -4,7 +4,7 @@ mod task;
 
 pub(crate) use task::*;
 
-use crate::utils::{setup_module_state, Result};
+use crate::utils::{notify, setup_module_state, Result};
 use ::nvim_oxi::api::{self as nvim, Buffer};
 use ::serde_json as json;
 use std::path::PathBuf;
@@ -21,8 +21,13 @@ pub(crate) const NO_CONFIGS_MSG: &str = "-- No active configs --";
 
 pub(crate) fn get_data_dir() -> &'static PathBuf {
     static DATA_DIR: LazyLock<PathBuf> = LazyLock::new(|| {
-        let ret: String = nvim::call_function("stdpath", ("data",)).unwrap();
-        let mut ret = PathBuf::from(ret);
+        let mut ret = match nvim::call_function::<_, String>("stdpath", ("data",)) {
+            Ok(path) => PathBuf::from(path),
+            Err(err) => {
+                notify!(Error: format!("stdpath('data') failed - {err}"));
+                return PathBuf::from("/nvim-stdpath-data-error");
+            },
+        };
         // WARN: change this to default path before release
         ret.push("launch_nvim_rust");
 
@@ -33,8 +38,14 @@ pub(crate) fn get_data_dir() -> &'static PathBuf {
 }
 
 fn get_runtime_filepath() -> PathBuf {
-    let json_filename = std::env::current_dir().unwrap().to_string_lossy().replace("@", "@@");
-    let re = ::regex::Regex::new(r"[\\/:]").unwrap();
+    let json_filename = match std::env::current_dir() {
+        Ok(cwd) => cwd.to_string_lossy().replace("@", "@@"),
+        Err(err) => {
+            notify!(Error: format!("std::env::current_dir() failed - {err}"));
+            return PathBuf::from("/rust-env-cwd-error");
+        },
+    };
+    let re = unsafe { ::regex::Regex::new(r"[\\/:]").unwrap_unchecked() };
     let json_filename = format!("{}.json", re.replace_all(&json_filename, "@"));
     self::get_data_dir().join(json_filename)
 }

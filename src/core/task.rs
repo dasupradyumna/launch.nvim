@@ -43,7 +43,7 @@ struct ActiveTask {
 impl ActiveTask {
     fn render(&self) -> Result<()> {
         let task_windows = &mut self::state!().windows;
-        let display_id = self.config.display() as usize;
+        let display_id = self.config.disp() as usize;
 
         if let Some(ref window) = task_windows[display_id] {
             let opts = OptionOpts::builder().win(window.clone()).build();
@@ -58,7 +58,7 @@ impl ActiveTask {
             let screen_width: u32 = nvim::get_option_value("columns", &OptionOpts::default())?;
             let screen_height: u32 = nvim::get_option_value("lines", &OptionOpts::default())?;
 
-            let mut window = match self.config.display() {
+            let mut window = match self.config.disp() {
                 TaskDisplay::Float => {
                     let size = ui_settings.float.size as u32;
                     float::centered(

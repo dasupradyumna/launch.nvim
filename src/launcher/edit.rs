@@ -43,7 +43,7 @@ impl LauncherState for Edit {
 
         let mut lines = Vec::new();
         lines.push(format!("NAME : {}", config.name()));
-        lines.push(format!("CMD  : {}", config.command()));
+        lines.push(format!("CMD  : {}", config.cmd()));
         lines.push("ARGS :".to_string());
         let args = config.args();
         lines.extend(args.iter().enumerate().map(|(i, arg)| {
@@ -54,7 +54,7 @@ impl LauncherState for Edit {
             }
         }));
         lines.push("  + New Arg...".to_string());
-        let fmt = match config.display() {
+        let fmt = match config.disp() {
             Some(d) => d.to_string(),
             None => NONE.to_string(),
         };

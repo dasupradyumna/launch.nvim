@@ -50,7 +50,8 @@ pub(crate) use setup_module_state;
 
 pub(crate) fn _send<M: std::fmt::Display>(level: ::nvim_oxi::api::types::LogLevel, msg: M) {
     use ::nvim_oxi::api::notify;
-    _ = notify(&format!("[launch.nvim] {msg}"), level, &::nvim_oxi::Dictionary::new());
+    let lvl = format!("{level:?}").to_ascii_uppercase();
+    _ = notify(&format!("[launch.nvim] {lvl}: {msg}"), level, &::nvim_oxi::Dictionary::new());
 }
 macro_rules! notify(
     ($level:ident: $msg:expr) => {
