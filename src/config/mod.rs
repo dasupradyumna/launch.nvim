@@ -4,13 +4,13 @@ mod task;
 
 pub(crate) use task::*;
 
-use crate::utils;
+use crate::utils::{setup_module_state, Result};
 use ::nvim_oxi::api::{self as nvim, Buffer};
 use ::serde_json as json;
 use std::path::PathBuf;
 use std::sync::LazyLock;
 
-utils::setup_module_state!(config, [pub(crate)]
+setup_module_state!(config, [pub(crate)]
 {
     filepath: PathBuf = self::get_runtime_filepath(),
     buffer: Buffer = Buffer::from(0),
@@ -23,6 +23,7 @@ pub(crate) fn get_data_dir() -> &'static PathBuf {
     static DATA_DIR: LazyLock<PathBuf> = LazyLock::new(|| {
         let ret: String = nvim::call_function("stdpath", ("data",)).unwrap();
         let mut ret = PathBuf::from(ret);
+        // WARN: change this to default path before release
         ret.push("launch_nvim_rust");
 
         ret
@@ -32,17 +33,13 @@ pub(crate) fn get_data_dir() -> &'static PathBuf {
 }
 
 fn get_runtime_filepath() -> PathBuf {
-    // get the JSON filename for the current working directory
-    // CHECK: if below replace() call can be included into regex pattern
     let json_filename = std::env::current_dir().unwrap().to_string_lossy().replace("@", "@@");
     let re = ::regex::Regex::new(r"[\\/:]").unwrap();
     let json_filename = format!("{}.json", re.replace_all(&json_filename, "@"));
-
-    // get the full JSON filepath in the plugin data directory
     self::get_data_dir().join(json_filename)
 }
 
-pub(crate) fn setup_buffer_and_configs() -> utils::Result<()> {
+pub(crate) fn setup_buffer_and_configs() -> Result<()> {
     {
         let mut config = self::state!();
         let mut buffer = nvim::create_buf(false, false)?;
@@ -50,27 +47,26 @@ pub(crate) fn setup_buffer_and_configs() -> utils::Result<()> {
         nvim::set_option_value("swapfile", false, &opts)?;
         buffer.set_name(&config.filepath)?;
         config.buffer = buffer;
-        ::nvim_oxi::dbg!(&config);
     }
     self::load_configs_from_json()
 }
 
-pub(crate) fn update_buffer() -> utils::Result<()> {
+pub(crate) fn update_buffer() -> Result<()> {
     let mut config = self::state!();
     let config_str = json::to_string_pretty(&config.list)?;
     let range = 0..config.buffer.line_count()?;
     Ok(config.buffer.set_lines(range, true, config_str.split('\n'))?)
 }
 
-pub(crate) fn write_buffer() -> utils::Result<()> {
+pub(crate) fn write_buffer() -> Result<()> {
     let buffer = &self::state!().buffer;
-    Ok(buffer.call(|_| -> utils::Result<()> { Ok(nvim::command("silent write")?) })?)
+    Ok(buffer.call(|_| -> Result<()> { Ok(nvim::command("silent write")?) })?)
 }
 
-pub(crate) fn load_configs_from_json() -> utils::Result<()> {
+pub(crate) fn load_configs_from_json() -> Result<()> {
     let mut config = self::state!();
     let buffer = &config.buffer;
-    () = buffer.call(|_| -> utils::Result<()> { Ok(nvim::command("edit! | set nobuflisted")?) })?;
+    () = buffer.call(|_| -> Result<()> { Ok(nvim::command("edit! | set nobuflisted")?) })?;
 
     let config_str = buffer
         .get_lines(0..buffer.line_count()?, true)?
@@ -82,7 +78,7 @@ pub(crate) fn load_configs_from_json() -> utils::Result<()> {
     Ok(())
 }
 
-pub(crate) fn close_buffer() -> utils::Result<()> {
+pub(crate) fn close_buffer() -> Result<()> {
     let config = &mut self::state!();
     let buffer = config.buffer.clone();
     config.buffer = Buffer::from(0);

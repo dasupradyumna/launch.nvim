@@ -2,9 +2,8 @@
 
 pub(crate) mod task;
 
-use crate::config;
 use crate::settings::state as settings;
-use crate::utils::notify;
+use crate::{config, utils};
 use ::nvim_oxi::Object;
 
 pub(crate) fn setup(user_settings: Object) {
@@ -13,5 +12,5 @@ pub(crate) fn setup(user_settings: Object) {
     let data_dir = config::get_data_dir();
     ::nvim_oxi::dbg!(data_dir);
     std::fs::create_dir_all(data_dir)
-        .unwrap_or_else(|err| notify::send!(Error: {format!("creating data dir - {err}")}));
+        .unwrap_or_else(|err| utils::notify!(Error: format!("creating data dir - {err}")));
 }

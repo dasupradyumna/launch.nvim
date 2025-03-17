@@ -2,29 +2,29 @@
 
 use crate::config::{TaskConfig, TaskDisplay};
 use crate::settings::state as settings;
-use crate::utils;
+use crate::utils::{float, setup_module_state, Result};
 use ::nvim_oxi::api::opts::{ExecAutocmdsOpts, OptionOpts};
 use ::nvim_oxi::api::types::{Mode, SplitDirection, WindowConfig};
 use ::nvim_oxi::api::{self as nvim, Buffer, Window};
 
-utils::setup_module_state!(core::task, [pub(crate)]
+setup_module_state!(core::task, [pub(crate)]
 {
     active_list: Vec<ActiveTask> = Vec::new(),
     windows: [Option<Window>; 3] = [const { None }; 3],
 });
 
-pub(crate) fn run(config: TaskConfig) -> utils::Result<()> {
-    // create a new task buffer
+pub(crate) fn run(config: TaskConfig) -> Result<()> {
+    // Create a new task buffer
     let buffer = nvim::create_buf(false, true)?;
     let opts = OptionOpts::builder().buffer(buffer.clone()).build();
     nvim::set_option_value("filetype", "launch_nvim_task", &opts)?;
 
-    // open the task window and launch a terminal buffer with current config
+    // Open the task window and launch a terminal buffer with current config
     let task = ActiveTask { buffer, config };
     task.render()?;
     task.run()?;
 
-    // enter insert mode after launching the task
+    // Enter insert mode after launching the task
     let task_settings = &settings!().task;
     if task_settings.insert_mode_on_launch {
         nvim::feedkeys("i", Mode::Normal, false);
@@ -35,13 +35,13 @@ pub(crate) fn run(config: TaskConfig) -> utils::Result<()> {
 }
 
 #[derive(Debug)]
-pub(crate) struct ActiveTask {
+struct ActiveTask {
     buffer: Buffer,
     config: TaskConfig,
 }
 
 impl ActiveTask {
-    fn render(&self) -> utils::Result<()> {
+    fn render(&self) -> Result<()> {
         let task_windows = &mut self::state!().windows;
         let display_id = self.config.display() as usize;
 
@@ -61,7 +61,7 @@ impl ActiveTask {
             let mut window = match self.config.display() {
                 TaskDisplay::Float => {
                     let size = ui_settings.float.size as u32;
-                    utils::open_float(
+                    float::centered(
                         self.config.name(),
                         &self.buffer,
                         screen_width * size / 100,
@@ -84,7 +84,6 @@ impl ActiveTask {
                 },
             };
 
-            // ::nvim_oxi::dbg!(&self.config);
             let opts = OptionOpts::builder().win(window.clone()).build();
             nvim::set_option_value("winfixbuf", true, &opts)?;
             nvim::set_option_value("signcolumn", "yes:1", &opts)?;
@@ -104,12 +103,10 @@ impl ActiveTask {
         Ok(())
     }
 
-    fn run(&self) -> utils::Result<i32> {
+    fn run(&self) -> Result<i32> {
         // TODO: handle failure here with a default command that displays an error message
         let command = self.config.command();
         let term_options = self.config.term_options();
-        // ::nvim_oxi::dbg!(&command);
-        // ::nvim_oxi::dbg!(&term_options);
 
         Ok(nvim::call_function("termopen", (command, term_options))?)
     }

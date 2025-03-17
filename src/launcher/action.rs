@@ -1,8 +1,9 @@
 /*--------------------------------------- LAUNCHER ACTIONS ---------------------------------------*/
 
 use super::{Edit, Launcher, Select, View};
+use crate::config;
 use crate::launcher::LauncherState;
-use crate::{config, utils};
+use crate::utils::{float, notify, Error, Result};
 use ::nvim_oxi::api::{self as nvim, Buffer, Window};
 use ::nvim_oxi::Function;
 
@@ -25,7 +26,7 @@ pub(super) enum Event {
 
 pub(super) fn wrap_cb<F, T>(func: F) -> Function<T, ()>
 where
-    F: Fn(T) -> utils::Result<()> + 'static,
+    F: Fn(T) -> Result<()> + 'static,
     T: ::nvim_oxi::lua::Poppable,
 {
     Function::from_fn(move |arg: T| self::handle_result(func(arg)))
@@ -33,23 +34,23 @@ where
 
 pub(super) fn wrap_cb_once<F, T>(func: F) -> Function<T, ()>
 where
-    F: FnOnce(T) -> utils::Result<()> + 'static,
+    F: FnOnce(T) -> Result<()> + 'static,
     T: ::nvim_oxi::lua::Poppable,
 {
     Function::from_fn_once(move |arg: T| self::handle_result(func(arg)))
 }
 
-pub(super) fn handle_result(result: utils::Result<()>) {
-    let Err(err_msg) = result else {
+pub(super) fn handle_result(result: Result<()>) {
+    let Err(msg) = result else {
         return;
     };
-    utils::notify::send!(Warn: {format!("{err_msg}")});
+    notify!(Error: msg);
 
     match std::mem::replace(&mut *super::state!(), Launcher::Closed) {
         Launcher::Select(Select { buffer, .. })
         | Launcher::View(View { buffer, .. })
         | Launcher::Edit(Edit { buffer, .. }) => {
-            _ = self::close(buffer);
+            _ = self::close_launcher(buffer);
         },
         _ => {},
     }
@@ -57,33 +58,33 @@ pub(super) fn handle_result(result: utils::Result<()>) {
 
 /*----------------------------- ACTION FUNCTIONS -----------------------------*/
 
-pub(super) fn get_config_index(window: &Window) -> utils::Result<usize> {
+pub(super) fn get_config_index(window: &Window) -> Result<usize> {
     if config::state!().list.is_empty() {
         // FIX: this should not be an error, since it is a valid state for the launcher
-        return utils::Error::new("No active configurations found.");
+        return Error::new("No active configurations found.");
     }
 
     Ok(window.get_cursor()?.0 - 2)
 }
 
-pub(super) fn add_config() -> utils::Result<()> {
+pub(super) fn add_config() -> Result<()> {
     config::state!().list.push(config::TaskConfigJson::default());
     Ok(())
 }
 
-pub(super) fn copy_config(index: usize) -> utils::Result<()> {
+pub(super) fn copy_config(index: usize) -> Result<()> {
     let configs = &mut config::state!().list;
     let copied = configs[index].clone();
     configs.push(copied);
     Ok(())
 }
 
-pub(super) fn close(buffer: Buffer) -> utils::Result<()> {
+pub(super) fn close_launcher(buffer: Buffer) -> Result<()> {
     buffer.delete(&nvim::opts::BufDeleteOpts::default())?;
     config::close_buffer()
 }
 
-pub(super) fn delete(index: usize) -> utils::Result<()> {
+pub(super) fn delete_config(index: usize) -> Result<()> {
     {
         config::state!().list.remove(index);
     }
@@ -91,15 +92,15 @@ pub(super) fn delete(index: usize) -> utils::Result<()> {
     config::write_buffer()
 }
 
-pub(super) fn launch(buffer: Buffer, index: usize) -> utils::Result<()> {
-    self::close(buffer)?;
+pub(super) fn launch_config(buffer: Buffer, index: usize) -> Result<()> {
+    self::close_launcher(buffer)?;
 
     let config = config::state!().list[index].clone().into();
     ::nvim_oxi::dbg!(&config);
     crate::core::task::run(config)
 }
 
-fn get_popup_pos(window: &Window) -> utils::Result<(u32, u32)> {
+fn get_popup_pos(window: &Window) -> Result<(u32, u32)> {
     let (row, col) = window.get_position()?;
     let offset = window.get_cursor()?.0 as u32 - 1;
     let width = window.get_width()?;
@@ -109,7 +110,7 @@ fn get_popup_pos(window: &Window) -> utils::Result<(u32, u32)> {
     Ok((row, col))
 }
 
-fn match_field_regex() -> utils::Result<String> {
+fn match_field_regex() -> Result<String> {
     let line = nvim::get_current_line()?;
     let patterns = [
         r"^\ +([A-Z]+)\ +:",
@@ -163,7 +164,7 @@ fn get_config_field(index: usize, field: &str) -> String {
     }
 }
 
-pub(super) fn edit_field(mut edit: Edit) -> utils::Result<()> {
+pub(super) fn edit_field(mut edit: Edit) -> Result<()> {
     let (row, col) = self::get_popup_pos(&edit.window)?;
     let mut field = self::match_field_regex()?;
     if field == "+" {
@@ -183,7 +184,7 @@ pub(super) fn edit_field(mut edit: Edit) -> utils::Result<()> {
                 config::update_buffer()?;
                 edit.update_ui()
             });
-            utils::open_select(vec!["float", "hsplit", "vsplit"], row, col, callback)
+            float::select(vec!["float", "hsplit", "vsplit"], row, col, callback)
         },
         env_var if field.ends_with('=') => {
             let f = field.to_string();
@@ -206,17 +207,16 @@ pub(super) fn edit_field(mut edit: Edit) -> utils::Result<()> {
                 buffer.set_var("callback", callback)?;
                 Ok(nvim::command("call b:update_prompt()")?)
             });
-            utils::open_prompt("VAR", env_var.trim_end_matches('='), row, col, callback)
+            float::prompt("VAR", env_var.trim_end_matches('='), row, col, callback)
         },
         _ => {
             let f = field.to_string();
             let callback = self::wrap_cb_once(move |input: ::nvim_oxi::String| {
                 self::set_config_field(edit.index, &f, input.to_string());
                 config::update_buffer()?;
-                // FIX: resets cursor to top of window
                 edit.update_ui()
             });
-            utils::open_prompt(field, value.as_str(), row, col, callback)
+            float::prompt(field, value.as_str(), row, col, callback)
         },
     }
 }
@@ -237,7 +237,7 @@ fn del_config_field(index: usize, field: &str) -> bool {
     true
 }
 
-pub(super) fn delete_field(edit: &mut Edit) -> utils::Result<()> {
+pub(super) fn delete_field(edit: &mut Edit) -> Result<()> {
     let field = self::match_field_regex()?;
     if !self::del_config_field(edit.index, field.as_str()) {
         return Ok(());
@@ -246,7 +246,7 @@ pub(super) fn delete_field(edit: &mut Edit) -> utils::Result<()> {
     edit.update_ui()
 }
 
-pub(super) fn insert_arg(mut edit: Edit) -> utils::Result<()> {
+pub(super) fn insert_arg(mut edit: Edit) -> Result<()> {
     let (row, col) = self::get_popup_pos(&edit.window)?;
     let field = self::match_field_regex()?;
     let Ok(index) = field.parse::<usize>() else {
@@ -261,5 +261,5 @@ pub(super) fn insert_arg(mut edit: Edit) -> utils::Result<()> {
         edit.update_ui()
     });
 
-    utils::open_prompt(format!("{field}-new").as_str(), "", row, col, callback)
+    float::prompt(format!("{field}-new").as_str(), "", row, col, callback)
 }

@@ -1,7 +1,8 @@
 /*------------------------------------- LAUNCHER : VIEW MODE -------------------------------------*/
 
-use super::LauncherState;
-use crate::{config, utils};
+use super::{Edit, LauncherState, Select};
+use crate::config;
+use crate::utils::Result;
 use ::nvim_oxi::api::opts::OptionOpts;
 use ::nvim_oxi::api::{self as nvim, Buffer, Window};
 
@@ -13,8 +14,8 @@ pub(super) struct View {
 }
 
 impl View {
-    pub(super) fn into_select(self) -> utils::Result<super::Select> {
-        let mut select = super::Select {
+    pub(super) fn into_select(self) -> Result<Select> {
+        let mut select = Select {
             buffer: self.buffer,
             window: self.window,
         };
@@ -24,8 +25,8 @@ impl View {
         Ok(select)
     }
 
-    pub(super) fn into_edit(self, index: usize) -> utils::Result<super::Edit> {
-        let mut edit = super::Edit {
+    pub(super) fn into_edit(self, index: usize) -> Result<Edit> {
+        let mut edit = Edit {
             buffer: self.buffer,
             window: self.window,
             index,
@@ -39,7 +40,7 @@ impl View {
 impl LauncherState for View {
     super::setup_getters!();
 
-    fn create_contents(&self) -> crate::utils::Result<Vec<String>> {
+    fn create_contents(&self) -> Result<Vec<String>> {
         let config = &config::state!().list[self.index];
 
         let mut lines = Vec::new();

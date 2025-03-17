@@ -8,19 +8,16 @@ mod view;
 use self::edit::Edit;
 use self::select::Select;
 use self::view::View;
-use crate::{config, utils};
+use crate::config;
+use crate::utils::{float, setup_module_state, Error, Result};
 use ::nvim_oxi::api::opts::OptionOpts;
 use ::nvim_oxi::api::{self as nvim, Buffer, Window};
-use ::nvim_oxi::Array;
 
-utils::setup_module_state!(launcher, [pub(self)] Launcher);
+setup_module_state!(launcher, Launcher);
 
 pub(crate) fn open() {
-    if let Err(e) = config::setup_buffer_and_configs() {
-        utils::notify::send!(Warn: {format!("config::setup_buffer_and_configs failed - {e}")});
-    }
-
-    action::handle_result(self::state!().on(action::Event::Open))
+    let result = { self::state!().on(action::Event::Open) };
+    action::handle_result(result);
 }
 
 #[derive(Debug, Clone)]
@@ -50,16 +47,18 @@ impl Default for Launcher {
 }
 
 impl Launcher {
-    fn on(&mut self, event: action::Event) -> utils::Result<()> {
+    fn on(&mut self, event: action::Event) -> Result<()> {
         use action::Event;
 
         let current = self.clone();
         let next = match (current, &event) {
             (Self::Closed, Event::Open) => {
+                config::setup_buffer_and_configs()?;
+
                 let buffer = nvim::create_buf(false, true)?;
                 let opts = OptionOpts::builder().buffer(buffer.clone()).build();
                 nvim::set_option_value("filetype", "launch_nvim_launcher", &opts)?;
-                let window = utils::open_float("Task Launcher", &buffer, 1, 1)?;
+                let window = float::centered("Task Launcher", &buffer, 1, 1)?;
 
                 let mut select = Select { buffer, window };
                 select.setup()?;
@@ -71,7 +70,7 @@ impl Launcher {
             (Self::Select(Select { buffer, .. }), Event::Close)
             | (Self::View(View { buffer, .. }), Event::Close)
             | (Self::Edit(Edit { buffer, .. }), Event::Close) => {
-                action::close(buffer)?;
+                action::close_launcher(buffer)?;
                 Self::Closed
             },
 
@@ -89,7 +88,7 @@ impl Launcher {
             },
 
             (Self::Select(mut select), Event::Delete) => {
-                action::delete(action::get_config_index(&select.window)?)?;
+                action::delete_config(action::get_config_index(&select.window)?)?;
                 select.setup()?;
                 let opts = OptionOpts::builder().win(select.window.clone()).build();
                 nvim::set_option_value("cursorline", !config::state!().list.is_empty(), &opts)?;
@@ -102,7 +101,7 @@ impl Launcher {
             },
 
             (Self::Select(Select { buffer, window }), Event::Launch) => {
-                action::launch(buffer, action::get_config_index(&window)?)?;
+                action::launch_config(buffer, action::get_config_index(&window)?)?;
                 Self::Closed
             },
 
@@ -118,7 +117,7 @@ impl Launcher {
             },
 
             (Self::View(view), Event::Delete) => {
-                action::delete(view.index)?;
+                action::delete_config(view.index)?;
                 Self::Select(view.into_select()?)
             },
 
@@ -128,7 +127,7 @@ impl Launcher {
             },
 
             (Self::View(View { buffer, index, .. }), Event::Launch) => {
-                action::launch(buffer, index)?;
+                action::launch_config(buffer, index)?;
                 Self::Closed
             },
 
@@ -163,7 +162,7 @@ impl Launcher {
             },
 
             _ => {
-                return utils::Error::new(format!(
+                return Error::new(format!(
                     "Unsupported transition requested: Event::{event:?} on {self}"
                 ))
             },
@@ -177,18 +176,18 @@ impl Launcher {
 trait LauncherState {
     fn buffer(&mut self) -> &mut Buffer;
     fn window(&mut self) -> &mut Window;
-    fn create_contents(&self) -> utils::Result<Vec<String>>;
-    fn update_callbacks(&mut self) -> utils::Result<()>;
+    fn create_contents(&self) -> Result<Vec<String>>;
+    fn update_callbacks(&mut self) -> Result<()>;
 
     /*---------------- BELOW METHODS SHOULD NOT BE RE-IMPLEMENTED ----------------*/
 
-    fn setup(&mut self) -> utils::Result<()> {
+    fn setup(&mut self) -> Result<()> {
         self.update_ui()?;
         self.window().set_cursor(2, 0)?;
         self.update_callbacks()
     }
 
-    fn update_ui(&mut self) -> utils::Result<()> {
+    fn update_ui(&mut self) -> Result<()> {
         let lines = self.create_contents()?;
 
         // Display buffer content
@@ -202,13 +201,13 @@ trait LauncherState {
         // Set navigation bounds
         let n = lines.len() as u32;
         // FIX: handle other navigation keymaps like wW, eE, bB etc.
-        self.buffer().set_var("bounds", Array::from((2, n + 1)))?;
+        self.buffer().set_var("bounds", ::nvim_oxi::Array::from((2, n + 1)))?;
 
         // Modify window size to match current config list
         use ::nvim_oxi::api::types::*;
         let height = n + 2;
         let width = lines.iter().map(|l| l.len() + 8).max().unwrap() as u32;
-        let (row, col) = utils::get_float_position(width, height)?;
+        let (row, col) = float::get_position(width, height)?;
         let win_config = WindowConfig::builder()
             .relative(WindowRelativeTo::Editor)
             .row(row)

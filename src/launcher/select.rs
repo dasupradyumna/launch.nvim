@@ -1,7 +1,8 @@
 /*------------------------------------ LAUNCHER : SELECT MODE ------------------------------------*/
 
-use super::{action, LauncherState};
-use crate::{config, utils};
+use super::{action, Edit, LauncherState, View};
+use crate::config;
+use crate::utils::Result;
 use ::nvim_oxi::api::{self as nvim, Buffer, Window};
 
 #[derive(Debug, Clone)]
@@ -11,9 +12,9 @@ pub(super) struct Select {
 }
 
 impl Select {
-    pub(super) fn into_view(self) -> utils::Result<super::View> {
+    pub(super) fn into_view(self) -> Result<View> {
         let index = action::get_config_index(&self.window)?;
-        let mut view = super::View {
+        let mut view = View {
             buffer: self.buffer,
             window: self.window,
             index,
@@ -22,8 +23,8 @@ impl Select {
         Ok(view)
     }
 
-    pub(super) fn into_edit(self, index: usize) -> utils::Result<super::Edit> {
-        let mut edit = super::Edit {
+    pub(super) fn into_edit(self, index: usize) -> Result<Edit> {
+        let mut edit = Edit {
             buffer: self.buffer,
             window: self.window,
             index,
@@ -37,7 +38,7 @@ impl Select {
 impl LauncherState for Select {
     super::setup_getters!();
 
-    fn create_contents(&self) -> utils::Result<Vec<String>> {
+    fn create_contents(&self) -> Result<Vec<String>> {
         let configs = &config::state!().list;
         let lines = if configs.is_empty() {
             Vec::from_iter([config::NO_CONFIGS_MSG.into()])

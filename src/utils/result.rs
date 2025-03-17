@@ -2,16 +2,18 @@
 
 pub(crate) type Result<T> = std::result::Result<T, Error>;
 
+// CHECK: nesting error sources from `source()` for detailed error messages
+
 #[derive(Debug, thiserror::Error)]
 pub(crate) enum Error {
-    #[error(transparent)]
+    #[error("ERROR (std::io): {0}")]
     Io(#[from] std::io::Error),
-    #[error(transparent)]
+    #[error("ERROR (serde_json): {0}")]
     Json(#[from] ::serde_json::Error),
-    #[error(transparent)]
+    #[error("ERROR (nvim_oxi): {0}")]
     Nvim(#[from] ::nvim_oxi::Error),
-    #[error("{0}")]
-    Plugin(String),
+    #[error("ERROR (internal): {0}")]
+    Internal(String),
 }
 
 impl Error {
@@ -19,7 +21,7 @@ impl Error {
     where
         M: std::fmt::Display,
     {
-        Err(Self::Plugin(message.to_string()))
+        Err(Self::Internal(message.to_string()))
     }
 }
 
