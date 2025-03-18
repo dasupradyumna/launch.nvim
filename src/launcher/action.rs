@@ -19,6 +19,7 @@ pub(super) enum Event {
     Launch,
     Open,
     Save,
+    Undo,
     View,
 }
 
@@ -58,6 +59,11 @@ pub(super) fn handle_result(result: Result<()>) {
 
 /*----------------------------- ACTION FUNCTIONS -----------------------------*/
 
+pub(super) fn undo_action(edit: &mut Edit) -> Result<()> {
+    config::undo_buffer()?;
+    edit.update_ui()
+}
+
 pub(super) fn get_config_index(window: &Window) -> Result<usize> {
     if config::state!().list.is_empty() {
         // FIX: this should not be an error, since it is a valid state for the launcher
@@ -81,7 +87,7 @@ pub(super) fn copy_config(index: usize) -> Result<()> {
 
 pub(super) fn close_launcher(buffer: Buffer) -> Result<()> {
     buffer.delete(&nvim::opts::BufDeleteOpts::default())?;
-    config::close_buffer()
+    config::delete_buffer()
 }
 
 pub(super) fn delete_config(index: usize) -> Result<()> {

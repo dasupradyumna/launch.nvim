@@ -78,5 +78,6 @@ impl LauncherState for Edit {
         ("<CR>", Edit),
         ("i", InsertArg),
         ("s", Save),
+        ("u", Undo),
     }
 }

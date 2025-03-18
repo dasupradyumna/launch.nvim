@@ -50,16 +50,24 @@ fn get_runtime_filepath() -> PathBuf {
     self::get_data_dir().join(json_filename)
 }
 
-pub(crate) fn setup_buffer_and_configs() -> Result<()> {
-    {
-        let mut config = self::state!();
-        let mut buffer = nvim::create_buf(false, false)?;
-        let opts = nvim::opts::OptionOpts::builder().buffer(buffer.clone()).build();
-        nvim::set_option_value("swapfile", false, &opts)?;
-        buffer.set_name(&config.filepath)?;
-        config.buffer = buffer;
+pub(crate) fn create_buffer() -> Result<()> {
+    let mut config = self::state!();
+    let mut buffer = nvim::create_buf(false, false)?;
+    let opts = nvim::opts::OptionOpts::builder().buffer(buffer.clone()).build();
+    nvim::set_option_value("swapfile", false, &opts)?;
+    buffer.set_name(&config.filepath)?;
+    config.buffer = buffer;
+    Ok(())
+}
+
+pub(crate) fn delete_buffer() -> Result<()> {
+    let config = &mut self::state!();
+    let buffer = config.buffer.clone();
+    config.buffer = Buffer::from(0);
+    if config.list.is_empty() && config.filepath.is_file() {
+        std::fs::remove_file(&config.filepath)?;
     }
-    self::load_configs_from_json()
+    Ok(buffer.delete(&nvim::opts::BufDeleteOpts::default())?)
 }
 
 pub(crate) fn update_buffer() -> Result<()> {
@@ -69,32 +77,34 @@ pub(crate) fn update_buffer() -> Result<()> {
     Ok(config.buffer.set_lines(range, true, config_str.split('\n'))?)
 }
 
-pub(crate) fn write_buffer() -> Result<()> {
+fn execute_in_buffer<Cmd: ToString>(command: Cmd) -> Result<()> {
     let buffer = &self::state!().buffer;
-    Ok(buffer.call(|_| -> Result<()> { Ok(nvim::command("silent write")?) })?)
+    let command = command.to_string();
+    Ok(buffer.call(move |_| -> Result<()> { Ok(nvim::command(&command)?) })?)
 }
 
-pub(crate) fn load_configs_from_json() -> Result<()> {
+fn load_configs_from_buffer() -> Result<()> {
     let mut config = self::state!();
     let buffer = &config.buffer;
-    () = buffer.call(|_| -> Result<()> { Ok(nvim::command("edit! | set nobuflisted")?) })?;
-
     let config_str = buffer
         .get_lines(0..buffer.line_count()?, true)?
         .fold(String::new(), |acc, line| acc + &line.to_string() + "\n");
-    let config_str = config_str.trim_ascii_end(); // Handles whitespace from empty buffer
-    if !config_str.is_empty() {
-        config.list = json::from_str(config_str)?;
+    if !config_str.trim_ascii_end().is_empty() {
+        config.list = json::from_str(&config_str)?;
     }
     Ok(())
 }
 
-pub(crate) fn close_buffer() -> Result<()> {
-    let config = &mut self::state!();
-    let buffer = config.buffer.clone();
-    config.buffer = Buffer::from(0);
-    if config.list.is_empty() && config.filepath.is_file() {
-        std::fs::remove_file(&config.filepath)?;
-    }
-    Ok(buffer.delete(&nvim::opts::BufDeleteOpts::default())?)
+pub(crate) fn load_configs_from_json() -> Result<()> {
+    self::execute_in_buffer("edit! | set nobuflisted")?;
+    self::load_configs_from_buffer()
+}
+
+pub(crate) fn write_buffer() -> Result<()> {
+    self::execute_in_buffer("silent write")
+}
+
+pub(super) fn undo_buffer() -> Result<()> {
+    self::execute_in_buffer("undo")?;
+    self::load_configs_from_buffer()
 }

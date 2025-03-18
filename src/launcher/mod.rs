@@ -53,7 +53,8 @@ impl Launcher {
         let current = self.clone();
         let next = match (current, &event) {
             (Self::Closed, Event::Open) => {
-                config::setup_buffer_and_configs()?;
+                config::create_buffer()?;
+                config::load_configs_from_json()?;
 
                 let buffer = nvim::create_buf(false, true)?;
                 let opts = OptionOpts::builder().buffer(buffer.clone()).build();
@@ -158,6 +159,11 @@ impl Launcher {
 
             (Self::Edit(edit), Event::InsertArg) => {
                 action::insert_arg(edit.clone())?;
+                Self::Edit(edit)
+            },
+
+            (Self::Edit(mut edit), Event::Undo) => {
+                action::undo_action(&mut edit)?;
                 Self::Edit(edit)
             },
 
