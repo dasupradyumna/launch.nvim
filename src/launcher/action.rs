@@ -190,6 +190,7 @@ pub(super) fn edit_field(mut edit: Edit) -> Result<()> {
                     let env_var: String = buffer.get_var("env_var")?;
                     buffer.del_var("env_var")?;
 
+                    let input: String = input.to_string_lossy().trim_ascii().into();
                     self::set_config_field(edit.index, &f, format!("{env_var}={input}"));
                     config::update_buffer()?;
                     edit.update_ui()
@@ -197,6 +198,7 @@ pub(super) fn edit_field(mut edit: Edit) -> Result<()> {
 
                 let mut buffer = nvim::get_current_buf();
                 // TODO: input must be a valid enviroment variable name
+                let input: String = input.to_string_lossy().trim_ascii().into();
                 buffer.set_var("env_var", input)?;
                 buffer.set_var("prompt", "VALUE")?;
                 buffer.set_var("default", value.as_str())?;
@@ -208,7 +210,7 @@ pub(super) fn edit_field(mut edit: Edit) -> Result<()> {
         _ => {
             let f = field.to_string();
             let callback = self::wrap_cb_once(move |input: ::nvim_oxi::String| {
-                self::set_config_field(edit.index, &f, input.to_string());
+                self::set_config_field(edit.index, &f, input.to_string_lossy().trim_ascii().into());
                 config::update_buffer()?;
                 edit.update_ui()
             });
@@ -251,7 +253,7 @@ pub(super) fn insert_arg(mut edit: Edit) -> Result<()> {
     let callback = self::wrap_cb_once(move |input: ::nvim_oxi::String| {
         {
             let config = &mut config::state!().list[edit.index];
-            config.insert_arg(index - 1, input.to_string());
+            config.insert_arg(index - 1, input.to_string_lossy().trim_ascii().into());
         }
         config::update_buffer()?;
         edit.update_ui()
