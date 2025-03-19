@@ -77,6 +77,7 @@ impl LauncherState for Edit {
         ("d", Delete),
         ("<CR>", Edit),
         ("i", InsertArg),
+        ("U", Redo),
         ("s", Save),
         ("u", Undo),
     }

@@ -77,9 +77,9 @@ pub(crate) fn update_buffer() -> Result<()> {
     Ok(config.buffer.set_lines(range, true, config_str.split('\n'))?)
 }
 
-fn execute_in_buffer<Cmd: ToString>(command: Cmd) -> Result<()> {
+fn execute_in_buffer<Cmd: std::fmt::Display>(command: Cmd) -> Result<()> {
     let buffer = &self::state!().buffer;
-    let command = command.to_string();
+    let command = format!("silent {command}");
     Ok(buffer.call(move |_| -> Result<()> { Ok(nvim::command(&command)?) })?)
 }
 
@@ -100,11 +100,16 @@ pub(crate) fn load_configs_from_json() -> Result<()> {
     self::load_configs_from_buffer()
 }
 
-pub(crate) fn write_buffer() -> Result<()> {
-    self::execute_in_buffer("silent write")
+pub(super) fn redo_buffer() -> Result<()> {
+    self::execute_in_buffer("redo")?;
+    self::load_configs_from_buffer()
 }
 
 pub(super) fn undo_buffer() -> Result<()> {
     self::execute_in_buffer("undo")?;
     self::load_configs_from_buffer()
+}
+
+pub(crate) fn write_buffer() -> Result<()> {
+    self::execute_in_buffer("write")
 }

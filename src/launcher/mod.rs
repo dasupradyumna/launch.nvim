@@ -106,6 +106,16 @@ impl Launcher {
                 Self::Closed
             },
 
+            (Self::Select(mut select), Event::Redo) => {
+                action::redo_action(&mut select, true)?;
+                Self::Select(select)
+            },
+
+            (Self::Select(mut select), Event::Undo) => {
+                action::undo_action(&mut select, true)?;
+                Self::Select(select)
+            },
+
             (Self::Select(select), Event::View) => Self::View(select.into_view()?),
 
             /*--------------------------------- VIEW MODE --------------------------------*/
@@ -161,9 +171,13 @@ impl Launcher {
                 action::insert_arg(edit.clone())?;
                 Self::Edit(edit)
             },
+            (Self::Edit(mut edit), Event::Redo) => {
+                action::redo_action(&mut edit, false)?;
+                Self::Edit(edit)
+            },
 
             (Self::Edit(mut edit), Event::Undo) => {
-                action::undo_action(&mut edit)?;
+                action::undo_action(&mut edit, false)?;
                 Self::Edit(edit)
             },
 

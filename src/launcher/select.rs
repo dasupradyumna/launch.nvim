@@ -56,6 +56,8 @@ impl LauncherState for Select {
         ("d", Delete),
         ("e", Edit),
         ("<CR>", Launch),
+        ("U", Redo),
+        ("u", Undo),
         ("v", View),
     }
 }

@@ -18,6 +18,7 @@ pub(super) enum Event {
     InsertArg,
     Launch,
     Open,
+    Redo,
     Save,
     Undo,
     View,
@@ -59,9 +60,20 @@ pub(super) fn handle_result(result: Result<()>) {
 
 /*----------------------------- ACTION FUNCTIONS -----------------------------*/
 
-pub(super) fn undo_action(edit: &mut Edit) -> Result<()> {
+pub(super) fn redo_action<LS: LauncherState>(state: &mut LS, write: bool) -> Result<()> {
+    config::redo_buffer()?;
+    if write {
+        config::write_buffer()?;
+    }
+    state.update_ui()
+}
+
+pub(super) fn undo_action<LS: LauncherState>(state: &mut LS, write: bool) -> Result<()> {
     config::undo_buffer()?;
-    edit.update_ui()
+    if write {
+        config::write_buffer()?;
+    }
+    state.update_ui()
 }
 
 pub(super) fn get_config_index(window: &Window) -> Result<usize> {
