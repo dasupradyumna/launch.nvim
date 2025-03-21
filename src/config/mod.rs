@@ -71,10 +71,14 @@ pub(crate) fn delete_buffer() -> Result<()> {
 }
 
 pub(crate) fn update_buffer() -> Result<()> {
-    let mut config = self::state!();
-    let config_str = json::to_string_pretty(&config.list)?;
-    let range = 0..config.buffer.line_count()?;
-    Ok(config.buffer.set_lines(range, true, config_str.split('\n'))?)
+    let (mut buffer, config_str) = {
+        let config = self::state!();
+        (config.buffer.clone(), json::to_string_pretty(&config.list)?)
+    };
+    let range = 0..buffer.line_count()?;
+    buffer.set_lines(range, true, config_str.split('\n'))?;
+    // NOTE: closes undo block to make `nvim_buf_set_lines()` changes undoable
+    self::execute_in_buffer("let &l:undolevels = &l:undolevels")
 }
 
 fn execute_in_buffer<Cmd: std::fmt::Display>(command: Cmd) -> Result<()> {
