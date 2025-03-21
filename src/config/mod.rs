@@ -67,7 +67,7 @@ pub(crate) fn delete_buffer() -> Result<()> {
     if config.list.is_empty() && config.filepath.is_file() {
         std::fs::remove_file(&config.filepath)?;
     }
-    Ok(buffer.delete(&nvim::opts::BufDeleteOpts::default())?)
+    Ok(buffer.delete(&nvim::opts::BufDeleteOpts::builder().force(true).build())?)
 }
 
 pub(crate) fn update_buffer() -> Result<()> {
@@ -116,4 +116,8 @@ pub(super) fn undo_buffer() -> Result<()> {
 
 pub(crate) fn write_buffer() -> Result<()> {
     self::execute_in_buffer("write")
+}
+
+pub(crate) fn clear_undo_in_buffer() -> Result<()> {
+    self::execute_in_buffer("call LaunchNvimClearUndo()")
 }

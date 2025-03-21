@@ -1,5 +1,15 @@
 "------------------------------------------- LAUNCH-NVIM ------------------------------------------"
 
+" Clears undo history of the current buffer
+" Refer :help clear-undo
+function! LaunchNvimClearUndo()
+    let old_undolevels = &l:undolevels
+    setlocal undolevels=-1
+    exe "normal a \<BS>\<Esc>"
+    let &l:undolevels = old_undolevels
+    unlet old_undolevels
+endfunction
+
 command! LaunchConfig lua require('launch').launch()
 
 augroup launch_nvim

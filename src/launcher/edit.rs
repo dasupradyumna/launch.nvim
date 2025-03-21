@@ -15,6 +15,7 @@ pub(super) struct Edit {
 
 impl Edit {
     pub(super) fn into_select(self) -> Result<Select> {
+        config::clear_undo_in_buffer()?;
         let mut select = Select {
             buffer: self.buffer,
             window: self.window,
@@ -24,6 +25,7 @@ impl Edit {
     }
 
     pub(super) fn into_view(self) -> Result<View> {
+        config::clear_undo_in_buffer()?;
         let mut view = View {
             buffer: self.buffer,
             window: self.window,

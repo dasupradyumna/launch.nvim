@@ -13,6 +13,7 @@ pub(super) struct Select {
 
 impl Select {
     pub(super) fn into_view(self) -> Result<View> {
+        config::clear_undo_in_buffer()?;
         let index = action::get_config_index(&self.window)?;
         let mut view = View {
             buffer: self.buffer,
@@ -24,6 +25,7 @@ impl Select {
     }
 
     pub(super) fn into_edit(self, index: usize) -> Result<Edit> {
+        config::clear_undo_in_buffer()?;
         let mut edit = Edit {
             buffer: self.buffer,
             window: self.window,
