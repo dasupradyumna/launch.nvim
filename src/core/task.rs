@@ -2,7 +2,7 @@
 
 use crate::config::{TaskConfig, TaskDisplay};
 use crate::settings::state as settings;
-use crate::utils::{float, setup_module_state, Result};
+use crate::utils::{buffer, float, setup_module_state, Result};
 use ::nvim_oxi::api::opts::{ExecAutocmdsOpts, OptionOpts};
 use ::nvim_oxi::api::types::{Mode, SplitDirection, WindowConfig};
 use ::nvim_oxi::api::{self as nvim, Buffer, Window};
@@ -14,12 +14,8 @@ setup_module_state!(core::task, [pub(crate)]
 });
 
 pub(crate) fn run(config: TaskConfig) -> Result<()> {
-    // Create a new task buffer
-    let buffer = nvim::create_buf(false, true)?;
-    let opts = OptionOpts::builder().buffer(buffer.clone()).build();
-    nvim::set_option_value("filetype", "launch_nvim_task", &opts)?;
-
     // Open the task window and launch a terminal buffer with current config
+    let buffer = buffer::create_scratch("task")?;
     let task = ActiveTask { buffer, config };
     task.render()?;
     task.run()?;
@@ -61,7 +57,7 @@ impl ActiveTask {
             let mut window = match self.config.disp() {
                 TaskDisplay::Float => {
                     let size = ui_settings.float.size as u32;
-                    float::centered(
+                    float::open_centered(
                         self.config.name(),
                         &self.buffer,
                         screen_width * size / 100,

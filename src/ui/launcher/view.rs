@@ -43,7 +43,7 @@ impl LauncherState for View {
     fn create_contents(&self) -> Result<Vec<String>> {
         let config = &config::state!().list[self.index];
 
-        let mut lines = Vec::new();
+        let mut lines = vec!["".into()];
         lines.push(format!("NAME : {}", config.name()));
         lines.push(format!("CMD  : {}", config.cmd()));
         if !config.args().is_empty() {

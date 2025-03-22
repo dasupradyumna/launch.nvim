@@ -1,5 +1,6 @@
 /*----------------------------------------- UTILITY ITEMS ----------------------------------------*/
 
+pub(crate) mod buffer;
 pub(crate) mod float;
 mod result;
 pub(crate) mod serde;

@@ -1,11 +1,11 @@
 /*----------------------------------- FLOATING WINDOW UTILITIES ----------------------------------*/
 
-use super::Result;
+use super::{buffer, Result};
 use ::nvim_oxi::api::opts::OptionOpts;
 use ::nvim_oxi::api::{self as nvim, Buffer, Window};
 use ::nvim_oxi::Function;
 
-pub(crate) fn get_position(width: u32, height: u32) -> Result<(u32, u32)> {
+pub(crate) fn get_centered_position(width: u32, height: u32) -> Result<(u32, u32)> {
     // Compute top-left row and column for a centered floating window
     let screen_height: u32 = nvim::get_option_value("lines", &OptionOpts::default())?;
     let screen_width: u32 = nvim::get_option_value("columns", &OptionOpts::default())?;
@@ -15,23 +15,40 @@ pub(crate) fn get_position(width: u32, height: u32) -> Result<(u32, u32)> {
     Ok((row, col))
 }
 
-pub(crate) fn centered(title: &str, buffer: &Buffer, width: u32, height: u32) -> Result<Window> {
+pub(crate) fn config_builder(
+    row: u32,
+    col: u32,
+    width: u32,
+    height: u32,
+) -> ::nvim_oxi::api::types::WindowConfigBuilder {
     use ::nvim_oxi::api::types::*;
-
-    let (row, col) = self::get_position(width, height)?;
-    let win_config = WindowConfig::builder()
+    let mut win_config = WindowConfig::builder();
+    win_config
         .relative(WindowRelativeTo::Editor)
         .row(row)
         .col(col)
         .width(width)
         .height(height)
+        .border(WindowBorder::Rounded)
+        .style(WindowStyle::Minimal)
+        .zindex(49);
+    win_config
+}
+
+pub(crate) fn open_centered(
+    title: &str,
+    buffer: &Buffer,
+    width: u32,
+    height: u32,
+) -> Result<Window> {
+    use ::nvim_oxi::api::types::*;
+
+    let (row, col) = self::get_centered_position(width, height)?;
+    let win_config = self::config_builder(row, col, width, height)
         .title(WindowTitle::SimpleString(format!(" {title} ").into()))
         .title_pos(WindowTitlePosition::Center)
         .footer(WindowTitle::SimpleString(" launch.nvim ".into()))
         .footer_pos(WindowTitlePosition::Right)
-        .border(WindowBorder::Rounded)
-        .style(WindowStyle::Minimal)
-        .zindex(49)
         .build();
     let window = nvim::open_win(buffer, true, &win_config)?;
 
@@ -42,31 +59,19 @@ pub(crate) fn centered(title: &str, buffer: &Buffer, width: u32, height: u32) ->
     Ok(window)
 }
 
-pub(crate) fn prompt(
+pub(crate) fn open_prompt(
     prompt: &str,
     default: &str,
     row: u32,
     col: u32,
     callback: Function<::nvim_oxi::String, ()>,
 ) -> Result<()> {
-    let mut buffer = nvim::create_buf(false, true)?;
-    let opts = OptionOpts::builder().buffer(buffer.clone()).build();
-    nvim::set_option_value("filetype", "launch_nvim_popup_prompt", &opts)?;
+    // Create prompt buffer
+    let mut buffer = buffer::create_scratch("popup_prompt")?;
 
-    use ::nvim_oxi::api::types::*;
-    let win_config = WindowConfig::builder()
-        .relative(WindowRelativeTo::Editor)
-        .row(row)
-        .col(col)
-        .width(40)
-        .height(1)
-        .border(WindowBorder::Rounded)
-        .style(WindowStyle::Minimal)
-        .zindex(49)
-        .build();
+    // Open the float and fix the buffer
+    let win_config = self::config_builder(row, col, 40, 1).build();
     let window = nvim::open_win(&buffer, true, &win_config)?;
-
-    // Fix the prompt buffer
     let opts = OptionOpts::builder().win(window.clone()).build();
     nvim::set_option_value("winfixbuf", true, &opts)?;
 
@@ -79,32 +84,22 @@ pub(crate) fn prompt(
     Ok(())
 }
 
-pub(crate) fn select(
+pub(crate) fn open_select(
     items: Vec<&str>,
     row: u32,
     col: u32,
     callback: Function<(), ()>,
 ) -> Result<()> {
-    let mut buffer = nvim::create_buf(false, true)?;
-    buffer.set_lines(0..1, true, items.iter().map(|i| format!("  {i}  ")))?;
-    buffer.set_var("callback", callback)?;
-    let opts = OptionOpts::builder().buffer(buffer.clone()).build();
-    nvim::set_option_value("filetype", "launch_nvim_popup_select", &opts)?;
+    // Create selection buffer
+    let mut buffer = buffer::create_scratch("popup_select")?;
+    buffer::write_lines(&mut buffer, &items)?;
+    buffer.set_var("callback", callback)?; // TODO: separate into accept/cancel callbacks
 
-    use ::nvim_oxi::api::types::*;
-    let win_config = WindowConfig::builder()
-        .relative(WindowRelativeTo::Editor)
-        .row(row)
-        .col(col)
-        .width(unsafe { items.iter().map(|i| i.len() + 4).max().unwrap_unchecked() as u32 })
-        .height(items.len() as u32)
-        .border(WindowBorder::Rounded)
-        .style(WindowStyle::Minimal)
-        .zindex(49)
-        .build();
+    // Open the float and fix the buffer
+    let width = unsafe { items.iter().map(|i| i.len() + 8).max().unwrap_unchecked() as u32 };
+    let height = items.len() as u32;
+    let win_config = self::config_builder(row, col, width, height).build();
     let window = nvim::open_win(&buffer, true, &win_config)?;
-
-    // Fix the prompt buffer
     let opts = OptionOpts::builder().win(window.clone()).build();
     nvim::set_option_value("winfixbuf", true, &opts)?;
     nvim::set_option_value("cursorline", true, &opts)?;

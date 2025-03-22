@@ -119,5 +119,5 @@ pub(crate) fn write_buffer() -> Result<()> {
 }
 
 pub(crate) fn clear_undo_in_buffer() -> Result<()> {
-    self::execute_in_buffer("call LaunchNvimClearUndo()")
+    self::execute_in_buffer("call launch#clear_undo_history()")
 }

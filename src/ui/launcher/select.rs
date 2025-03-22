@@ -43,9 +43,11 @@ impl LauncherState for Select {
     fn create_contents(&self) -> Result<Vec<String>> {
         let configs = &config::state!().list;
         let lines = if configs.is_empty() {
-            Vec::from_iter([config::NO_CONFIGS_MSG.into()])
+            vec!["".into(), config::NO_CONFIGS_MSG.into()]
         } else {
-            configs.iter().map(|c| c.name().into()).collect()
+            let mut vec = vec!["".into()];
+            vec.extend(configs.iter().map(|c| c.name().into()));
+            vec
         };
 
         Ok(lines)

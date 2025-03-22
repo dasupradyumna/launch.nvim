@@ -5,6 +5,7 @@ if exists('b:did_ftplugin') | finish | endif
 let b:did_ftplugin = 1
 
 " setup buffer as prompt
+setlocal modifiable
 setlocal buftype=prompt
 
 function! s:callback(input)

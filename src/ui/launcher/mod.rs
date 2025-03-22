@@ -9,7 +9,7 @@ use self::edit::Edit;
 use self::select::Select;
 use self::view::View;
 use crate::config;
-use crate::utils::{float, setup_module_state, Error, Result};
+use crate::utils::{buffer, float, setup_module_state, Error, Result};
 use ::nvim_oxi::api::opts::OptionOpts;
 use ::nvim_oxi::api::{self as nvim, Buffer, Window};
 
@@ -56,10 +56,8 @@ impl Launcher {
                 config::create_buffer()?;
                 config::load_configs_from_json()?;
 
-                let buffer = nvim::create_buf(false, true)?;
-                let opts = OptionOpts::builder().buffer(buffer.clone()).build();
-                nvim::set_option_value("filetype", "launch_nvim_launcher", &opts)?;
-                let window = float::centered("Task Launcher", &buffer, 1, 1)?;
+                let buffer = buffer::create_scratch("launcher")?;
+                let window = float::open_centered("Task Launcher", &buffer, 1, 1)?;
 
                 let mut select = Select { buffer, window };
                 select.setup()?;
@@ -208,33 +206,18 @@ trait LauncherState {
     }
 
     fn update_ui(&mut self) -> Result<()> {
+        // Get mode-specific buffer contents and write them
         let lines = self.create_contents()?;
+        buffer::write_lines(self.buffer(), &lines)?;
 
-        // Display buffer content
-        let range = 1..self.buffer().line_count()?;
-        let opts = OptionOpts::builder().buffer(self.buffer().clone()).build();
-        nvim::set_option_value("modifiable", true, &opts)?;
-        self.buffer()
-            .set_lines(range, true, lines.iter().map(|s| format!("    {s}    ")))?;
-        nvim::set_option_value("modifiable", false, &opts)?;
-
-        // Set navigation bounds
-        let n = lines.len() as u32;
+        // Modify window size to match current buffer content
         // FIX: handle other navigation keymaps like wW, eE, bB etc.
-        self.buffer().set_var("bounds", ::nvim_oxi::Array::from((2, n + 1)))?;
-
-        // Modify window size to match current config list
-        use ::nvim_oxi::api::types::*;
-        let height = n + 2;
+        let bounds = (2, lines.len() as u32);
+        self.buffer().set_var("bounds", ::nvim_oxi::Array::from(bounds))?;
+        let height = bounds.1 + 1;
         let width = unsafe { lines.iter().map(|l| l.len() + 8).max().unwrap_unchecked() as u32 };
-        let (row, col) = float::get_position(width, height)?;
-        let win_config = WindowConfig::builder()
-            .relative(WindowRelativeTo::Editor)
-            .row(row)
-            .col(col)
-            .width(width)
-            .height(height)
-            .build();
+        let (row, col) = float::get_centered_position(width, height)?;
+        let win_config = float::config_builder(row, col, width, height).build();
         self.window().set_config(&win_config)?;
 
         Ok(())
@@ -266,7 +249,7 @@ macro_rules! setup_callbacks {
                 $( Array::from(($key, wrap_cb(|()| state!().on(Event::$event)))) ),+
             ));
             self.buffer.set_var("callbacks", action_list)?;
-            nvim::command("call b:setup_callbacks()")?;
+            nvim::command("call launch#setup_callbacks()")?;
 
             Ok(())
         }

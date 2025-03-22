@@ -43,7 +43,7 @@ impl LauncherState for Edit {
         let config = &config::state!().list[self.index];
         const NONE: &str = "---";
 
-        let mut lines = Vec::new();
+        let mut lines = vec!["".into()];
         lines.push(format!("NAME : {}", config.name()));
         lines.push(format!("CMD  : {}", config.cmd()));
         lines.push("ARGS :".to_string());

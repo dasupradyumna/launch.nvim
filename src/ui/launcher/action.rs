@@ -198,7 +198,7 @@ pub(super) fn edit_field(mut edit: Edit) -> Result<()> {
                 config::update_buffer()?;
                 edit.update_ui()
             });
-            float::select(vec!["float", "hsplit", "vsplit"], row, col, callback)
+            float::open_select(vec!["float", "hsplit", "vsplit"], row, col, callback)
         },
         env_var if field.ends_with('=') => {
             let f = field.to_string();
@@ -223,7 +223,7 @@ pub(super) fn edit_field(mut edit: Edit) -> Result<()> {
                 buffer.set_var("callback", callback)?;
                 Ok(nvim::command("call b:update_prompt()")?)
             });
-            float::prompt("VAR", env_var.trim_end_matches('='), row, col, callback)
+            float::open_prompt("VAR", env_var.trim_end_matches('='), row, col, callback)
         },
         _ => {
             let f = field.to_string();
@@ -232,7 +232,7 @@ pub(super) fn edit_field(mut edit: Edit) -> Result<()> {
                 config::update_buffer()?;
                 edit.update_ui()
             });
-            float::prompt(field, value.as_str(), row, col, callback)
+            float::open_prompt(field, value.as_str(), row, col, callback)
         },
     }
 }
@@ -277,5 +277,5 @@ pub(super) fn insert_arg(mut edit: Edit) -> Result<()> {
         edit.update_ui()
     });
 
-    float::prompt(format!("{field}-new").as_str(), "", row, col, callback)
+    float::open_prompt(format!("{field}-new").as_str(), "", row, col, callback)
 }

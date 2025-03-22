@@ -1,7 +1,7 @@
 /*-------------------------------------- ACTIVE TASKS VIEWER -------------------------------------*/
 
 use crate::core::task;
-use crate::utils::{float, notify, Result};
+use crate::utils::{buffer, float, notify, Result};
 use ::nvim_oxi::api as nvim;
 use ::nvim_oxi::api::opts::{BufDeleteOpts, OptionOpts};
 
@@ -16,30 +16,22 @@ fn _open() -> Result<()> {
 
     let state = &mut task::state!();
     let lines: Vec<String> = if state.active_list.is_empty() {
-        Vec::from_iter([NO_TASKS_MSG.into()])
+        vec!["".into(), NO_TASKS_MSG.into()]
     } else {
-        state.active_list.iter().map(|c| c.config.name().into()).collect()
+        let mut vec = vec!["".into()];
+        vec.extend(state.active_list.iter().map(|c| c.config.name().into()));
+        vec
     };
-
-    // Create buffer
-    let mut buffer = nvim::create_buf(false, true)?;
-    let opts = OptionOpts::builder().buffer(buffer.clone()).build();
-    nvim::set_option_value("filetype", "launch_nvim_active_task_list", &opts)?;
-
-    // Set buffer contents
-    let range = 1..buffer.line_count()?;
-    nvim::set_option_value("modifiable", true, &opts)?;
-    buffer.set_lines(range, true, lines.iter().map(|s| format!("    {s}    ")))?;
-    nvim::set_option_value("modifiable", false, &opts)?;
+    let mut buffer = buffer::create_scratch("active_tasks")?;
+    buffer::write_lines(&mut buffer, &lines)?;
 
     // Open a centered floating window
-    let n = lines.len() as u32;
     // FIX: handle other navigation keymaps like wW, eE, bB etc.
-    buffer.set_var("bounds", ::nvim_oxi::Array::from((2, n + 1)))?;
-    let height = n + 2;
+    let bounds = (2u32, lines.len() as u32);
+    buffer.set_var("bounds", ::nvim_oxi::Array::from(bounds))?;
     let width = unsafe { lines.iter().map(|l| l.len() + 8).max().unwrap_unchecked() as u32 };
-    let mut window = float::centered("Active Tasks", &buffer, width, height)?;
-    window.set_cursor(2, 0)?;
+    let mut window = float::open_centered("Active Tasks", &buffer, width, bounds.1 + 1)?;
+    window.set_cursor(bounds.0 as usize, 0)?;
     let opts = OptionOpts::builder().win(window.clone()).build();
     nvim::set_option_value("cursorline", !state.active_list.is_empty(), &opts)?;
 
@@ -56,7 +48,7 @@ fn _open() -> Result<()> {
         )),))
     };
     buffer.set_var("callbacks", action_list)?;
-    nvim::command("call b:setup_callbacks()")?;
+    nvim::command("call launch#setup_callbacks()")?;
 
     Ok(())
 }
