@@ -13,7 +13,7 @@ use crate::utils::{float, setup_module_state, Error, Result};
 use ::nvim_oxi::api::opts::OptionOpts;
 use ::nvim_oxi::api::{self as nvim, Buffer, Window};
 
-setup_module_state!(launcher, Launcher);
+setup_module_state!(ui::launcher, Launcher);
 
 pub(crate) fn open() {
     let result = { self::state!().on(action::Event::Open) };
@@ -258,7 +258,7 @@ macro_rules! setup_callbacks {
     { $( ($key:expr, $event: ident) ,)* } => {
 
         fn update_callbacks(&mut self) -> crate::utils::Result<()> {
-            use crate::launcher::{action::{wrap_cb, Event}, state};
+            use crate::ui::launcher::{action::{wrap_cb, Event}, state};
             use ::nvim_oxi::Array;
 
             nvim::command("call b:remove_callbacks()")?;

@@ -35,10 +35,9 @@ pub(crate) fn run(config: TaskConfig) -> Result<()> {
 }
 
 pub(crate) fn list_active_tasks() {
-    let Err(msg) = ActiveTask::open_list() else {
-        return;
-    };
-    notify!(Error: msg);
+    if let Err(msg) = ActiveTask::open_list() {
+        notify!(Error: msg);
+    }
 }
 
 #[derive(Debug)]
@@ -81,7 +80,7 @@ impl ActiveTask {
         nvim::set_option_value("cursorline", !state.active_list.is_empty(), &opts)?;
 
         // Set buffer keymaps for actions
-        use crate::launcher::action;
+        use crate::ui::launcher::action;
         use ::nvim_oxi::Array;
         let action_list = {
             let buf = buffer.clone();

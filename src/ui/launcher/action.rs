@@ -2,7 +2,7 @@
 
 use super::{Edit, Launcher, Select, View};
 use crate::config;
-use crate::launcher::LauncherState;
+use crate::ui::launcher::LauncherState;
 use crate::utils::{float, notify, Error, Result};
 use ::nvim_oxi::api::{self as nvim, Buffer, Window};
 use ::nvim_oxi::Function;
