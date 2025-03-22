@@ -26,7 +26,7 @@ pub(super) enum Event {
 
 /*----------------------------- CALLBACK HELPERS -----------------------------*/
 
-pub(super) fn wrap_cb<F, T>(func: F) -> Function<T, ()>
+pub(crate) fn wrap_cb<F, T>(func: F) -> Function<T, ()>
 where
     F: Fn(T) -> Result<()> + 'static,
     T: ::nvim_oxi::lua::Poppable,
@@ -34,7 +34,7 @@ where
     Function::from_fn(move |arg: T| self::handle_result(func(arg)))
 }
 
-pub(super) fn wrap_cb_once<F, T>(func: F) -> Function<T, ()>
+pub(crate) fn wrap_cb_once<F, T>(func: F) -> Function<T, ()>
 where
     F: FnOnce(T) -> Result<()> + 'static,
     T: ::nvim_oxi::lua::Poppable,

@@ -11,6 +11,7 @@ function! LaunchNvimClearUndo()
 endfunction
 
 command! LaunchConfig lua require('launch').launch()
+command! LaunchListActiveTasks lua require('launch').list_active_tasks()
 
 augroup launch_nvim
     autocmd!

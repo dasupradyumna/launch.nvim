@@ -1,6 +1,6 @@
 /*------------------------------------ CONFIGURATION LAUNCHER ------------------------------------*/
 
-mod action;
+pub(crate) mod action;
 mod edit;
 mod select;
 mod view;
