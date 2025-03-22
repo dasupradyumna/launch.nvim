@@ -2,14 +2,14 @@
 
 use crate::config::{TaskConfig, TaskDisplay};
 use crate::settings::state as settings;
-use crate::utils::{float, notify, setup_module_state, Result};
-use ::nvim_oxi::api::opts::{BufDeleteOpts, ExecAutocmdsOpts, OptionOpts};
+use crate::utils::{float, setup_module_state, Result};
+use ::nvim_oxi::api::opts::{ExecAutocmdsOpts, OptionOpts};
 use ::nvim_oxi::api::types::{Mode, SplitDirection, WindowConfig};
 use ::nvim_oxi::api::{self as nvim, Buffer, Window};
 
 setup_module_state!(core::task, [pub(crate)]
 {
-    active_list: Vec<ActiveTask> = Vec::new(),
+    pub(crate) active_list: Vec<ActiveTask> = Vec::new(),
     windows: [Option<Window>; 3] = [const { None }; 3],
 });
 
@@ -34,69 +34,13 @@ pub(crate) fn run(config: TaskConfig) -> Result<()> {
     Ok(())
 }
 
-pub(crate) fn list_active_tasks() {
-    if let Err(msg) = ActiveTask::open_list() {
-        notify!(Error: msg);
-    }
-}
-
 #[derive(Debug)]
-struct ActiveTask {
+pub(crate) struct ActiveTask {
     buffer: Buffer,
-    config: TaskConfig,
+    pub(crate) config: TaskConfig,
 }
 
 impl ActiveTask {
-    fn open_list() -> Result<()> {
-        let NO_TASKS_MSG = "-- No active tasks --";
-
-        let state = &mut self::state!();
-        let lines: Vec<String> = if state.active_list.is_empty() {
-            Vec::from_iter([NO_TASKS_MSG.into()])
-        } else {
-            state.active_list.iter().map(|c| c.config.name().into()).collect()
-        };
-
-        // Create buffer
-        let mut buffer = nvim::create_buf(false, true)?;
-        let opts = OptionOpts::builder().buffer(buffer.clone()).build();
-        nvim::set_option_value("filetype", "launch_nvim_active_task_list", &opts)?;
-
-        // Set buffer contents
-        let range = 1..buffer.line_count()?;
-        nvim::set_option_value("modifiable", true, &opts)?;
-        buffer.set_lines(range, true, lines.iter().map(|s| format!("    {s}    ")))?;
-        nvim::set_option_value("modifiable", false, &opts)?;
-
-        // Open a centered floating window
-        let n = lines.len() as u32;
-        // FIX: handle other navigation keymaps like wW, eE, bB etc.
-        buffer.set_var("bounds", ::nvim_oxi::Array::from((2, n + 1)))?;
-        let height = n + 2;
-        let width = unsafe { lines.iter().map(|l| l.len() + 8).max().unwrap_unchecked() as u32 };
-        let mut window = float::centered("Active Tasks", &buffer, width, height)?;
-        window.set_cursor(2, 0)?;
-        let opts = OptionOpts::builder().win(window.clone()).build();
-        nvim::set_option_value("cursorline", !state.active_list.is_empty(), &opts)?;
-
-        // Set buffer keymaps for actions
-        use crate::ui::launcher::action;
-        use ::nvim_oxi::Array;
-        let action_list = {
-            let buf = buffer.clone();
-            Array::from((Array::from((
-                "q",
-                action::wrap_cb_once(move |()| {
-                    Ok(buf.delete(&BufDeleteOpts::builder().force(true).build())?)
-                }),
-            )),))
-        };
-        buffer.set_var("callbacks", action_list)?;
-        nvim::command("call b:setup_callbacks()")?;
-
-        Ok(())
-    }
-
     fn render(&self) -> Result<()> {
         let task_windows = &mut self::state!().windows;
         let display_id = self.config.disp() as usize;
