@@ -1,12 +1,12 @@
 /*-------------------------------------- ACTIVE TASKS VIEWER -------------------------------------*/
 
-use super::utils::Float;
-use crate::core::task;
+use super::utils::{index_from_cursor, Float, TargetItem};
+use crate::core::task::{self, ActiveTask};
 use crate::utils::{buffer, float, notify, setup_module_state, Result};
 use ::nvim_oxi::api as nvim;
 use ::nvim_oxi::api::opts::{BufDeleteOpts, OptionOpts};
 
-setup_module_state!(ui::active_tasks, Float);
+setup_module_state!(ui::active_tasks, [pub(super)] Float);
 
 pub(crate) fn open() {
     if { self::state!().buffer.handle() } == 0 {
@@ -61,8 +61,8 @@ fn close() -> Result<()> {
 }
 
 fn show_task() -> Result<()> {
-    let item = { super::utils::get_target_item!(ActiveTask, &self::state!().window) };
-    let Some(active_task) = item else {
+    let index = { index_from_cursor(&self::state!().window)? };
+    let Some(active_task) = ActiveTask::at_index(index) else {
         notify!(Warn: "No active tasks found.");
         return Ok(());
     };

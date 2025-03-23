@@ -3,9 +3,9 @@
 use super::{Edit, Launcher, Select, View};
 use crate::config;
 use crate::ui::launcher::LauncherState;
-use crate::utils::{float, notify, Error, Result};
+use crate::ui::utils::wrap_cb_once;
+use crate::utils::{float, notify, Result};
 use ::nvim_oxi::api::{self as nvim, Buffer, Window};
-use ::nvim_oxi::Function;
 
 #[derive(Debug)]
 pub(super) enum Event {
@@ -24,31 +24,13 @@ pub(super) enum Event {
     View,
 }
 
-/*----------------------------- CALLBACK HELPERS -----------------------------*/
-
-pub(crate) fn wrap_cb<F, T>(func: F) -> Function<T, ()>
-where
-    F: Fn(T) -> Result<()> + 'static,
-    T: ::nvim_oxi::lua::Poppable,
-{
-    Function::from_fn(move |arg: T| self::handle_result(func(arg)))
-}
-
-pub(crate) fn wrap_cb_once<F, T>(func: F) -> Function<T, ()>
-where
-    F: FnOnce(T) -> Result<()> + 'static,
-    T: ::nvim_oxi::lua::Poppable,
-{
-    Function::from_fn_once(move |arg: T| self::handle_result(func(arg)))
-}
-
-pub(super) fn handle_result(result: Result<()>) {
+pub(super) fn result_handler(result: Result<()>) {
     let Err(msg) = result else {
         return;
     };
     notify!(Error: msg);
 
-    match std::mem::replace(&mut *super::state!(), Launcher::Closed) {
+    match std::mem::take(&mut *super::state!()) {
         Launcher::Select(Select { buffer, .. })
         | Launcher::View(View { buffer, .. })
         | Launcher::Edit(Edit { buffer, .. }) => {
@@ -76,24 +58,13 @@ pub(super) fn undo_action<LS: LauncherState>(state: &mut LS, write: bool) -> Res
     state.update_ui()
 }
 
-pub(super) fn get_config_index(window: &Window) -> Result<usize> {
-    if config::state!().list.is_empty() {
-        // FIX: this should not be an error, since it is a valid state for the launcher
-        return Error::new("No active configurations found.");
-    }
-
-    Ok(window.get_cursor()?.0 - 2)
-}
-
 pub(super) fn add_config() -> Result<()> {
     config::state!().list.push(config::TaskConfigJson::default());
     Ok(())
 }
 
-pub(super) fn copy_config(index: usize) -> Result<()> {
-    let configs = &mut config::state!().list;
-    let copied = configs[index].clone();
-    configs.push(copied);
+pub(super) fn copy_config(config: config::TaskConfigJson) -> Result<()> {
+    config::state!().list.push(config);
     Ok(())
 }
 
@@ -190,7 +161,7 @@ pub(super) fn edit_field(mut edit: Edit) -> Result<()> {
     match field {
         "ARGS" | "ENV" | "" => Ok(()),
         "DISP" => {
-            let callback = self::wrap_cb_once(move |()| {
+            let callback = wrap_cb_once(self::result_handler, move |()| {
                 {
                     let choice = nvim::get_current_line()?.trim_ascii().into();
                     config::state!().list[edit.index].set_disp(choice);
@@ -202,17 +173,18 @@ pub(super) fn edit_field(mut edit: Edit) -> Result<()> {
         },
         env_var if field.ends_with('=') => {
             let f = field.to_string();
-            let callback = self::wrap_cb_once(move |input: ::nvim_oxi::String| {
-                let callback = self::wrap_cb_once(move |input: ::nvim_oxi::String| {
-                    let mut buffer = nvim::get_current_buf();
-                    let env_var: String = buffer.get_var("env_var")?;
-                    buffer.del_var("env_var")?;
+            let callback = wrap_cb_once(self::result_handler, move |input: ::nvim_oxi::String| {
+                let callback =
+                    wrap_cb_once(self::result_handler, move |input: ::nvim_oxi::String| {
+                        let mut buffer = nvim::get_current_buf();
+                        let env_var: String = buffer.get_var("env_var")?;
+                        buffer.del_var("env_var")?;
 
-                    let input: String = input.to_string_lossy().trim_ascii().into();
-                    self::set_config_field(edit.index, &f, format!("{env_var}={input}"));
-                    config::update_buffer()?;
-                    edit.update_ui()
-                });
+                        let input: String = input.to_string_lossy().trim_ascii().into();
+                        self::set_config_field(edit.index, &f, format!("{env_var}={input}"));
+                        config::update_buffer()?;
+                        edit.update_ui()
+                    });
 
                 let mut buffer = nvim::get_current_buf();
                 // TODO: input must be a valid enviroment variable name
@@ -227,7 +199,7 @@ pub(super) fn edit_field(mut edit: Edit) -> Result<()> {
         },
         _ => {
             let f = field.to_string();
-            let callback = self::wrap_cb_once(move |input: ::nvim_oxi::String| {
+            let callback = wrap_cb_once(self::result_handler, move |input: ::nvim_oxi::String| {
                 self::set_config_field(edit.index, &f, input.to_string_lossy().trim_ascii().into());
                 config::update_buffer()?;
                 edit.update_ui()
@@ -268,7 +240,7 @@ pub(super) fn insert_arg(mut edit: Edit) -> Result<()> {
     let Ok(index) = field.parse::<usize>() else {
         return Ok(());
     };
-    let callback = self::wrap_cb_once(move |input: ::nvim_oxi::String| {
+    let callback = wrap_cb_once(self::result_handler, move |input: ::nvim_oxi::String| {
         {
             let config = &mut config::state!().list[edit.index];
             config.insert_arg(index - 1, input.to_string_lossy().trim_ascii().into());

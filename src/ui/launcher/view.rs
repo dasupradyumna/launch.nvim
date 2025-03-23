@@ -7,10 +7,10 @@ use ::nvim_oxi::api::opts::OptionOpts;
 use ::nvim_oxi::api::{self as nvim, Buffer, Window};
 
 #[derive(Debug, Clone)]
-pub(super) struct View {
-    pub(super) buffer: Buffer,
-    pub(super) window: Window,
-    pub(super) index: usize,
+pub(in crate::ui) struct View {
+    pub(in crate::ui) buffer: Buffer,
+    pub(in crate::ui) window: Window,
+    pub(in crate::ui) index: usize,
 }
 
 impl View {

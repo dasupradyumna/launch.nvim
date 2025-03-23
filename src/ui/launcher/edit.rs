@@ -6,11 +6,11 @@ use crate::utils::Result;
 use ::nvim_oxi::api::{self as nvim, Buffer, Window};
 
 #[derive(Debug, Clone)]
-pub(super) struct Edit {
-    pub(super) buffer: Buffer,
-    pub(super) window: Window,
-    pub(super) index: usize,
-    pub(super) from_select: bool,
+pub(in crate::ui) struct Edit {
+    pub(in crate::ui) buffer: Buffer,
+    pub(in crate::ui) window: Window,
+    pub(in crate::ui) index: usize,
+    pub(in crate::ui) from_select: bool,
 }
 
 impl Edit {

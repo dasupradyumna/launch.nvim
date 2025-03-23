@@ -38,6 +38,10 @@ where
     Function::from_fn_once(move |arg: T| handler(func(arg)))
 }
 
+pub(super) fn index_from_cursor(window: &Window) -> Result<usize> {
+    Ok(window.get_cursor()?.0 - 2)
+}
+
 pub(super) trait TargetItem
 where
     Self: Sized,
@@ -57,14 +61,20 @@ impl TargetItem for config::TaskConfigJson {
     }
 }
 
-macro_rules! get_target_item {
-    ($target:ident, $window:expr) => {{
-        use crate::config::TaskConfigJson;
-        use crate::core::task::ActiveTask;
+macro_rules! get_item {
+    (@ ActiveTask $index:expr) => {{
         use crate::ui::utils::TargetItem;
+        crate::core::task::ActiveTask::at_index($index)
+    }};
 
+    (@ TaskConfig $index:expr) => {{
+        use crate::ui::utils::TargetItem;
+        crate::config::TaskConfigJson::at_index($index)
+    }};
+
+    ($target:ident, $window:expr) => {{
         // CHECK: might have to make offset (2 here) a parameter
-        $target::at_index($window.get_cursor()?.0 - 2)
+        crate::ui::utils::get_item!(@ $target $window.get_cursor()?.0 - 2)
     }};
 }
-pub(super) use get_target_item;
+pub(super) use get_item;

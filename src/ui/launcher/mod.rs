@@ -5,23 +5,24 @@ mod edit;
 mod select;
 mod view;
 
-use self::edit::Edit;
-use self::select::Select;
-use self::view::View;
+pub(super) use self::edit::Edit;
+pub(super) use self::select::Select;
+pub(super) use self::view::View;
+use super::utils::{get_item, index_from_cursor};
 use crate::config;
-use crate::utils::{buffer, float, setup_module_state, Error, Result};
+use crate::utils::{buffer, float, notify, setup_module_state, Error, Result};
 use ::nvim_oxi::api::opts::OptionOpts;
 use ::nvim_oxi::api::{self as nvim, Buffer, Window};
 
-setup_module_state!(ui::launcher, Launcher);
+setup_module_state!(ui::launcher, [pub(super)] Launcher);
 
 pub(crate) fn open() {
     let result = { self::state!().on(action::Event::Open) };
-    action::handle_result(result);
+    action::result_handler(result);
 }
 
 #[derive(Debug, Clone)]
-enum Launcher {
+pub(super) enum Launcher {
     Closed,
     Select(Select),
     View(View),
@@ -52,6 +53,7 @@ impl Launcher {
 
         let current = self.clone();
         let next = match (current, &event) {
+            /*-------------------------------- OPEN-CLOSE --------------------------------*/
             (Self::Closed, Event::Open) => {
                 config::create_buffer()?;
                 config::load_configs_from_json()?;
@@ -80,14 +82,19 @@ impl Launcher {
                 Self::Edit(select.into_edit(index)?)
             },
 
-            (Self::Select(select), Event::Copy) => {
+            (Self::Select(select), Event::Copy) => 'a: {
+                let Some(item) = get_item!(TaskConfig, &select.window) else {
+                    notify!(Warn: "No task configurations found.");
+                    break 'a Self::Select(select);
+                };
+                action::copy_config(item)?;
+
                 let index = { config::state!().list.len() };
-                action::copy_config(action::get_config_index(&select.window)?)?;
                 Self::Edit(select.into_edit(index)?)
             },
 
             (Self::Select(mut select), Event::Delete) => {
-                action::delete_config(action::get_config_index(&select.window)?)?;
+                action::delete_config(index_from_cursor(&select.window)?)?;
                 select.setup()?;
                 let opts = OptionOpts::builder().win(select.window.clone()).build();
                 nvim::set_option_value("cursorline", !config::state!().list.is_empty(), &opts)?;
@@ -95,12 +102,12 @@ impl Launcher {
             },
 
             (Self::Select(select), Event::Edit) => {
-                let index = action::get_config_index(&select.window)?;
+                let index = index_from_cursor(&select.window)?;
                 Self::Edit(select.into_edit(index)?)
             },
 
             (Self::Select(Select { buffer, window }), Event::Launch) => {
-                action::launch_config(buffer, action::get_config_index(&window)?)?;
+                action::launch_config(buffer, index_from_cursor(&window)?)?;
                 Self::Closed
             },
 
@@ -120,8 +127,10 @@ impl Launcher {
             (Self::View(view), Event::Back) => Self::Select(view.into_select()?),
 
             (Self::View(view), Event::Copy) => {
+                let item = unsafe { get_item!(TaskConfig, &view.window).unwrap_unchecked() };
+                action::copy_config(item)?;
+
                 let index = { config::state!().list.len() };
-                action::copy_config(action::get_config_index(&view.window)?)?;
                 Self::Edit(view.into_edit(index)?)
             },
 
@@ -131,7 +140,7 @@ impl Launcher {
             },
 
             (Self::View(view), Event::Edit) => {
-                let index = action::get_config_index(&view.window)?;
+                let index = view.index;
                 Self::Edit(view.into_edit(index)?)
             },
 
@@ -241,12 +250,16 @@ macro_rules! setup_callbacks {
     { $( ($key:expr, $event: ident) ,)* } => {
 
         fn update_callbacks(&mut self) -> crate::utils::Result<()> {
-            use crate::ui::launcher::{action::{wrap_cb, Event}, state};
+            use crate::ui::launcher::{action, state};
+            use crate::ui::utils::wrap_cb;
             use ::nvim_oxi::Array;
 
             nvim::command("call b:remove_callbacks()")?;
             let action_list = Array::from((
-                $( Array::from(($key, wrap_cb(|()| state!().on(Event::$event)))) ),+
+                $( Array::from(($key, wrap_cb(
+                    action::result_handler,
+                    |()| state!().on(action::Event::$event)
+                ))) ),+
             ));
             self.buffer.set_var("callbacks", action_list)?;
             nvim::command("call launch#setup_callbacks()")?;

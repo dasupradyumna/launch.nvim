@@ -1,20 +1,21 @@
 /*------------------------------------ LAUNCHER : SELECT MODE ------------------------------------*/
 
-use super::{action, Edit, LauncherState, View};
+use super::{Edit, LauncherState, View};
 use crate::config;
+use crate::ui::utils::index_from_cursor;
 use crate::utils::Result;
 use ::nvim_oxi::api::{self as nvim, Buffer, Window};
 
 #[derive(Debug, Clone)]
-pub(super) struct Select {
-    pub(super) buffer: Buffer,
-    pub(super) window: Window,
+pub(in crate::ui) struct Select {
+    pub(in crate::ui) buffer: Buffer,
+    pub(in crate::ui) window: Window,
 }
 
 impl Select {
     pub(super) fn into_view(self) -> Result<View> {
         config::clear_undo_in_buffer()?;
-        let index = action::get_config_index(&self.window)?;
+        let index = index_from_cursor(&self.window)?;
         let mut view = View {
             buffer: self.buffer,
             window: self.window,
