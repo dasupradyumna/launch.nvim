@@ -41,6 +41,10 @@ impl ActiveTask {
         self.config.name()
     }
 
+    pub(crate) fn take_buffer(&mut self) -> Result<Buffer> {
+        Ok(std::mem::replace(&mut self.buffer, buffer::create_scratch("task")?))
+    }
+
     pub(crate) fn render(&self) -> Result<()> {
         let task_windows = &mut self::state!().windows;
         let display_id = self.config.disp() as usize;
@@ -103,12 +107,13 @@ impl ActiveTask {
         Ok(())
     }
 
-    fn run(&self) -> Result<i32> {
+    pub(crate) fn run(&self) -> Result<()> {
         // TODO: handle failure here with a default command that displays an error message
         let command = self.config.command();
         let term_options = self.config.term_options();
+        nvim::call_function::<_, i32>("termopen", (command, term_options))?;
 
-        Ok(nvim::call_function("termopen", (command, term_options))?)
+        Ok(())
     }
 }
 

@@ -43,7 +43,8 @@ fn _open() -> Result<()> {
     use ::nvim_oxi::Array;
     let action_list = Array::from((
         Array::from(("q", wrap_cb(result_handler, |()| self::close()))),
-        Array::from(("<CR>", wrap_cb(result_handler, |()| self::show_task()))),
+        Array::from(("r", wrap_cb(result_handler, |()| self::relaunch()))),
+        Array::from(("<CR>", wrap_cb(result_handler, |()| self::view()))),
     ));
     buffer.set_var("callbacks", action_list)?;
     nvim::command("call launch#setup_callbacks()")?;
@@ -60,7 +61,24 @@ fn close() -> Result<()> {
     Ok(float.buffer.delete(&BufDeleteOpts::builder().force(true).build())?)
 }
 
-fn show_task() -> Result<()> {
+fn relaunch() -> Result<()> {
+    let index = { index_from_cursor(&self::state!().window)? };
+    let Some(mut active_task) = ActiveTask::at_index(index) else {
+        notify!(Warn: "No active tasks found.");
+        return Ok(());
+    };
+    self::close()?;
+
+    let buffer = active_task.take_buffer()?;
+    // FIX: this deletes the entry from the active task list
+    buffer.delete(&BufDeleteOpts::builder().force(true).build())?;
+    active_task.render()?;
+    active_task.run()?;
+
+    Ok(())
+}
+
+fn view() -> Result<()> {
     let index = { index_from_cursor(&self::state!().window)? };
     let Some(active_task) = ActiveTask::at_index(index) else {
         notify!(Warn: "No active tasks found.");
