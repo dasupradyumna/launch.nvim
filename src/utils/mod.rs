@@ -9,7 +9,7 @@ pub(crate) use result::{Error, Result};
 
 macro_rules! setup_module_state {
 
-    ( @state_macro $pub:vis $( $path:ident )::+, $state_struct:ident ) => {
+    ( @state_macro $pub:vis $( $path:ident )::+, $state_struct:path ) => {
 
         // Static state variable definition along with a macro for convenient access
         $pub static _STATE: std::sync::LazyLock<std::sync::Mutex<$state_struct>> =
@@ -41,7 +41,7 @@ macro_rules! setup_module_state {
 
     };
 
-    ( $( $path:ident )::+ , $([$pub:vis])? $struct:ident ) => {
+    ( $( $path:ident )::+ , $([$pub:vis])? $struct:path ) => {
 
         crate::utils::setup_module_state!( @state_macro $($pub)? $( $path )::+, $struct );
 

@@ -10,6 +10,8 @@ use ::serde_json as json;
 use std::path::PathBuf;
 use std::sync::LazyLock;
 
+// FIX: clear modified flag on config buffer on VimLeavePre to prevent save prompts
+
 setup_module_state!(config, [pub(crate)]
 {
     filepath: PathBuf = self::get_runtime_filepath(),
@@ -62,11 +64,10 @@ pub(crate) fn create_buffer() -> Result<()> {
 
 pub(crate) fn delete_buffer() -> Result<()> {
     let config = &mut self::state!();
-    let buffer = config.buffer.clone();
-    config.buffer = Buffer::from(0);
     if config.list.is_empty() && config.filepath.is_file() {
         std::fs::remove_file(&config.filepath)?;
     }
+    let buffer = std::mem::replace(&mut config.buffer, Buffer::from(0));
     Ok(buffer.delete(&nvim::opts::BufDeleteOpts::builder().force(true).build())?)
 }
 

@@ -5,6 +5,7 @@ mod core;
 mod ui {
     pub(super) mod active_tasks;
     pub(super) mod launcher;
+    pub(super) mod utils;
 }
 mod settings;
 mod utils;

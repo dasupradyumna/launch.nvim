@@ -1,25 +1,28 @@
 /*-------------------------------------- ACTIVE TASKS VIEWER -------------------------------------*/
 
+use super::utils::Float;
 use crate::core::task;
-use crate::utils::{buffer, float, notify, Result};
+use crate::utils::{buffer, float, notify, setup_module_state, Result};
 use ::nvim_oxi::api as nvim;
 use ::nvim_oxi::api::opts::{BufDeleteOpts, OptionOpts};
 
+setup_module_state!(ui::active_tasks, Float);
+
 pub(crate) fn open() {
-    if let Err(msg) = self::_open() {
-        notify!(Error: msg);
+    if { self::state!().buffer.handle() } == 0 {
+        self::result_handler(self::_open());
     }
 }
 
 fn _open() -> Result<()> {
     let NO_TASKS_MSG = "-- No active tasks --";
 
-    let state = &mut task::state!();
-    let lines: Vec<String> = if state.active_list.is_empty() {
+    let active_tasks = &mut task::state!().active_list;
+    let lines: Vec<String> = if active_tasks.is_empty() {
         vec!["".into(), NO_TASKS_MSG.into()]
     } else {
         let mut vec = vec!["".into()];
-        vec.extend(state.active_list.iter().map(|c| c.config.name().into()));
+        vec.extend(active_tasks.iter().map(|task| task.name().into()));
         vec
     };
     let mut buffer = buffer::create_scratch("active_tasks")?;
@@ -33,22 +36,42 @@ fn _open() -> Result<()> {
     let mut window = float::open_centered("Active Tasks", &buffer, width, bounds.1 + 1)?;
     window.set_cursor(bounds.0 as usize, 0)?;
     let opts = OptionOpts::builder().win(window.clone()).build();
-    nvim::set_option_value("cursorline", !state.active_list.is_empty(), &opts)?;
+    nvim::set_option_value("cursorline", !active_tasks.is_empty(), &opts)?;
 
     // Set buffer keymaps for actions
-    use crate::ui::launcher::action;
+    use super::utils::wrap_cb;
     use ::nvim_oxi::Array;
-    let action_list = {
-        let buf = buffer.clone();
-        Array::from((Array::from((
-            "q",
-            action::wrap_cb_once(move |()| {
-                Ok(buf.delete(&BufDeleteOpts::builder().force(true).build())?)
-            }),
-        )),))
-    };
+    let action_list = Array::from((
+        Array::from(("q", wrap_cb(result_handler, |()| self::close()))),
+        Array::from(("<CR>", wrap_cb(result_handler, |()| self::show_task()))),
+    ));
     buffer.set_var("callbacks", action_list)?;
     nvim::command("call launch#setup_callbacks()")?;
 
+    let state = &mut self::state!();
+    state.buffer = buffer;
+    state.window = window;
     Ok(())
+}
+
+fn close() -> Result<()> {
+    let float = std::mem::take(&mut *self::state!());
+    float.window.close(true)?;
+    Ok(float.buffer.delete(&BufDeleteOpts::builder().force(true).build())?)
+}
+
+fn show_task() -> Result<()> {
+    let item = { super::utils::get_target_item!(ActiveTask, &self::state!().window) };
+    let Some(active_task) = item else {
+        notify!(Warn: "No active tasks found.");
+        return Ok(());
+    };
+    self::close()?;
+    active_task.render()
+}
+
+fn result_handler(result: Result<()>) {
+    if let Err(msg) = result {
+        notify!(Error: msg);
+    }
 }

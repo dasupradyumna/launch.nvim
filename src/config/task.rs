@@ -233,7 +233,7 @@ impl TryFrom<TaskConfigJson> for TaskConfig {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub(crate) struct TaskConfig {
     name: String,
     cmd: String,

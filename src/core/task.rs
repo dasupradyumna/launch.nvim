@@ -30,14 +30,18 @@ pub(crate) fn run(config: TaskConfig) -> Result<()> {
     Ok(())
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub(crate) struct ActiveTask {
     buffer: Buffer,
-    pub(crate) config: TaskConfig,
+    config: TaskConfig,
 }
 
 impl ActiveTask {
-    fn render(&self) -> Result<()> {
+    pub(crate) fn name(&self) -> &String {
+        self.config.name()
+    }
+
+    pub(crate) fn render(&self) -> Result<()> {
         let task_windows = &mut self::state!().windows;
         let display_id = self.config.disp() as usize;
 
