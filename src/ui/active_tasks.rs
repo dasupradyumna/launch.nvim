@@ -70,10 +70,10 @@ fn relaunch() -> Result<()> {
     self::close()?;
 
     let buffer = active_task.take_buffer()?;
-    // FIX: this deletes the entry from the active task list
     buffer.delete(&BufDeleteOpts::builder().force(true).build())?;
     active_task.render()?;
     active_task.run()?;
+    task::state!().active_list.insert(index, active_task);
 
     Ok(())
 }
