@@ -59,12 +59,12 @@ pub(super) fn undo_action<LS: LauncherState>(state: &mut LS, write: bool) -> Res
 }
 
 pub(super) fn add_config() -> Result<()> {
-    config::state!().list.push(config::TaskConfigJson::default());
+    config::state!().tasks.push(config::TaskConfigJson::default());
     Ok(())
 }
 
 pub(super) fn copy_config(config: config::TaskConfigJson) -> Result<()> {
-    config::state!().list.push(config);
+    config::state!().tasks.push(config);
     Ok(())
 }
 
@@ -75,7 +75,7 @@ pub(super) fn close_launcher(buffer: Buffer) -> Result<()> {
 
 pub(super) fn delete_config(index: usize) -> Result<()> {
     {
-        config::state!().list.remove(index);
+        config::state!().tasks.remove(index);
     }
     config::update_buffer()?;
     config::write_buffer()
@@ -84,7 +84,7 @@ pub(super) fn delete_config(index: usize) -> Result<()> {
 pub(super) fn launch_config(buffer: Buffer, index: usize) -> Result<()> {
     self::close_launcher(buffer)?;
 
-    let config = config::state!().list[index].clone().try_into()?;
+    let config = config::state!().tasks[index].clone().try_into()?;
     ::nvim_oxi::dbg!(&config);
     crate::core::task::run(config)
 }
@@ -115,7 +115,7 @@ fn match_field_regex() -> Result<String> {
 }
 
 fn set_config_field(index: usize, field: &str, value: String) {
-    let config = &mut config::state!().list[index];
+    let config = &mut config::state!().tasks[index];
     match field {
         "NAME" => config.set_name(value),
         "CMD" => config.set_cmd(value),
@@ -130,7 +130,7 @@ fn set_config_field(index: usize, field: &str, value: String) {
 }
 
 fn get_config_field(index: usize, field: &str) -> String {
-    let config = &config::state!().list[index];
+    let config = &config::state!().tasks[index];
     match field {
         "NAME" => config.name().to_string(),
         "CMD" => config.cmd().to_string(),
@@ -153,7 +153,7 @@ pub(super) fn edit_field(mut edit: Edit) -> Result<()> {
     let (row, col) = self::get_popup_pos(&edit.window)?;
     let mut field = self::match_field_regex()?;
     if field == "+" {
-        field = (config::state!().list[edit.index].args().len() + 1).to_string();
+        field = (config::state!().tasks[edit.index].args().len() + 1).to_string();
     };
     let field = field.as_str();
     let value = self::get_config_field(edit.index, field);
@@ -164,7 +164,7 @@ pub(super) fn edit_field(mut edit: Edit) -> Result<()> {
             let callback = wrap_cb_once(self::result_handler, move |()| {
                 {
                     let choice = nvim::get_current_line()?.trim_ascii().into();
-                    config::state!().list[edit.index].set_disp(choice);
+                    config::state!().tasks[edit.index].set_disp(choice);
                 }
                 config::update_buffer()?;
                 edit.update_ui()
@@ -210,7 +210,7 @@ pub(super) fn edit_field(mut edit: Edit) -> Result<()> {
 }
 
 fn del_config_field(index: usize, field: &str) -> bool {
-    let config = &mut config::state!().list[index];
+    let config = &mut config::state!().tasks[index];
     match field {
         "CWD" => config.del_cwd(),
         "DISP" => config.del_disp(),
@@ -242,7 +242,7 @@ pub(super) fn insert_arg(mut edit: Edit) -> Result<()> {
     };
     let callback = wrap_cb_once(self::result_handler, move |input: ::nvim_oxi::String| {
         {
-            let config = &mut config::state!().list[edit.index];
+            let config = &mut config::state!().tasks[edit.index];
             config.insert_arg(index - 1, input.to_string_lossy().trim_ascii().into());
         }
         config::update_buffer()?;

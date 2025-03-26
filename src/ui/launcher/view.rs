@@ -21,7 +21,7 @@ impl View {
         };
         select.setup()?;
         let opts = OptionOpts::builder().win(select.window.clone()).build();
-        nvim::set_option_value("cursorline", !config::state!().list.is_empty(), &opts)?;
+        nvim::set_option_value("cursorline", !config::state!().tasks.is_empty(), &opts)?;
         Ok(select)
     }
 
@@ -41,7 +41,7 @@ impl LauncherState for View {
     super::setup_getters!();
 
     fn create_contents(&self) -> Result<Vec<String>> {
-        let config = &config::state!().list[self.index];
+        let config = &config::state!().tasks[self.index];
 
         let mut lines = vec!["".into()];
         lines.push(format!("NAME : {}", config.name()));

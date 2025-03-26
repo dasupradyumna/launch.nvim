@@ -40,7 +40,7 @@ impl LauncherState for Edit {
     super::setup_getters!();
 
     fn create_contents(&self) -> Result<Vec<String>> {
-        let config = &config::state!().list[self.index];
+        let config = &config::state!().tasks[self.index];
         const NONE: &str = "---";
 
         let mut lines = vec!["".into()];

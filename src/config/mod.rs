@@ -1,12 +1,12 @@
 /*------------------------------------ RUNTIME CONFIGURATIONS ------------------------------------*/
 
+mod serde;
 mod task;
 
 pub(crate) use task::*;
 
 use crate::utils::{notify, setup_module_state, Result};
 use ::nvim_oxi::api::{self as nvim, Buffer};
-use ::serde_json as json;
 use std::path::PathBuf;
 use std::sync::LazyLock;
 
@@ -16,7 +16,8 @@ setup_module_state!(config, [pub(crate)]
 {
     filepath: PathBuf = self::get_runtime_filepath(),
     buffer: Buffer = Buffer::from(0),
-    pub(crate) list: Vec<TaskConfigJson> = Vec::new(),
+    version: u8 = 1,
+    pub(crate) tasks: Vec<TaskConfigJson> = Vec::new(),
 });
 
 pub(crate) const NO_CONFIGS_MSG: &str = "-- No active configs --";
@@ -30,7 +31,7 @@ pub(crate) fn get_data_dir() -> &'static PathBuf {
                 return PathBuf::from("/nvim-stdpath-data-error");
             },
         };
-        // WARN: change this to default path before release
+        // FIX: change this to default path before release
         ret.push("launch_nvim_rust");
 
         ret
@@ -64,7 +65,7 @@ pub(crate) fn create_buffer() -> Result<()> {
 
 pub(crate) fn delete_buffer() -> Result<()> {
     let config = &mut self::state!();
-    if config.list.is_empty() && config.filepath.is_file() {
+    if config.tasks.is_empty() && config.filepath.is_file() {
         std::fs::remove_file(&config.filepath)?;
     }
     let buffer = std::mem::replace(&mut config.buffer, Buffer::from(0));
@@ -72,12 +73,8 @@ pub(crate) fn delete_buffer() -> Result<()> {
 }
 
 pub(crate) fn update_buffer() -> Result<()> {
-    let (mut buffer, config_str) = {
-        let config = self::state!();
-        (config.buffer.clone(), json::to_string_pretty(&config.list)?)
-    };
-    let range = 0..buffer.line_count()?;
-    buffer.set_lines(range, true, config_str.split('\n'))?;
+    let contents = self::serde::serialize()?;
+    self::state!().buffer.set_lines(.., true, contents.split('\n'))?;
     // NOTE: closes undo block to make `nvim_buf_set_lines()` changes undoable
     self::execute_in_buffer("let &l:undolevels = &l:undolevels")
 }
@@ -89,13 +86,12 @@ fn execute_in_buffer<Cmd: std::fmt::Display>(command: Cmd) -> Result<()> {
 }
 
 fn load_configs_from_buffer() -> Result<()> {
-    let mut config = self::state!();
-    let buffer = &config.buffer;
-    let config_str = buffer
-        .get_lines(0..buffer.line_count()?, true)?
-        .fold(String::new(), |acc, line| acc + &line.to_string() + "\n");
-    if !config_str.trim_ascii_end().is_empty() {
-        config.list = json::from_str(&config_str)?;
+    let contents = {
+        let lines = self::state!().buffer.get_lines(.., true)?;
+        lines.fold(String::new(), |acc, line| acc + &line.to_string() + "\n")
+    };
+    if !contents.trim_ascii_end().is_empty() {
+        self::serde::deserialize(&contents)?;
     }
     Ok(())
 }

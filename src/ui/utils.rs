@@ -57,7 +57,7 @@ impl TargetItem for task::ActiveTask {
 
 impl TargetItem for config::TaskConfigJson {
     fn at_index(index: usize) -> Option<Self> {
-        config::state!().list.get(index).cloned()
+        config::state!().tasks.get(index).cloned()
     }
 }
 

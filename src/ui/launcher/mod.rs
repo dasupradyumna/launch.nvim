@@ -64,7 +64,7 @@ impl Launcher {
                 let mut select = Select { buffer, window };
                 select.setup()?;
                 let opts = OptionOpts::builder().win(select.window.clone()).build();
-                nvim::set_option_value("cursorline", !config::state!().list.is_empty(), &opts)?;
+                nvim::set_option_value("cursorline", !config::state!().tasks.is_empty(), &opts)?;
                 Self::Select(select)
             },
 
@@ -77,7 +77,7 @@ impl Launcher {
 
             /*-------------------------------- SELECT MODE -------------------------------*/
             (Self::Select(select), Event::Add) => {
-                let index = { config::state!().list.len() };
+                let index = { config::state!().tasks.len() };
                 action::add_config()?;
                 Self::Edit(select.into_edit(index)?)
             },
@@ -89,7 +89,7 @@ impl Launcher {
                 };
                 action::copy_config(item)?;
 
-                let index = { config::state!().list.len() };
+                let index = { config::state!().tasks.len() };
                 Self::Edit(select.into_edit(index)?)
             },
 
@@ -97,7 +97,7 @@ impl Launcher {
                 action::delete_config(index_from_cursor(&select.window)?)?;
                 select.setup()?;
                 let opts = OptionOpts::builder().win(select.window.clone()).build();
-                nvim::set_option_value("cursorline", !config::state!().list.is_empty(), &opts)?;
+                nvim::set_option_value("cursorline", !config::state!().tasks.is_empty(), &opts)?;
                 Self::Select(select)
             },
 
@@ -130,7 +130,7 @@ impl Launcher {
                 let item = unsafe { get_item!(TaskConfig, &view.window).unwrap_unchecked() };
                 action::copy_config(item)?;
 
-                let index = { config::state!().list.len() };
+                let index = { config::state!().tasks.len() };
                 Self::Edit(view.into_edit(index)?)
             },
 

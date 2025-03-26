@@ -42,7 +42,7 @@ impl LauncherState for Select {
     super::setup_getters!();
 
     fn create_contents(&self) -> Result<Vec<String>> {
-        let configs = &config::state!().list;
+        let configs = &config::state!().tasks;
         let lines = if configs.is_empty() {
             vec!["".into(), config::NO_CONFIGS_MSG.into()]
         } else {
