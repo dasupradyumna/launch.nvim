@@ -1,12 +1,14 @@
 /*-------------------------------------- ACTIVE TASKS VIEWER -------------------------------------*/
 
-use super::utils::{index_from_cursor, Float, TargetItem};
-use crate::core::task::{self, ActiveTask};
+use super::utils::{index_from_cursor, Float};
+use crate::core::task;
 use crate::utils::{buffer, float, notify, nvim_set_local, setup_module_state, Result};
 use ::nvim_oxi::api as nvim;
 use ::nvim_oxi::api::opts::BufDeleteOpts;
 
 setup_module_state!(ui::active_tasks, [pub(super)] Float);
+
+const NO_TASKS_MSG: &str = "-- No active tasks --";
 
 pub(crate) fn open() {
     if { self::state!().buffer.handle() } == 0 {
@@ -15,8 +17,6 @@ pub(crate) fn open() {
 }
 
 fn _open() -> Result<()> {
-    let NO_TASKS_MSG = "-- No active tasks --";
-
     let active_tasks = &mut task::state!().active_list;
     let lines: Vec<String> = if active_tasks.is_empty() {
         vec!["".into(), NO_TASKS_MSG.into()]
@@ -61,30 +61,36 @@ fn close() -> Result<()> {
 }
 
 fn relaunch() -> Result<()> {
-    let index = { index_from_cursor(&self::state!().window)? };
-    let Some(mut active_task) = ActiveTask::at_index(index) else {
+    let active_tasks = &mut task::state!().active_list;
+    if active_tasks.is_empty() {
         notify!(Warn: "No active tasks found.");
         return Ok(());
-    };
+    }
+
+    let index = { index_from_cursor(&self::state!().window)? };
+    let mut active_task = active_tasks[index].clone();
     self::close()?;
 
+    // NOTE: this removes the current active task from runtime list
     let buffer = active_task.take_buffer()?;
     buffer.delete(&BufDeleteOpts::builder().force(true).build())?;
+
     active_task.render()?;
     active_task.run()?;
-    task::state!().active_list.insert(index, active_task);
-
+    active_tasks.insert(index, active_task);
     Ok(())
 }
 
 fn view() -> Result<()> {
-    let index = { index_from_cursor(&self::state!().window)? };
-    let Some(active_task) = ActiveTask::at_index(index) else {
+    let active_tasks = &mut task::state!().active_list;
+    if active_tasks.is_empty() {
         notify!(Warn: "No active tasks found.");
         return Ok(());
-    };
+    }
+
+    let index = { index_from_cursor(&self::state!().window)? };
     self::close()?;
-    active_task.render()
+    active_tasks[index].render()
 }
 
 fn result_handler(result: Result<()>) {

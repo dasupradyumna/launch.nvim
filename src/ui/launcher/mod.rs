@@ -8,7 +8,7 @@ mod view;
 pub(super) use self::edit::Edit;
 pub(super) use self::select::Select;
 pub(super) use self::view::View;
-use super::utils::{get_item, index_from_cursor};
+use super::utils::index_from_cursor;
 use crate::config;
 use crate::utils::{buffer, float, notify, nvim_set_local, setup_module_state, Error, Result};
 use ::nvim_oxi::api::{Buffer, Window};
@@ -50,6 +50,8 @@ impl Launcher {
     fn on(&mut self, event: action::Event) -> Result<()> {
         use action::Event;
 
+        let num_configs = { config::state!().tasks.len() };
+
         let current = self.clone();
         let next = match (current, &event) {
             /*-------------------------------- OPEN-CLOSE --------------------------------*/
@@ -73,22 +75,23 @@ impl Launcher {
                 Self::Closed
             },
 
-            /*-------------------------------- SELECT MODE -------------------------------*/
-            (Self::Select(select), Event::Add) => {
-                let index = { config::state!().tasks.len() };
-                action::add_config()?;
-                Self::Edit(select.into_edit(index)?)
+            (
+                Self::Select(select),
+                Event::Copy | Event::Delete | Event::Edit | Event::Launch | Event::View,
+            ) if num_configs == 0 => {
+                notify!(Warn: "No task configurations found.");
+                Self::Select(select)
             },
 
-            (Self::Select(select), Event::Copy) => 'a: {
-                let Some(item) = get_item!(TaskConfig, &select.window) else {
-                    notify!(Warn: "No task configurations found.");
-                    break 'a Self::Select(select);
-                };
-                action::copy_config(item)?;
+            /*-------------------------------- SELECT MODE -------------------------------*/
+            (Self::Select(select), Event::Add) => {
+                action::add_config()?;
+                Self::Edit(select.into_edit(num_configs)?)
+            },
 
-                let index = { config::state!().tasks.len() };
-                Self::Edit(select.into_edit(index)?)
+            (Self::Select(select), Event::Copy) => {
+                action::copy_config(index_from_cursor(&select.window)?)?;
+                Self::Edit(select.into_edit(num_configs)?)
             },
 
             (Self::Select(mut select), Event::Delete) => {
@@ -124,11 +127,8 @@ impl Launcher {
             (Self::View(view), Event::Back) => Self::Select(view.into_select()?),
 
             (Self::View(view), Event::Copy) => {
-                let item = unsafe { get_item!(TaskConfig, &view.window).unwrap_unchecked() };
-                action::copy_config(item)?;
-
-                let index = { config::state!().tasks.len() };
-                Self::Edit(view.into_edit(index)?)
+                action::copy_config(index_from_cursor(&view.window)?)?;
+                Self::Edit(view.into_edit(num_configs)?)
             },
 
             (Self::View(view), Event::Delete) => {
@@ -208,6 +208,7 @@ trait LauncherState {
     fn setup(&mut self) -> Result<()> {
         self.update_ui()?;
         self.window().set_cursor(2, 0)?;
+        nvim_set_local(self.window(), "cursorline", true)?;
         self.update_callbacks()
     }
 

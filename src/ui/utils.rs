@@ -1,7 +1,5 @@
 /*----------------------------------------- UI UTILITIES -----------------------------------------*/
 
-use crate::config;
-use crate::core::task;
 use crate::utils::Result;
 use ::nvim_oxi::api::{Buffer, Window};
 use ::nvim_oxi::Function;
@@ -41,40 +39,3 @@ where
 pub(super) fn index_from_cursor(window: &Window) -> Result<usize> {
     Ok(window.get_cursor()?.0 - 2)
 }
-
-pub(super) trait TargetItem
-where
-    Self: Sized,
-{
-    fn at_index(index: usize) -> Option<Self>;
-}
-
-impl TargetItem for task::ActiveTask {
-    fn at_index(index: usize) -> Option<Self> {
-        task::state!().active_list.get(index).cloned()
-    }
-}
-
-impl TargetItem for config::TaskConfigJson {
-    fn at_index(index: usize) -> Option<Self> {
-        config::state!().tasks.get(index).cloned()
-    }
-}
-
-macro_rules! get_item {
-    (@ ActiveTask $index:expr) => {{
-        use crate::ui::utils::TargetItem;
-        crate::core::task::ActiveTask::at_index($index)
-    }};
-
-    (@ TaskConfig $index:expr) => {{
-        use crate::ui::utils::TargetItem;
-        crate::config::TaskConfigJson::at_index($index)
-    }};
-
-    ($target:ident, $window:expr) => {{
-        // CHECK: might have to make offset (2 here) a parameter
-        crate::ui::utils::get_item!(@ $target $window.get_cursor()?.0 - 2)
-    }};
-}
-pub(super) use get_item;

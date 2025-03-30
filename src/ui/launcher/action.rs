@@ -63,8 +63,10 @@ pub(super) fn add_config() -> Result<()> {
     Ok(())
 }
 
-pub(super) fn copy_config(config: config::TaskConfigJson) -> Result<()> {
-    config::state!().tasks.push(config);
+pub(super) fn copy_config(index: usize) -> Result<()> {
+    let configs = &mut config::state!().tasks;
+    let config = configs[index].clone();
+    configs.push(config);
     Ok(())
 }
 
