@@ -77,7 +77,7 @@ pub(super) fn delete_config(index: usize) -> Result<()> {
     {
         config::state!().tasks.remove(index);
     }
-    config::update_buffer()?;
+    config::serialize_to_buffer()?;
     config::write_buffer()
 }
 
@@ -166,7 +166,7 @@ pub(super) fn edit_field(mut edit: Edit) -> Result<()> {
                     let choice = nvim::get_current_line()?.trim_ascii().into();
                     config::state!().tasks[edit.index].set_disp(choice);
                 }
-                config::update_buffer()?;
+                config::serialize_to_buffer()?;
                 edit.update_ui()
             });
             float::open_select(vec!["float", "hsplit", "vsplit"], row, col, callback)
@@ -182,7 +182,7 @@ pub(super) fn edit_field(mut edit: Edit) -> Result<()> {
 
                         let input: String = input.to_string_lossy().trim_ascii().into();
                         self::set_config_field(edit.index, &f, format!("{env_var}={input}"));
-                        config::update_buffer()?;
+                        config::serialize_to_buffer()?;
                         edit.update_ui()
                     });
 
@@ -201,7 +201,7 @@ pub(super) fn edit_field(mut edit: Edit) -> Result<()> {
             let f = field.to_string();
             let callback = wrap_cb_once(self::result_handler, move |input: ::nvim_oxi::String| {
                 self::set_config_field(edit.index, &f, input.to_string_lossy().trim_ascii().into());
-                config::update_buffer()?;
+                config::serialize_to_buffer()?;
                 edit.update_ui()
             });
             float::open_prompt(field, value.as_str(), row, col, callback)
@@ -230,7 +230,7 @@ pub(super) fn delete_field(edit: &mut Edit) -> Result<()> {
     if !self::del_config_field(edit.index, field.as_str()) {
         return Ok(());
     }
-    config::update_buffer()?;
+    config::serialize_to_buffer()?;
     edit.update_ui()
 }
 
@@ -245,7 +245,7 @@ pub(super) fn insert_arg(mut edit: Edit) -> Result<()> {
             let config = &mut config::state!().tasks[edit.index];
             config.insert_arg(index - 1, input.to_string_lossy().trim_ascii().into());
         }
-        config::update_buffer()?;
+        config::serialize_to_buffer()?;
         edit.update_ui()
     });
 

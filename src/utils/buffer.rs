@@ -1,13 +1,18 @@
 /*----------------------------------- SCRATCH BUFFER UTILITIES -----------------------------------*/
 
-pub(crate) use super::result::Result;
-pub(crate) use ::nvim_oxi::api::{self as nvim, opts::OptionOpts, Buffer};
+use super::result::Result;
+use ::nvim_oxi::api::{self as nvim, opts::OptionOpts, Buffer};
+
+impl super::ScopeOpts for Buffer {
+    fn opts(&self) -> OptionOpts {
+        OptionOpts::builder().buffer(self.clone()).build()
+    }
+}
 
 pub(crate) fn create_scratch(filetype: &str) -> Result<Buffer> {
     let buffer = nvim::create_buf(false, true)?;
-    let opts = OptionOpts::builder().buffer(buffer.clone()).build();
-    nvim::set_option_value("modifiable", false, &opts)?;
-    nvim::set_option_value("filetype", format!("launch_nvim_{filetype}"), &opts)?;
+    super::nvim_set_local(&buffer, "modifiable", false)?;
+    super::nvim_set_local(&buffer, "filetype", format!("launch_nvim_{filetype}"))?;
 
     Ok(buffer)
 }
@@ -16,10 +21,9 @@ pub(crate) fn write_lines<Line>(buffer: &mut Buffer, lines: &[Line]) -> Result<(
 where
     Line: std::fmt::Display,
 {
-    let opts = OptionOpts::builder().buffer(buffer.clone()).build();
-    nvim::set_option_value("modifiable", true, &opts)?;
+    super::nvim_set_local(buffer, "modifiable", true)?;
     buffer.set_lines(.., true, lines.iter().map(|s| format!("    {s}    ")))?;
-    nvim::set_option_value("modifiable", false, &opts)?;
+    super::nvim_set_local(buffer, "modifiable", false)?;
 
     Ok(())
 }

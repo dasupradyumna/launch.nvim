@@ -10,9 +10,8 @@ pub(super) use self::select::Select;
 pub(super) use self::view::View;
 use super::utils::{get_item, index_from_cursor};
 use crate::config;
-use crate::utils::{buffer, float, notify, setup_module_state, Error, Result};
-use ::nvim_oxi::api::opts::OptionOpts;
-use ::nvim_oxi::api::{self as nvim, Buffer, Window};
+use crate::utils::{buffer, float, notify, nvim_set_local, setup_module_state, Error, Result};
+use ::nvim_oxi::api::{Buffer, Window};
 
 setup_module_state!(ui::launcher, [pub(super)] Launcher);
 
@@ -63,8 +62,7 @@ impl Launcher {
 
                 let mut select = Select { buffer, window };
                 select.setup()?;
-                let opts = OptionOpts::builder().win(select.window.clone()).build();
-                nvim::set_option_value("cursorline", !config::state!().tasks.is_empty(), &opts)?;
+                nvim_set_local(&select.window, "cursorline", !config::state!().tasks.is_empty())?;
                 Self::Select(select)
             },
 
@@ -96,8 +94,7 @@ impl Launcher {
             (Self::Select(mut select), Event::Delete) => {
                 action::delete_config(index_from_cursor(&select.window)?)?;
                 select.setup()?;
-                let opts = OptionOpts::builder().win(select.window.clone()).build();
-                nvim::set_option_value("cursorline", !config::state!().tasks.is_empty(), &opts)?;
+                nvim_set_local(&select.window, "cursorline", !config::state!().tasks.is_empty())?;
                 Self::Select(select)
             },
 

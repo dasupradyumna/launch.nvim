@@ -14,10 +14,11 @@ pub(super) fn serialize() -> Result<String> {
 }
 
 pub(super) fn deserialize(contents: &str) -> Result<()> {
-    let mut config = super::state!();
-    let contents: Value = json::from_str(contents)?;
-    config.version = json::from_value(contents["version"].clone())?;
-    config.tasks = json::from_value(contents["tasks"].clone())?;
-
+    if !contents.trim_ascii_end().is_empty() {
+        let mut config = super::state!();
+        let contents: Value = json::from_str(contents)?;
+        config.version = json::from_value(contents["version"].clone())?;
+        config.tasks = json::from_value(contents["tasks"].clone())?;
+    }
     Ok(())
 }

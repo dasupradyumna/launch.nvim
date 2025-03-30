@@ -2,8 +2,7 @@
 
 use super::{Edit, LauncherState, Select};
 use crate::config;
-use crate::utils::Result;
-use ::nvim_oxi::api::opts::OptionOpts;
+use crate::utils::{nvim_set_local, Result};
 use ::nvim_oxi::api::{self as nvim, Buffer, Window};
 
 #[derive(Debug, Clone)]
@@ -20,8 +19,8 @@ impl View {
             window: self.window,
         };
         select.setup()?;
-        let opts = OptionOpts::builder().win(select.window.clone()).build();
-        nvim::set_option_value("cursorline", !config::state!().tasks.is_empty(), &opts)?;
+        nvim_set_local(&select.window, "cursorline", !config::state!().tasks.is_empty())?;
+
         Ok(select)
     }
 

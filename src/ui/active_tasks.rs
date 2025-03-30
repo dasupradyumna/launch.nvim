@@ -2,9 +2,9 @@
 
 use super::utils::{index_from_cursor, Float, TargetItem};
 use crate::core::task::{self, ActiveTask};
-use crate::utils::{buffer, float, notify, setup_module_state, Result};
+use crate::utils::{buffer, float, notify, nvim_set_local, setup_module_state, Result};
 use ::nvim_oxi::api as nvim;
-use ::nvim_oxi::api::opts::{BufDeleteOpts, OptionOpts};
+use ::nvim_oxi::api::opts::BufDeleteOpts;
 
 setup_module_state!(ui::active_tasks, [pub(super)] Float);
 
@@ -35,8 +35,7 @@ fn _open() -> Result<()> {
     let width = unsafe { lines.iter().map(|l| l.len() + 8).max().unwrap_unchecked() as u32 };
     let mut window = float::open_centered("Active Tasks", &buffer, width, bounds.1 + 1)?;
     window.set_cursor(bounds.0 as usize, 0)?;
-    let opts = OptionOpts::builder().win(window.clone()).build();
-    nvim::set_option_value("cursorline", !active_tasks.is_empty(), &opts)?;
+    nvim_set_local(&window, "cursorline", !active_tasks.is_empty())?;
 
     // Set buffer keymaps for actions
     use super::utils::wrap_cb;

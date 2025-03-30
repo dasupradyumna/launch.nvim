@@ -2,7 +2,7 @@
 
 use crate::config::{TaskConfig, TaskDisplay};
 use crate::settings::state as settings;
-use crate::utils::{buffer, float, setup_module_state, Result};
+use crate::utils::{buffer, float, nvim_set_local, setup_module_state, Result};
 use ::nvim_oxi::api::opts::{ExecAutocmdsOpts, OptionOpts};
 use ::nvim_oxi::api::types::{Mode, SplitDirection, WindowConfig};
 use ::nvim_oxi::api::{self as nvim, Buffer, Window};
@@ -50,12 +50,10 @@ impl ActiveTask {
         let display_id = self.config.disp() as usize;
 
         if let Some(ref window) = task_windows[display_id] {
-            let opts = OptionOpts::builder().win(window.clone()).build();
-
             nvim::set_current_win(window)?;
-            nvim::set_option_value("winfixbuf", false, &opts)?;
+            nvim_set_local(window, "winfixbuf", false)?;
             nvim::set_current_buf(&self.buffer)?;
-            nvim::set_option_value("winfixbuf", true, &opts)?;
+            nvim_set_local(window, "winfixbuf", true)?;
         } else {
             let ui_settings = &settings!().task.ui;
 
@@ -88,9 +86,8 @@ impl ActiveTask {
                 },
             };
 
-            let opts = OptionOpts::builder().win(window.clone()).build();
-            nvim::set_option_value("winfixbuf", true, &opts)?;
-            nvim::set_option_value("signcolumn", "yes:1", &opts)?;
+            nvim_set_local(&window, "winfixbuf", true)?;
+            nvim_set_local(&window, "signcolumn", "yes:1")?;
             window.set_var("launch_nvim_taskdisplay", display_id)?;
 
             nvim::exec_autocmds(

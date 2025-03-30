@@ -60,3 +60,15 @@ macro_rules! notify(
     };
 );
 pub(crate) use notify;
+
+pub(crate) trait ScopeOpts {
+    fn opts(&self) -> ::nvim_oxi::api::opts::OptionOpts;
+}
+
+pub(crate) fn nvim_set_local<Scope, Value>(scope: &Scope, name: &str, value: Value) -> Result<()>
+where
+    Value: ::nvim_oxi::conversion::ToObject,
+    Scope: ScopeOpts,
+{
+    Ok(::nvim_oxi::api::set_option_value(name, value, &scope.opts())?)
+}

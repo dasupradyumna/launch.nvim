@@ -5,6 +5,12 @@ use ::nvim_oxi::api::opts::OptionOpts;
 use ::nvim_oxi::api::{self as nvim, Buffer, Window};
 use ::nvim_oxi::Function;
 
+impl super::ScopeOpts for Window {
+    fn opts(&self) -> OptionOpts {
+        OptionOpts::builder().win(self.clone()).build()
+    }
+}
+
 pub(crate) fn get_centered_position(width: u32, height: u32) -> Result<(u32, u32)> {
     // Compute top-left row and column for a centered floating window
     let screen_height: u32 = nvim::get_option_value("lines", &OptionOpts::default())?;
@@ -52,10 +58,7 @@ pub(crate) fn open_centered(
         .build();
     let window = nvim::open_win(buffer, true, &win_config)?;
 
-    // Fix the target buffer
-    let opts = OptionOpts::builder().win(window.clone()).build();
-    nvim::set_option_value("winfixbuf", true, &opts)?;
-
+    super::nvim_set_local(&window, "winfixbuf", true)?;
     Ok(window)
 }
 
@@ -72,8 +75,7 @@ pub(crate) fn open_prompt(
     // Open the float and fix the buffer
     let win_config = self::config_builder(row, col, 40, 1).build();
     let window = nvim::open_win(&buffer, true, &win_config)?;
-    let opts = OptionOpts::builder().win(window.clone()).build();
-    nvim::set_option_value("winfixbuf", true, &opts)?;
+    super::nvim_set_local(&window, "winfixbuf", true)?;
 
     // Update the prompt text
     buffer.set_var("prompt", prompt)?;
@@ -100,9 +102,8 @@ pub(crate) fn open_select(
     let height = items.len() as u32;
     let win_config = self::config_builder(row, col, width, height).build();
     let window = nvim::open_win(&buffer, true, &win_config)?;
-    let opts = OptionOpts::builder().win(window.clone()).build();
-    nvim::set_option_value("winfixbuf", true, &opts)?;
-    nvim::set_option_value("cursorline", true, &opts)?;
+    super::nvim_set_local(&window, "winfixbuf", true)?;
+    super::nvim_set_local(&window, "cursorline", true)?;
 
     Ok(())
 }
