@@ -1,12 +1,12 @@
 /*-------------------------------------- ACTIVE TASKS VIEWER -------------------------------------*/
 
 use super::utils::{index_from_cursor, Float};
-use crate::core::task;
+use crate::core::task::ActiveTask;
 use crate::utils::{buffer, float, notify, nvim_set_local, setup_module_state, Result};
 use ::nvim_oxi::api as nvim;
 use ::nvim_oxi::api::opts::BufDeleteOpts;
 
-setup_module_state!(ui::active_tasks, [pub(super)] Float);
+setup_module_state!(ui::active_tasks, Float);
 
 const NO_TASKS_MSG: &str = "-- No active tasks --";
 
@@ -17,25 +17,18 @@ pub(crate) fn open() {
 }
 
 fn _open() -> Result<()> {
-    let active_tasks = &mut task::state!().active_list;
-    let lines: Vec<String> = if active_tasks.is_empty() {
-        vec!["".into(), NO_TASKS_MSG.into()]
-    } else {
-        let mut vec = vec!["".into()];
-        vec.extend(active_tasks.iter().map(|task| task.name().into()));
-        vec
-    };
+    let lines = ActiveTask::get_lines_for_ui(NO_TASKS_MSG)?;
     let mut buffer = buffer::create_scratch("active_tasks")?;
     buffer::write_lines(&mut buffer, &lines)?;
 
     // Open a centered floating window
     // FIX: handle other navigation keymaps like wW, eE, bB etc.
-    let bounds = (2u32, lines.len() as u32);
+    let bounds = (2, lines.len() as u32);
     buffer.set_var("bounds", ::nvim_oxi::Array::from(bounds))?;
     let width = unsafe { lines.iter().map(|l| l.len() + 8).max().unwrap_unchecked() as u32 };
     let mut window = float::open_centered("Active Tasks", &buffer, width, bounds.1 + 1)?;
     window.set_cursor(bounds.0 as usize, 0)?;
-    nvim_set_local(&window, "cursorline", !active_tasks.is_empty())?;
+    nvim_set_local(&window, "cursorline", !ActiveTask::is_list_empty())?;
 
     // Set buffer keymaps for actions
     use super::utils::wrap_cb;
@@ -61,36 +54,26 @@ fn close() -> Result<()> {
 }
 
 fn relaunch() -> Result<()> {
-    let active_tasks = &mut task::state!().active_list;
-    if active_tasks.is_empty() {
+    if ActiveTask::is_list_empty() {
         notify!(Warn: "No active tasks found.");
         return Ok(());
     }
 
     let index = { index_from_cursor(&self::state!().window)? };
-    let mut active_task = active_tasks[index].clone();
-    self::close()?;
-
-    // NOTE: this removes the current active task from runtime list
-    let buffer = active_task.take_buffer()?;
-    buffer.delete(&BufDeleteOpts::builder().force(true).build())?;
-
-    active_task.render()?;
-    active_task.run()?;
-    active_tasks.insert(index, active_task);
-    Ok(())
+    self::close()?; // NOTE: close float before rendering : vsplit / hsplit will fail otherwise
+    ActiveTask::render(index)?;
+    ActiveTask::run(index)
 }
 
 fn view() -> Result<()> {
-    let active_tasks = &mut task::state!().active_list;
-    if active_tasks.is_empty() {
+    if ActiveTask::is_list_empty() {
         notify!(Warn: "No active tasks found.");
         return Ok(());
     }
 
     let index = { index_from_cursor(&self::state!().window)? };
     self::close()?;
-    active_tasks[index].render()
+    ActiveTask::render(index)
 }
 
 fn result_handler(result: Result<()>) {
