@@ -3,7 +3,7 @@
 use super::{Edit, LauncherState, View};
 use crate::config;
 use crate::ui::utils::index_from_cursor;
-use crate::utils::Result;
+use crate::utils::{nvim_set_local, Result};
 use ::nvim_oxi::api::{self as nvim, Buffer, Window};
 
 #[derive(Debug, Clone)]
@@ -52,6 +52,11 @@ impl LauncherState for Select {
         };
 
         Ok(lines)
+    }
+
+    fn update_ui(&mut self) -> Result<()> {
+        self.__update_ui()?;
+        nvim_set_local(&self.window, "cursorline", !config::state!().tasks.is_empty())
     }
 
     super::setup_callbacks! {

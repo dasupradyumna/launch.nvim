@@ -2,7 +2,7 @@
 
 use super::{Edit, LauncherState, Select};
 use crate::config;
-use crate::utils::{nvim_set_local, Result};
+use crate::utils::Result;
 use ::nvim_oxi::api::{self as nvim, Buffer, Window};
 
 #[derive(Debug, Clone)]
@@ -19,7 +19,6 @@ impl View {
             window: self.window,
         };
         select.setup()?;
-        nvim_set_local(&select.window, "cursorline", !config::state!().tasks.is_empty())?;
 
         Ok(select)
     }

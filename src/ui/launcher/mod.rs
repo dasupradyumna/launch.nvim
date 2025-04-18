@@ -52,7 +52,6 @@ impl Launcher {
 
                 let mut select = Select { buffer, window };
                 select.setup()?;
-                nvim_set_local(&select.window, "cursorline", !config::state!().tasks.is_empty())?;
                 Self::Select(select)
             },
 
@@ -85,7 +84,6 @@ impl Launcher {
             (Self::Select(mut select), Event::Delete) => {
                 action::delete_config(index_from_cursor(&select.window)?)?;
                 select.setup()?;
-                nvim_set_local(&select.window, "cursorline", !config::state!().tasks.is_empty())?;
                 Self::Select(select)
             },
 
@@ -101,13 +99,11 @@ impl Launcher {
 
             (Self::Select(mut select), Event::Redo) => {
                 action::redo_action(&mut select, true)?;
-                nvim_set_local(&select.window, "cursorline", !config::state!().tasks.is_empty())?;
                 Self::Select(select)
             },
 
             (Self::Select(mut select), Event::Undo) => {
                 action::undo_action(&mut select, true)?;
-                nvim_set_local(&select.window, "cursorline", !config::state!().tasks.is_empty())?;
                 Self::Select(select)
             },
 
@@ -193,16 +189,19 @@ trait LauncherState {
     fn create_contents(&self) -> Result<Vec<String>>;
     fn update_callbacks(&mut self) -> Result<()>;
 
+    fn update_ui(&mut self) -> Result<()> {
+        self.__update_ui()
+    }
+
     /*---------------- BELOW METHODS SHOULD NOT BE RE-IMPLEMENTED ----------------*/
 
     fn setup(&mut self) -> Result<()> {
         self.update_ui()?;
         self.window().set_cursor(2, 0)?;
-        nvim_set_local(self.window(), "cursorline", true)?;
         self.update_callbacks()
     }
 
-    fn update_ui(&mut self) -> Result<()> {
+    fn __update_ui(&mut self) -> Result<()> {
         // Get mode-specific buffer contents and write them
         let lines = self.create_contents()?;
         buffer::write_lines(self.buffer(), &lines)?;
@@ -216,6 +215,7 @@ trait LauncherState {
         let (row, col) = float::get_centered_position(width, height)?;
         let win_config = float::config_builder(row, col, width, height).build();
         self.window().set_config(&win_config)?;
+        nvim_set_local(self.window(), "cursorline", true)?;
 
         Ok(())
     }
