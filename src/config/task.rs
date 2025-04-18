@@ -12,8 +12,7 @@ use std::path::PathBuf;
 // or create a separate setup_deserializable_enum! macro, and make the struct macro modular
 // - is there some way to make all of the below TaskDisplay logic more compact?
 
-#[derive(Debug, Clone, Copy)]
-#[repr(u8)]
+#[derive(Debug, Clone, Hash, PartialEq, Eq)]
 pub(crate) enum TaskDisplay {
     Float,
     VSplit,
@@ -226,7 +225,7 @@ impl TryFrom<TaskConfigJson> for TaskConfig {
             name: config.name,
             cmd: config.cmd,
             args: config.args,
-            disp: config.disp.unwrap_or(task_settings.ui.display),
+            disp: config.disp.unwrap_or_else(|| task_settings.ui.display.clone()),
             cwd,
             env: config.env,
         })
@@ -249,8 +248,8 @@ impl TaskConfig {
         &self.name
     }
 
-    pub(crate) fn disp(&self) -> TaskDisplay {
-        self.disp
+    pub(crate) fn disp(&self) -> &TaskDisplay {
+        &self.disp
     }
 
     pub(crate) fn command(&self) -> Object {

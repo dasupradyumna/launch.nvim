@@ -6,11 +6,12 @@ use crate::utils::{buffer, float, nvim_set_local, setup_module_state, Result};
 use ::nvim_oxi::api::opts::{ExecAutocmdsOpts, OptionOpts};
 use ::nvim_oxi::api::types::{Mode, SplitDirection, WindowConfig};
 use ::nvim_oxi::api::{self as nvim, Buffer, Window};
+use std::collections::HashMap;
 
 setup_module_state!(core::task,
 {
     active_list: Vec<ActiveTask> = Vec::new(),
-    windows: [Option<Window>; 3] = [const { None }; 3],
+    windows: HashMap<TaskDisplay, Option<Window>> = HashMap::new(),
 });
 
 pub(crate) fn run(config: TaskConfig) -> Result<()> {
@@ -59,9 +60,9 @@ impl ActiveTask {
     pub(crate) fn render(index: usize) -> Result<()> {
         let mut state = self::state!();
         let active_task = &state.active_list[index];
-        let display_id = active_task.config.disp() as usize;
+        let display = active_task.config.disp().clone();
 
-        if let Some(ref window) = state.windows[display_id] {
+        if let Some(Some(window)) = state.windows.get(&display) {
             nvim::set_current_win(window)?;
             nvim_set_local(window, "winfixbuf", false)?;
             nvim::set_current_buf(&active_task.buffer)?;
@@ -100,7 +101,7 @@ impl ActiveTask {
 
             nvim_set_local(&window, "winfixbuf", true)?;
             nvim_set_local(&window, "signcolumn", "yes:1")?;
-            window.set_var("taskdisplay", display_id)?;
+            window.set_var("taskdisplay", display.to_string())?;
 
             nvim::exec_autocmds(
                 ["User"],
@@ -110,7 +111,7 @@ impl ActiveTask {
                     .build(),
             )?;
 
-            state.windows[display_id] = Some(window);
+            state.windows.insert(display, Some(window));
         }
 
         Ok(())
@@ -135,6 +136,7 @@ pub(crate) fn on_bufwipeout(buffer: i32) {
     }
 }
 
-pub(crate) fn on_winclosed(display_id: i32) {
-    self::state!().windows[display_id as usize] = None;
+pub(crate) fn on_winclosed(display: ::nvim_oxi::String) {
+    let display = display.to_string().as_str().into();
+    self::state!().windows.insert(display, None);
 }
