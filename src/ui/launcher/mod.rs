@@ -55,6 +55,8 @@ impl Launcher {
                 Self::Select(select)
             },
 
+            (state, Event::Open) => state,
+
             (Self::Select(Select { buffer, .. }), Event::Close)
             | (Self::View(View { buffer, .. }), Event::Close)
             | (Self::Edit(Edit { buffer, .. }), Event::Close) => {
