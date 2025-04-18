@@ -1,19 +1,19 @@
 /*------------------------------------ CONFIGURATION LAUNCHER ------------------------------------*/
 
-pub(crate) mod action;
+mod action;
 mod edit;
 mod select;
 mod view;
 
-pub(super) use self::edit::Edit;
-pub(super) use self::select::Select;
-pub(super) use self::view::View;
+use self::edit::Edit;
+use self::select::Select;
+use self::view::View;
 use super::utils::index_from_cursor;
 use crate::config;
 use crate::utils::{buffer, float, notify, nvim_set_local, setup_module_state, Error, Result};
 use ::nvim_oxi::api::{Buffer, Window};
 
-setup_module_state!(ui::launcher, [pub(super)] Launcher);
+setup_module_state!(ui::launcher, Launcher);
 
 pub(crate) fn open() {
     let result = { self::state!().on(action::Event::Open) };
@@ -26,18 +26,6 @@ pub(super) enum Launcher {
     Select(Select),
     View(View),
     Edit(Edit),
-}
-
-impl std::fmt::Display for Launcher {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let fmt = match self {
-            Self::Closed => "Closed",
-            Self::Select(_) => "Select",
-            Self::View(_) => "View",
-            Self::Edit(_) => "Edit",
-        };
-        write!(f, "Launcher::{}", fmt)
-    }
 }
 
 impl Default for Launcher {
@@ -75,6 +63,7 @@ impl Launcher {
                 Self::Closed
             },
 
+            /*-------------------------------- SELECT MODE -------------------------------*/
             (
                 Self::Select(select),
                 Event::Copy | Event::Delete | Event::Edit | Event::Launch | Event::View,
@@ -83,7 +72,6 @@ impl Launcher {
                 Self::Select(select)
             },
 
-            /*-------------------------------- SELECT MODE -------------------------------*/
             (Self::Select(select), Event::Add) => {
                 action::add_config()?;
                 Self::Edit(select.into_edit(num_configs)?)
@@ -113,11 +101,13 @@ impl Launcher {
 
             (Self::Select(mut select), Event::Redo) => {
                 action::redo_action(&mut select, true)?;
+                nvim_set_local(&select.window, "cursorline", !config::state!().tasks.is_empty())?;
                 Self::Select(select)
             },
 
             (Self::Select(mut select), Event::Undo) => {
                 action::undo_action(&mut select, true)?;
+                nvim_set_local(&select.window, "cursorline", !config::state!().tasks.is_empty())?;
                 Self::Select(select)
             },
 
@@ -187,7 +177,7 @@ impl Launcher {
 
             _ => {
                 return Error::new(format!(
-                    "Unsupported transition requested: Event::{event:?} on {self}"
+                    "Unsupported transition requested: Event::{event:?} on Launcher::{self:?}"
                 ))
             },
         };
