@@ -8,7 +8,7 @@ augroup launch_nvim
 
     autocmd User LaunchNvimTaskWindowCreated
         \ execute "autocmd launch_nvim WinClosed" win_getid() "++once"
-        \   printf("lua require('launch')._impl_.task.on_winclosed(%d)", w:taskdisplay)
+        \   printf("lua require('launch')._impl_.task.on_winclosed('%s')", w:taskdisplay)
 
     autocmd DirChanged * lua require('launch')._impl_.dirchanged.post()
     autocmd DirChangedPre * lua require('launch')._impl_.dirchanged.pre()
