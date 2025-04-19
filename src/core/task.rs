@@ -30,7 +30,7 @@ pub(crate) fn run(config: TaskConfig) -> Result<()> {
 pub(crate) fn on_bufwipeout(buffer: i32) {
     let active_tasks = &mut self::state!().active_list;
     if let Some(idx) = active_tasks.iter().position(|e| e.buffer.handle() == buffer) {
-        active_tasks.swap_remove(idx);
+        active_tasks.remove(idx);
     }
 }
 
@@ -41,7 +41,9 @@ pub(crate) fn on_winclosed(display: ::nvim_oxi::String) {
 
 pub(crate) fn on_dirchanged() {
     let state = &mut self::state!();
-    state.active_list.clear();
+    for task in state.active_list.drain(..) {
+        _ = task.buffer.delete(&BufDeleteOpts::default());
+    }
     state.windows.clear();
 }
 
