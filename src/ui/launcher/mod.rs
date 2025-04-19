@@ -20,8 +20,13 @@ pub(crate) fn open() {
     action::result_handler(result);
 }
 
+pub(crate) fn on_dirchanged() {
+    let result = { self::state!().on(action::Event::Close) };
+    action::result_handler(result);
+}
+
 #[derive(Debug, Clone)]
-pub(super) enum Launcher {
+enum Launcher {
     Closed,
     Select(Select),
     View(View),
@@ -55,14 +60,14 @@ impl Launcher {
                 Self::Select(select)
             },
 
-            (state, Event::Open) => state,
-
             (Self::Select(Select { buffer, .. }), Event::Close)
             | (Self::View(View { buffer, .. }), Event::Close)
             | (Self::Edit(Edit { buffer, .. }), Event::Close) => {
                 action::close_launcher(buffer)?;
                 Self::Closed
             },
+
+            (state, Event::Open | Event::Close) => state,
 
             /*-------------------------------- SELECT MODE -------------------------------*/
             (

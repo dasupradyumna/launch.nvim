@@ -27,6 +27,24 @@ pub(crate) fn run(config: TaskConfig) -> Result<()> {
     ActiveTask::run(index)
 }
 
+pub(crate) fn on_bufwipeout(buffer: i32) {
+    let active_tasks = &mut self::state!().active_list;
+    if let Some(idx) = active_tasks.iter().position(|e| e.buffer.handle() == buffer) {
+        active_tasks.swap_remove(idx);
+    }
+}
+
+pub(crate) fn on_winclosed(display: ::nvim_oxi::String) {
+    let display = display.to_string().as_str().into();
+    self::state!().windows.insert(display, None);
+}
+
+pub(crate) fn on_dirchanged() {
+    let state = &mut self::state!();
+    state.active_list.clear();
+    state.windows.clear();
+}
+
 #[derive(Debug, Clone)]
 pub(crate) struct ActiveTask {
     title: String,
@@ -145,16 +163,4 @@ impl ActiveTask {
         }
         Ok(())
     }
-}
-
-pub(crate) fn on_bufwipeout(buffer: i32) {
-    let active_tasks = &mut self::state!().active_list;
-    if let Some(idx) = active_tasks.iter().position(|e| e.buffer.handle() == buffer) {
-        active_tasks.swap_remove(idx);
-    }
-}
-
-pub(crate) fn on_winclosed(display: ::nvim_oxi::String) {
-    let display = display.to_string().as_str().into();
-    self::state!().windows.insert(display, None);
 }

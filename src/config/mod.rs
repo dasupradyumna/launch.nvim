@@ -22,6 +22,10 @@ setup_module_state!(config, [pub(crate)]
 
 pub(crate) const NO_CONFIGS_MSG: &str = "-- No active configs --";
 
+pub(crate) fn on_dirchanged() {
+    self::state!().filepath = self::get_runtime_filepath();
+}
+
 pub(crate) fn get_data_dir() -> &'static PathBuf {
     static DATA_DIR: LazyLock<PathBuf> = LazyLock::new(|| {
         let mut ret = match nvim::call_function::<_, String>("stdpath", ("data",)) {

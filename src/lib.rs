@@ -18,7 +18,22 @@ fn launch() -> Dictionary {
         ("on_bufwipeout", Function::from_fn(core::task::on_bufwipeout).into()),
         ("on_winclosed", Function::from_fn(core::task::on_winclosed).into()),
     ]);
-    let _impl_ = Dictionary::from_iter([("task", task_event_callbacks)]);
+
+    let dirchanged_callbacks = Dictionary::from_iter([
+        ("post", Function::from_fn(|()| config::on_dirchanged())),
+        (
+            "pre",
+            Function::from_fn(|()| {
+                ui::launcher::on_dirchanged();
+                core::task::on_dirchanged();
+            }),
+        ),
+    ]);
+
+    let _impl_ = Dictionary::from_iter([
+        ("task", task_event_callbacks),
+        ("dirchanged", dirchanged_callbacks),
+    ]);
 
     Dictionary::from_iter::<[(_, Object); 4]>([
         ("setup", Function::from_fn(core::setup).into()),
