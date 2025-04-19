@@ -5,7 +5,7 @@ mod core;
 mod ui {
     pub(super) mod active_tasks;
     pub(super) mod launcher;
-    pub(super) mod utils;
+    mod utils;
 }
 mod settings;
 mod utils;
@@ -14,9 +14,9 @@ use ::nvim_oxi::{Dictionary, Function, Object};
 
 #[nvim_oxi::plugin]
 fn launch() -> Dictionary {
-    let task_event_callbacks = Dictionary::from_iter([
-        ("on_bufwipeout", Function::from_fn(core::task::on_bufwipeout)),
-        ("on_winclosed", Function::from_fn(core::task::on_winclosed)),
+    let task_event_callbacks = Dictionary::from_iter::<[(_, Object); 2]>([
+        ("on_bufwipeout", Function::from_fn(core::task::on_bufwipeout).into()),
+        ("on_winclosed", Function::from_fn(core::task::on_winclosed).into()),
     ]);
     let _impl_ = Dictionary::from_iter([("task", task_event_callbacks)]);
 

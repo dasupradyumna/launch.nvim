@@ -16,6 +16,7 @@ rev = "6a2483cb4dee72272a8f08d8807ba96d07f33947"
 features = ["neovim-nightly", "libuv"]
 
 [dependencies]
+chrono = "0.4"
 regex = "1"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"

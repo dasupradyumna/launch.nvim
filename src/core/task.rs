@@ -3,7 +3,8 @@
 use crate::config::{TaskConfig, TaskDisplay};
 use crate::settings::state as settings;
 use crate::utils::{buffer, float, nvim_set_local, setup_module_state, Result};
-use ::nvim_oxi::api::opts::{ExecAutocmdsOpts, OptionOpts};
+use ::chrono::{DateTime, Local};
+use ::nvim_oxi::api::opts::{BufDeleteOpts, ExecAutocmdsOpts, OptionOpts};
 use ::nvim_oxi::api::types::{Mode, SplitDirection, WindowConfig};
 use ::nvim_oxi::api::{self as nvim, Buffer, Window};
 use std::collections::HashMap;
@@ -19,27 +20,31 @@ pub(crate) fn run(config: TaskConfig) -> Result<()> {
     let buffer = buffer::create_scratch("task")?;
     let index = {
         let active_tasks = &mut self::state!().active_list;
-        active_tasks.push(ActiveTask { buffer, config });
+        active_tasks.push(ActiveTask::new(buffer, config, Local::now()));
         active_tasks.len() - 1
     };
     ActiveTask::render(index)?;
-    ActiveTask::run(index)?;
-
-    // Enter insert mode after launching the task
-    let task_settings = &settings!().task;
-    if task_settings.insert_mode_on_launch {
-        nvim::feedkeys("i", Mode::Normal, false);
-    }
-    Ok(())
+    ActiveTask::run(index)
 }
 
 #[derive(Debug, Clone)]
 pub(crate) struct ActiveTask {
+    title: String,
+    start_time: DateTime<Local>,
     buffer: Buffer,
     config: TaskConfig,
 }
 
 impl ActiveTask {
+    fn new(buffer: Buffer, config: TaskConfig, start_time: DateTime<Local>) -> Self {
+        Self {
+            title: format!("{} ({})", config.name(), start_time.format("%T")),
+            start_time,
+            buffer,
+            config,
+        }
+    }
+
     pub(crate) fn is_list_empty() -> bool {
         self::state!().active_list.is_empty()
     }
@@ -50,7 +55,7 @@ impl ActiveTask {
         } else {
             let active_tasks = &self::state!().active_list;
             let mut vec = vec!["".into()];
-            vec.extend(active_tasks.iter().map(|task| task.config.name().into()));
+            vec.extend(active_tasks.iter().map(|task| task.title.clone()));
             vec
         };
 
@@ -77,7 +82,7 @@ impl ActiveTask {
                 TaskDisplay::Float => {
                     let size = ui_settings.float.size as u32;
                     float::open_centered(
-                        active_task.config.name(),
+                        &active_task.title,
                         &active_task.buffer,
                         screen_width * size / 100,
                         screen_height * size / 100,
@@ -125,6 +130,19 @@ impl ActiveTask {
         let term_options = active_task.config.term_options();
         nvim::call_function::<_, i32>("termopen", (command, term_options))?;
 
+        // Set buffer name to the task title
+        let new_name = format!("[launch.nvim] {}", active_task.title);
+        active_task.buffer.set_name(new_name)?;
+        let old_buffer = Buffer::from(nvim::call_function::<_, i32>("bufnr", ("#",))?);
+        if old_buffer.is_valid() {
+            old_buffer.delete(&BufDeleteOpts::default())?;
+        }
+
+        // Enter insert mode after launching the task
+        let task_settings = &settings!().task;
+        if task_settings.insert_mode_on_launch {
+            nvim::feedkeys("i", Mode::Normal, false);
+        }
         Ok(())
     }
 }
