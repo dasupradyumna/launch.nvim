@@ -1,28 +1,16 @@
 "--------------------------------------- LAUNCHER UI BUFFER ---------------------------------------"
 
-" script guard
+" Script guard
 if exists('b:did_ftplugin') | finish | endif
 let b:did_ftplugin = 1
 
-function! s:navigate(up)
-    " TODO: change from cursor position to something more robust for navigation
-    let cursor = line('.')
-    if a:up && cursor > b:bounds[0]
-        normal! k
-    elseif !a:up && cursor < b:bounds[1]
-        normal! j
-    endif
-endfunction
-
-nnoremap <buffer> <nowait> j <Cmd>call <SID>navigate(v:false)<CR>
-nnoremap <buffer> <nowait> k <Cmd>call <SID>navigate(v:true)<CR>
-" disable window navigation
-nnoremap <buffer> <C-W> <NOP>
+call launch#disable_all_keys()
+call launch#setup_navigation()
 
 function! s:remove_callbacks()
     if !exists('b:callbacks') | return | endif
     for [key; _] in b:callbacks
-        execute 'nunmap <buffer>' key
+        execute 'silent nnoremap <buffer> <nowait>' key '<NOP>'
     endfor
 endfunction
 let b:remove_callbacks = function('s:remove_callbacks')

@@ -1,10 +1,10 @@
 "--------------------------------------- PROMPT POPUP BUFFER --------------------------------------"
 
-" script guard
+" Script guard
 if exists('b:did_ftplugin') | finish | endif
 let b:did_ftplugin = 1
 
-" setup buffer as prompt
+" Setup buffer as prompt
 setlocal modifiable
 setlocal buftype=prompt
 
@@ -22,13 +22,13 @@ function! s:update_prompt()
 endfunction
 let b:update_prompt = function('s:update_prompt')
 
-" cancel prompt and exit
+" Cancel prompt and exit
 inoremap <buffer> <C-C> <Cmd>bwipeout!<CR>
-" disable window navigation
+" Disable window navigation
 inoremap <buffer> <C-W> <NOP>
-" disable exiting insert mode
+" Disable exiting insert mode
 inoremap <buffer> <Esc> <NOP>
 inoremap <buffer> <C-O> <NOP>
 
-" start insert mode
+" Start insert mode
 call feedkeys('i')
