@@ -99,6 +99,11 @@ impl Launcher {
                 Self::Edit(select.into_edit(index)?)
             },
 
+            (Self::Select(Select { buffer, window }), Event::Help) => {
+                action::show_help(&buffer, &window)?;
+                Self::Select(Select { buffer, window })
+            },
+
             (Self::Select(Select { buffer, window }), Event::Launch) => {
                 action::launch_config(buffer, index_from_cursor(&window)?)?;
                 Self::Closed
@@ -214,7 +219,6 @@ trait LauncherState {
         buffer::write_lines(self.buffer(), &lines)?;
 
         // Modify window size to match current buffer content
-        // FIX: handle other navigation keymaps like wW, eE, bB etc.
         let bounds = (2, lines.len() as u32);
         self.buffer().set_var("bounds", ::nvim_oxi::Array::from(bounds))?;
         let height = bounds.1 + 1;
@@ -242,7 +246,7 @@ macro_rules! setup_getters {
 use setup_getters;
 
 macro_rules! setup_callbacks {
-    { $( ($key:expr, $event: ident) ,)* } => {
+    { $( ($key:expr, $event:ident, $desc:expr) ,)* } => {
 
         fn update_callbacks(&mut self) -> crate::utils::Result<()> {
             use crate::ui::launcher::{action, state};
@@ -251,7 +255,7 @@ macro_rules! setup_callbacks {
 
             nvim::command("call b:remove_callbacks()")?;
             let action_list = Array::from((
-                $( Array::from(($key, wrap_cb(
+                $( Array::from(($key, $desc, wrap_cb(
                     action::result_handler,
                     |()| state!().on(action::Event::$event)
                 ))) ),+

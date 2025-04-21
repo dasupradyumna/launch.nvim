@@ -60,14 +60,15 @@ impl LauncherState for Select {
     }
 
     super::setup_callbacks! {
-        ("a", Add),
-        ("q", Close),
-        ("c", Copy),
-        ("d", Delete),
-        ("e", Edit),
-        ("<CR>", Launch),
-        ("U", Redo),
-        ("u", Undo),
-        ("v", View),
+        ("a", Add, "Add new config"),
+        ("q", Close, "Close launcher"),
+        ("c", Copy, "Copy config"),
+        ("d", Delete, "Delete config"),
+        ("e", Edit, "Edit config"),
+        ("h", Help, "Open help"),
+        ("<CR>", Launch, "Launch config"),
+        ("U", Redo, "Redo action"),
+        ("u", Undo, "Undo action"),
+        ("v", View, "View config"),
     }
 }

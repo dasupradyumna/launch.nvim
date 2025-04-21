@@ -81,9 +81,7 @@ pub(crate) fn open_prompt(
     buffer.set_var("prompt", prompt)?;
     buffer.set_var("default", default)?;
     buffer.set_var("callback", callback)?;
-    nvim::command("call b:update_prompt()")?;
-
-    Ok(())
+    Ok(nvim::command("call b:update_prompt()")?)
 }
 
 pub(crate) fn open_select(
@@ -103,7 +101,23 @@ pub(crate) fn open_select(
     let win_config = self::config_builder(row, col, width, height).build();
     let window = nvim::open_win(&buffer, true, &win_config)?;
     super::nvim_set_local(&window, "winfixbuf", true)?;
-    super::nvim_set_local(&window, "cursorline", true)?;
+    super::nvim_set_local(&window, "cursorline", true)
+}
 
-    Ok(())
+pub(crate) fn open_help(mut lines: Vec<String>, row: u32, col: u32) -> Result<()> {
+    // Create help buffer
+    let mut buffer = buffer::create_scratch("help")?;
+    lines.insert(0, "".into());
+    buffer::write_lines(&mut buffer, &lines)?;
+
+    // Open the float and fix the buffer
+    use ::nvim_oxi::api::types::*;
+    let width = unsafe { lines.iter().map(|i| i.len() + 8).max().unwrap_unchecked() as u32 };
+    let height = lines.len() as u32 + 1;
+    let win_config = self::config_builder(row, col, width, height)
+        .title(WindowTitle::SimpleString("Help".into()))
+        .title_pos(WindowTitlePosition::Center)
+        .build();
+    let window = nvim::open_win(&buffer, true, &win_config)?;
+    super::nvim_set_local(&window, "winfixbuf", true)
 }

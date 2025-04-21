@@ -6,6 +6,7 @@ use crate::ui::launcher::LauncherState;
 use crate::ui::utils::wrap_cb_once;
 use crate::utils::{float, notify, Result};
 use ::nvim_oxi::api::{self as nvim, Buffer, Window};
+use ::nvim_oxi::conversion::FromObject;
 
 #[derive(Debug)]
 pub(super) enum Event {
@@ -15,6 +16,7 @@ pub(super) enum Event {
     Copy,
     Delete,
     Edit,
+    Help,
     InsertArg,
     Launch,
     Open,
@@ -41,6 +43,22 @@ pub(super) fn result_handler(result: Result<()>) {
 }
 
 /*----------------------------- ACTION FUNCTIONS -----------------------------*/
+
+pub(super) fn show_help(buffer: &Buffer, window: &Window) -> Result<()> {
+    let (row, col) = self::get_popup_pos(window, false)?;
+    let callbacks: Vec<::nvim_oxi::Array> = buffer.get_var("callbacks")?;
+    let lines = callbacks
+        .into_iter()
+        .map(|array| {
+            let mut iter = array.into_iter().flat_map(String::from_object);
+            let key = unsafe { iter.next().unwrap_unchecked() };
+            let desc = unsafe { iter.next().unwrap_unchecked() };
+            format!("{key}: {desc}")
+        })
+        .collect();
+
+    float::open_help(lines, row, col)
+}
 
 pub(super) fn redo_action<LS: LauncherState>(state: &mut LS, write: bool) -> Result<()> {
     config::redo_buffer()?;
@@ -91,9 +109,9 @@ pub(super) fn launch_config(buffer: Buffer, index: usize) -> Result<()> {
     crate::core::task::run(config)
 }
 
-fn get_popup_pos(window: &Window) -> Result<(u32, u32)> {
+fn get_popup_pos(window: &Window, on_cursor_row: bool) -> Result<(u32, u32)> {
     let (row, col) = window.get_position()?;
-    let offset = window.get_cursor()?.0 as u32 - 1;
+    let offset = if on_cursor_row { window.get_cursor()?.0 as u32 - 1 } else { 0 };
     let width = window.get_width()?;
     let row = row as u32 + offset;
     let col = col as u32 + width + 2;
@@ -152,7 +170,7 @@ fn get_config_field(index: usize, field: &str) -> String {
 }
 
 pub(super) fn edit_field(mut edit: Edit) -> Result<()> {
-    let (row, col) = self::get_popup_pos(&edit.window)?;
+    let (row, col) = self::get_popup_pos(&edit.window, true)?;
     let mut field = self::match_field_regex()?;
     if field == "+" {
         field = (config::state!().tasks[edit.index].args().len() + 1).to_string();
@@ -237,7 +255,7 @@ pub(super) fn delete_field(edit: &mut Edit) -> Result<()> {
 }
 
 pub(super) fn insert_arg(mut edit: Edit) -> Result<()> {
-    let (row, col) = self::get_popup_pos(&edit.window)?;
+    let (row, col) = self::get_popup_pos(&edit.window, true)?;
     let field = self::match_field_regex()?;
     let Ok(index) = field.parse::<usize>() else {
         return Ok(());

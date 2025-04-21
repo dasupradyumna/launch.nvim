@@ -13,7 +13,7 @@ endfunction
 " Sets up buffer-local callbacks defined by a list variable
 function! launch#setup_callbacks()
     for idx in range(len(b:callbacks))
-        execute printf('silent nnoremap <buffer> <nowait> %s <Cmd>call b:callbacks[%d][1]()<CR>',
+        execute printf('silent nnoremap <buffer> <nowait> %s <Cmd>call b:callbacks[%d][2]()<CR>',
                     \ b:callbacks[idx][0], idx)
     endfor
 endfunction

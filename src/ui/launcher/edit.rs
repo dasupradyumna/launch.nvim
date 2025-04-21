@@ -74,13 +74,13 @@ impl LauncherState for Edit {
     }
 
     super::setup_callbacks! {
-        ("b", Back),
-        ("q", Close),
-        ("d", Delete),
-        ("<CR>", Edit),
-        ("i", InsertArg),
-        ("U", Redo),
-        ("s", Save),
-        ("u", Undo),
+        ("b", Back, "Back to previous window"),
+        ("q", Close, "Close launcher"),
+        ("d", Delete, "Delete / reset field"),
+        ("<CR>", Edit, "Edit field"),
+        ("i", InsertArg, "Insert argument in `ARGS`"),
+        ("U", Redo, "Redo action"),
+        ("s", Save, "Save and go back"),
+        ("u", Undo, "Undo action"),
     }
 }

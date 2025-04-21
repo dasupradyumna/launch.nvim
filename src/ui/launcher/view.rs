@@ -70,11 +70,11 @@ impl LauncherState for View {
     }
 
     super::setup_callbacks! {
-        ("b", Back),
-        ("q", Close),
-        ("c", Copy),
-        ("d", Delete),
-        ("e", Edit),
-        ("<CR>", Launch),
+        ("b", Back, "Back to previous window"),
+        ("q", Close, "Close launcher"),
+        ("c", Copy, "Copy config"),
+        ("d", Delete, "Delete config"),
+        ("e", Edit, "Edit config"),
+        ("<CR>", Launch, "Launch config"),
     }
 }
