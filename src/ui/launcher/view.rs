@@ -75,6 +75,7 @@ impl LauncherState for View {
         ("c", Copy, "Copy config"),
         ("d", Delete, "Delete config"),
         ("e", Edit, "Edit config"),
+        ("h", Help, "Open help"),
         ("<CR>", Launch, "Launch config"),
     }
 }

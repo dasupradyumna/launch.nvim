@@ -78,6 +78,7 @@ impl LauncherState for Edit {
         ("q", Close, "Close launcher"),
         ("d", Delete, "Delete / reset field"),
         ("<CR>", Edit, "Edit field"),
+        ("h", Help, "Open help"),
         ("i", InsertArg, "Insert argument in `ARGS`"),
         ("U", Redo, "Redo action"),
         ("s", Save, "Save and go back"),

@@ -69,6 +69,12 @@ impl Launcher {
 
             (state, Event::Open | Event::Close) => state,
 
+            /*--------------------------------- SHOW-HELP --------------------------------*/
+            (state, Event::Help) => {
+                action::show_help(&state)?;
+                state
+            },
+
             /*-------------------------------- SELECT MODE -------------------------------*/
             (
                 Self::Select(select),
@@ -97,11 +103,6 @@ impl Launcher {
             (Self::Select(select), Event::Edit) => {
                 let index = index_from_cursor(&select.window)?;
                 Self::Edit(select.into_edit(index)?)
-            },
-
-            (Self::Select(Select { buffer, window }), Event::Help) => {
-                action::show_help(&buffer, &window)?;
-                Self::Select(Select { buffer, window })
             },
 
             (Self::Select(Select { buffer, window }), Event::Launch) => {

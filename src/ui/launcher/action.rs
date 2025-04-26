@@ -4,7 +4,7 @@ use super::{Edit, Launcher, Select, View};
 use crate::config;
 use crate::ui::launcher::LauncherState;
 use crate::ui::utils::wrap_cb_once;
-use crate::utils::{float, notify, Result};
+use crate::utils::{float, notify, Error, Result};
 use ::nvim_oxi::api::{self as nvim, Buffer, Window};
 use ::nvim_oxi::conversion::FromObject;
 
@@ -44,7 +44,14 @@ pub(super) fn result_handler(result: Result<()>) {
 
 /*----------------------------- ACTION FUNCTIONS -----------------------------*/
 
-pub(super) fn show_help(buffer: &Buffer, window: &Window) -> Result<()> {
+pub(super) fn show_help(state: &Launcher) -> Result<()> {
+    let (buffer, window) = match state {
+        Launcher::Closed => return Error::new("Cannot show help when launcher is closed"),
+        Launcher::Select(Select { buffer, window })
+        | Launcher::View(View { buffer, window, .. })
+        | Launcher::Edit(Edit { buffer, window, .. }) => (buffer, window),
+    };
+
     let (row, col) = self::get_popup_pos(window, false)?;
     let callbacks: Vec<::nvim_oxi::Array> = buffer.get_var("callbacks")?;
     let lines = callbacks
