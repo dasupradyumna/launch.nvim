@@ -7,6 +7,7 @@ pub(crate) use task::*;
 
 use crate::utils::{notify, nvim_set_local, setup_module_state, Result};
 use ::nvim_oxi::api::{self as nvim, Buffer};
+use ::nvim_oxi::Dictionary;
 use std::path::PathBuf;
 use std::sync::LazyLock;
 
@@ -101,14 +102,31 @@ pub(crate) fn load_configs_from_json() -> Result<()> {
     self::deserialize_from_buffer()
 }
 
-pub(super) fn redo_buffer() -> Result<()> {
-    self::execute_in_buffer("redo")?;
-    self::deserialize_from_buffer()
+fn get_undotree() -> Result<Dictionary> {
+    let buffer = &self::state!().buffer;
+    Ok(nvim::call_function("undotree", (buffer.handle(),))?)
 }
 
-pub(super) fn undo_buffer() -> Result<()> {
+pub(super) fn redo_buffer() -> Result<bool> {
+    let undotree = self::get_undotree()?;
+    if undotree["seq_cur"] == undotree["seq_last"] {
+        return Ok(false);
+    }
+
+    self::execute_in_buffer("redo")?;
+    self::deserialize_from_buffer()?;
+    Ok(true)
+}
+
+pub(super) fn undo_buffer() -> Result<bool> {
+    let undotree = self::get_undotree()?;
+    if unsafe { undotree["seq_cur"].as_integer_unchecked() } == 0 {
+        return Ok(false);
+    }
+
     self::execute_in_buffer("undo")?;
-    self::deserialize_from_buffer()
+    self::deserialize_from_buffer()?;
+    Ok(true)
 }
 
 pub(crate) fn write_buffer() -> Result<()> {

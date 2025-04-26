@@ -68,7 +68,9 @@ pub(super) fn show_help(state: &Launcher) -> Result<()> {
 }
 
 pub(super) fn redo_action<LS: LauncherState>(state: &mut LS, write: bool) -> Result<()> {
-    config::redo_buffer()?;
+    if !config::redo_buffer()? {
+        return Ok(());
+    }
     if write {
         config::write_buffer()?;
     }
@@ -76,7 +78,9 @@ pub(super) fn redo_action<LS: LauncherState>(state: &mut LS, write: bool) -> Res
 }
 
 pub(super) fn undo_action<LS: LauncherState>(state: &mut LS, write: bool) -> Result<()> {
-    config::undo_buffer()?;
+    if !config::undo_buffer()? {
+        return Ok(());
+    }
     if write {
         config::write_buffer()?;
     }
@@ -84,15 +88,19 @@ pub(super) fn undo_action<LS: LauncherState>(state: &mut LS, write: bool) -> Res
 }
 
 pub(super) fn add_config() -> Result<()> {
-    config::state!().tasks.push(config::TaskConfigJson::default());
-    Ok(())
+    {
+        config::state!().tasks.push(config::TaskConfigJson::default());
+    }
+    config::serialize_to_buffer()
 }
 
 pub(super) fn copy_config(index: usize) -> Result<()> {
-    let configs = &mut config::state!().tasks;
-    let config = configs[index].clone();
-    configs.push(config);
-    Ok(())
+    {
+        let configs = &mut config::state!().tasks;
+        let config = configs[index].clone();
+        configs.push(config);
+    }
+    config::serialize_to_buffer()
 }
 
 pub(super) fn close_launcher(buffer: Buffer) -> Result<()> {
