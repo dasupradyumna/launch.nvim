@@ -8,7 +8,7 @@ mod view;
 use self::edit::Edit;
 use self::select::Select;
 use self::view::View;
-use super::utils::index_from_cursor;
+use super::utils::{index_from_cursor, NAVIGATION_OFFSET};
 use crate::config;
 use crate::utils::{buffer, float, notify, nvim_set_local, setup_module_state, Error, Result};
 use ::nvim_oxi::api::{Buffer, Window};
@@ -197,8 +197,8 @@ impl Launcher {
 }
 
 trait LauncherState {
-    fn buffer(&mut self) -> &mut Buffer;
-    fn window(&mut self) -> &mut Window;
+    fn buf(&mut self) -> &mut Buffer;
+    fn win(&mut self) -> &mut Window;
     fn create_contents(&self) -> Result<Vec<String>>;
     fn update_callbacks(&mut self) -> Result<()>;
 
@@ -210,24 +210,26 @@ trait LauncherState {
 
     fn setup(&mut self) -> Result<()> {
         self.update_ui()?;
-        self.window().set_cursor(2, 0)?;
+        self.win().set_cursor(NAVIGATION_OFFSET, 0)?;
         self.update_callbacks()
     }
 
     fn __update_ui(&mut self) -> Result<()> {
         // Get mode-specific buffer contents and write them
-        let lines = self.create_contents()?;
-        buffer::write_lines(self.buffer(), &lines)?;
+        let mut lines = self.create_contents()?;
+        lines.insert(0, "h : open help".into());
+        buffer::write_lines(self.buf(), &lines)?;
+        self.buf().add_highlight(crate::nvim_namespace(), "Comment", 0, ..)?;
 
         // Modify window size to match current buffer content
-        let bounds = (2, lines.len() as u32);
-        self.buffer().set_var("bounds", ::nvim_oxi::Array::from(bounds))?;
+        let bounds = (NAVIGATION_OFFSET as u32, lines.len() as u32);
+        self.buf().set_var("bounds", ::nvim_oxi::Array::from(bounds))?;
         let height = bounds.1 + 1;
         let width = unsafe { lines.iter().map(|l| l.len() + 8).max().unwrap_unchecked() as u32 };
         let (row, col) = float::get_centered_position(width, height)?;
         let win_config = float::config_builder(row, col, width, height).build();
-        self.window().set_config(&win_config)?;
-        nvim_set_local(self.window(), "cursorline", true)?;
+        self.win().set_config(&win_config)?;
+        nvim_set_local(self.win(), "cursorline", true)?;
 
         Ok(())
     }
@@ -235,11 +237,11 @@ trait LauncherState {
 
 macro_rules! setup_getters {
     () => {
-        fn buffer(&mut self) -> &mut Buffer {
+        fn buf(&mut self) -> &mut Buffer {
             &mut self.buffer
         }
 
-        fn window(&mut self) -> &mut Window {
+        fn win(&mut self) -> &mut Window {
             &mut self.window
         }
     };

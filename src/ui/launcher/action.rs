@@ -54,17 +54,17 @@ pub(super) fn show_help(state: &Launcher) -> Result<()> {
 
     let (row, col) = self::get_popup_pos(window, false)?;
     let callbacks: Vec<::nvim_oxi::Array> = buffer.get_var("callbacks")?;
-    let lines = callbacks
+    let entries = callbacks
         .into_iter()
         .map(|array| {
             let mut iter = array.into_iter().flat_map(String::from_object);
             let key = unsafe { iter.next().unwrap_unchecked() };
             let desc = unsafe { iter.next().unwrap_unchecked() };
-            format!("{key}: {desc}")
+            format!("{key:^4} : {desc}")
         })
         .collect();
 
-    float::open_help(lines, row, col)
+    float::open_help(entries, row, col)
 }
 
 pub(super) fn redo_action<LS: LauncherState>(state: &mut LS, write: bool) -> Result<()> {

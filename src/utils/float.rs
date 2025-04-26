@@ -104,20 +104,24 @@ pub(crate) fn open_select(
     super::nvim_set_local(&window, "cursorline", true)
 }
 
-pub(crate) fn open_help(mut lines: Vec<String>, row: u32, col: u32) -> Result<()> {
+pub(crate) fn open_help(mut entries: Vec<String>, row: u32, col: u32) -> Result<()> {
     // Create help buffer
-    let mut buffer = buffer::create_scratch("help")?;
-    lines.insert(0, "".into());
-    buffer::write_lines(&mut buffer, &lines)?;
+    let mut buf = buffer::create_scratch("help")?;
+    entries = vec!["q : close help".into(), "".into()]
+        .into_iter()
+        .chain(entries)
+        .collect();
+    buffer::write_lines(&mut buf, &entries)?;
+    buf.add_highlight(crate::nvim_namespace(), "Comment", 0, ..)?;
 
     // Open the float and fix the buffer
     use ::nvim_oxi::api::types::*;
-    let width = unsafe { lines.iter().map(|i| i.len() + 8).max().unwrap_unchecked() as u32 };
-    let height = lines.len() as u32 + 1;
+    let width = unsafe { entries.iter().map(|i| i.len() + 8).max().unwrap_unchecked() as u32 };
+    let height = entries.len() as u32 + 1;
     let win_config = self::config_builder(row, col, width, height)
         .title(WindowTitle::SimpleString("Help".into()))
         .title_pos(WindowTitlePosition::Center)
         .build();
-    let window = nvim::open_win(&buffer, true, &win_config)?;
+    let window = nvim::open_win(&buf, true, &win_config)?;
     super::nvim_set_local(&window, "winfixbuf", true)
 }

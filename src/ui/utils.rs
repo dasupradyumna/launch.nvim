@@ -4,6 +4,8 @@ use crate::utils::Result;
 use ::nvim_oxi::api::{Buffer, Window};
 use ::nvim_oxi::Function;
 
+pub(super) const NAVIGATION_OFFSET: usize = 3;
+
 // TODO: refactor launcher appropriately
 
 pub(super) struct Float {
@@ -37,5 +39,5 @@ where
 }
 
 pub(super) fn index_from_cursor(window: &Window) -> Result<usize> {
-    Ok(window.get_cursor()?.0 - 2)
+    Ok(window.get_cursor()?.0 - NAVIGATION_OFFSET)
 }

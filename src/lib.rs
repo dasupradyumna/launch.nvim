@@ -12,6 +12,13 @@ mod utils;
 
 use ::nvim_oxi::{Dictionary, Function, Object};
 
+fn nvim_namespace() -> u32 {
+    use ::nvim_oxi::api as nvim;
+    use std::sync::LazyLock;
+    static INSTANCE: LazyLock<u32> = LazyLock::new(|| nvim::create_namespace("launch.nvim"));
+    *INSTANCE
+}
+
 #[nvim_oxi::plugin]
 fn launch() -> Dictionary {
     let task_event_callbacks = Dictionary::from_iter::<[(_, Object); 2]>([
