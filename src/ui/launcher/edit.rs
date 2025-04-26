@@ -21,6 +21,8 @@ impl Edit {
             window: self.window,
         };
         select.setup()?;
+        let cursor_pos = self.index + crate::ui::utils::NAVIGATION_OFFSET;
+        select.window.set_cursor(cursor_pos, 0)?;
         Ok(select)
     }
 

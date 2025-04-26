@@ -24,11 +24,13 @@ let b:update_prompt = function('s:update_prompt')
 
 " Cancel prompt and exit
 inoremap <buffer> <C-C> <Cmd>bwipeout!<CR>
-" Disable window navigation
-inoremap <buffer> <C-W> <NOP>
+" Reset <C-W> to insert mode default behavior
+inoremap <buffer> <nowait> <C-W> <C-\><C-O>dB
 " Disable exiting insert mode
 inoremap <buffer> <Esc> <NOP>
-inoremap <buffer> <C-O> <NOP>
+inoremap <buffer> <nowait> <C-G> <NOP>
+inoremap <buffer> <nowait> <C-O> <NOP>
+inoremap <buffer> <nowait> <C-\> <NOP>
 
 " Start insert mode
 call feedkeys('i')
