@@ -8,7 +8,7 @@ mod view;
 use self::edit::Edit;
 use self::select::Select;
 use self::view::View;
-use super::utils::{index_from_cursor, NAVIGATION_OFFSET};
+use super::utils::{index_from_cursor, show_help, NAVIGATION_OFFSET};
 use crate::config;
 use crate::utils::{buffer, float, notify, nvim_set_local, setup_module_state, Error, Result};
 use ::nvim_oxi::api::{Buffer, Window};
@@ -70,9 +70,17 @@ impl Launcher {
             (state, Event::Open | Event::Close) => state,
 
             /*--------------------------------- SHOW-HELP --------------------------------*/
-            (state, Event::Help) => {
-                action::show_help(&state)?;
-                state
+            (Self::Select(select), Event::Help) => {
+                show_help(&select.buffer, &select.window)?;
+                Self::Select(select)
+            },
+            (Self::View(view), Event::Help) => {
+                show_help(&view.buffer, &view.window)?;
+                Self::View(view)
+            },
+            (Self::Edit(edit), Event::Help) => {
+                show_help(&edit.buffer, &edit.window)?;
+                Self::Edit(edit)
             },
 
             /*-------------------------------- SELECT MODE -------------------------------*/

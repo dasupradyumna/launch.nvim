@@ -69,17 +69,15 @@ impl ActiveTask {
         self::state!().active_list.is_empty()
     }
 
-    pub(crate) fn get_lines_for_ui(no_tasks_msg: &str) -> Result<Vec<String>> {
-        let lines: Vec<String> = if ActiveTask::is_list_empty() {
-            vec!["".into(), no_tasks_msg.into()]
-        } else {
-            let active_tasks = &self::state!().active_list;
-            let mut vec = vec!["".into()];
-            vec.extend(active_tasks.iter().map(|task| task.title.clone()));
-            vec
-        };
+    pub(crate) fn get_lines_for_ui() -> Vec<String> {
+        const NO_TASKS_MSG: &str = "-- No active tasks --";
 
-        Ok(lines)
+        let active_tasks = &self::state!().active_list;
+        if active_tasks.is_empty() {
+            vec![NO_TASKS_MSG.into()]
+        } else {
+            active_tasks.iter().map(|task| task.title.clone()).collect()
+        }
     }
 
     pub(crate) fn render(index: usize) -> Result<()> {
