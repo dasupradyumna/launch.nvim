@@ -2,6 +2,7 @@
 
 use super::{LauncherState, Select, View};
 use crate::config;
+use crate::ui::utils::NAVIGATION_OFFSET;
 use crate::utils::Result;
 use ::nvim_oxi::api::{self as nvim, Buffer, Window};
 
@@ -21,8 +22,8 @@ impl Edit {
             window: self.window,
         };
         select.setup()?;
-        let cursor_pos = self.index + crate::ui::utils::NAVIGATION_OFFSET;
-        select.window.set_cursor(cursor_pos, 0)?;
+        let line_nr = NAVIGATION_OFFSET + self.index % { config::state!().tasks.len() };
+        select.window.set_cursor(line_nr, 0)?;
         Ok(select)
     }
 
