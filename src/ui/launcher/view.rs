@@ -39,10 +39,10 @@ impl View {
 impl LauncherState for View {
     super::setup_getters!();
 
-    fn create_contents(&self) -> Result<Vec<String>> {
+    fn create_contents(&self) -> Vec<String> {
         let config = &config::state!().tasks[self.index];
 
-        let mut lines = vec!["".into()];
+        let mut lines = Vec::new();
         lines.push(format!("NAME : {}", config.name()));
         lines.push(format!("CMD  : {}", config.cmd()));
         if !config.args().is_empty() {
@@ -67,7 +67,7 @@ impl LauncherState for View {
             lines.extend(config.env().iter().map(|(var, value)| format!("  {var}={value}")));
         }
 
-        Ok(lines)
+        lines
     }
 
     super::setup_callbacks! {

@@ -41,17 +41,15 @@ impl Select {
 impl LauncherState for Select {
     super::setup_getters!();
 
-    fn create_contents(&self) -> Result<Vec<String>> {
-        let configs = &config::state!().tasks;
-        let lines = if configs.is_empty() {
-            vec!["".into(), config::NO_CONFIGS_MSG.into()]
-        } else {
-            let mut vec = vec!["".into()];
-            vec.extend(configs.iter().map(|c| c.name().into()));
-            vec
-        };
+    fn create_contents(&self) -> Vec<String> {
+        const NO_CONFIGS_MSG: &str = "-- No active configs --";
 
-        Ok(lines)
+        let configs = &config::state!().tasks;
+        if configs.is_empty() {
+            vec![NO_CONFIGS_MSG.into()]
+        } else {
+            configs.iter().map(|c| c.name().into()).collect()
+        }
     }
 
     fn update_ui(&mut self) -> Result<()> {

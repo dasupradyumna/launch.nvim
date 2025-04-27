@@ -207,7 +207,7 @@ impl Launcher {
 trait LauncherState {
     fn buf(&mut self) -> &mut Buffer;
     fn win(&mut self) -> &mut Window;
-    fn create_contents(&self) -> Result<Vec<String>>;
+    fn create_contents(&self) -> Vec<String>;
     fn update_callbacks(&mut self) -> Result<()>;
 
     fn update_ui(&mut self) -> Result<()> {
@@ -224,8 +224,11 @@ trait LauncherState {
 
     fn __update_ui(&mut self) -> Result<()> {
         // Get mode-specific buffer contents and write them
-        let mut lines = self.create_contents()?;
-        lines.insert(0, "h : open help".into());
+        let lines: Vec<_> = vec!["h : open help", ""]
+            .into_iter()
+            .map(Into::into)
+            .chain(self.create_contents())
+            .collect();
         buffer::write_lines(self.buf(), &lines)?;
         self.buf().add_highlight(crate::nvim_namespace(), "Comment", 0, ..)?;
 

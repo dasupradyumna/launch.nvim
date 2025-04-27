@@ -21,8 +21,6 @@ setup_module_state!(config, [pub(crate)]
     pub(crate) tasks: Vec<TaskConfigJson> = Vec::new(),
 });
 
-pub(crate) const NO_CONFIGS_MSG: &str = "-- No active configs --";
-
 pub(crate) fn on_dirchanged() {
     self::state!().filepath = self::get_runtime_filepath();
 }

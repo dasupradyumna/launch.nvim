@@ -41,11 +41,11 @@ impl Edit {
 impl LauncherState for Edit {
     super::setup_getters!();
 
-    fn create_contents(&self) -> Result<Vec<String>> {
+    fn create_contents(&self) -> Vec<String> {
         let config = &config::state!().tasks[self.index];
         const NONE: &str = "---";
 
-        let mut lines = vec!["".into()];
+        let mut lines = Vec::new();
         lines.push(format!("NAME : {}", config.name()));
         lines.push(format!("CMD  : {}", config.cmd()));
         lines.push("ARGS :".to_string());
@@ -72,7 +72,7 @@ impl LauncherState for Edit {
         lines.extend(config.env().iter().map(|(var, value)| format!("  {var}={value}")));
         lines.push("  + New Var=...".to_string());
 
-        Ok(lines)
+        lines
     }
 
     super::setup_callbacks! {
