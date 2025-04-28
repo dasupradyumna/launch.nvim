@@ -134,7 +134,7 @@ impl Launcher {
             (Self::View(view), Event::Back) => Self::Select(view.into_select()?),
 
             (Self::View(view), Event::Copy) => {
-                action::copy_config(index_from_cursor(&view.window)?)?;
+                action::copy_config(view.index)?;
                 Self::Edit(view.into_edit(num_configs)?)
             },
 
@@ -161,7 +161,9 @@ impl Launcher {
                     _ => (),
                 }
 
-                if edit.from_select {
+                // HACK: Workaround for below issue -
+                // https://github.com/dasupradyumna/launch.nvim/issues/49#issuecomment-2833621644
+                if edit.from_select || edit.index == { config::state!().tasks.len() } {
                     Self::Select(edit.into_select()?)
                 } else {
                     Self::View(edit.into_view()?)
