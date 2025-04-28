@@ -44,21 +44,21 @@ pub(super) fn result_handler(result: Result<()>) {
 /*----------------------------- ACTION FUNCTIONS -----------------------------*/
 
 pub(super) fn redo_action<LS: LauncherState>(state: &mut LS, write: bool) -> Result<()> {
-    if !config::redo_buffer()? {
+    if !config::buffer::redo()? {
         return Ok(());
     }
     if write {
-        config::write_buffer()?;
+        config::buffer::write_to_file()?;
     }
     state.update_ui()
 }
 
 pub(super) fn undo_action<LS: LauncherState>(state: &mut LS, write: bool) -> Result<()> {
-    if !config::undo_buffer()? {
+    if !config::buffer::undo()? {
         return Ok(());
     }
     if write {
-        config::write_buffer()?;
+        config::buffer::write_to_file()?;
     }
     state.update_ui()
 }
@@ -67,7 +67,7 @@ pub(super) fn add_config() -> Result<()> {
     {
         config::state!().tasks.push(config::TaskConfigJson::default());
     }
-    config::serialize_to_buffer()
+    config::buffer::serialize_to_string()
 }
 
 pub(super) fn copy_config(index: usize) -> Result<()> {
@@ -76,20 +76,20 @@ pub(super) fn copy_config(index: usize) -> Result<()> {
         let config = configs.get_checked(index)?.clone();
         configs.push(config);
     }
-    config::serialize_to_buffer()
+    config::buffer::serialize_to_string()
 }
 
 pub(super) fn close_launcher(buffer: Buffer) -> Result<()> {
     buffer.delete(&nvim::opts::BufDeleteOpts::default())?;
-    config::delete_buffer()
+    config::buffer::delete()
 }
 
 pub(super) fn delete_config(index: usize) -> Result<()> {
     {
         config::state!().tasks.remove(index);
     }
-    config::serialize_to_buffer()?;
-    config::write_buffer()
+    config::buffer::serialize_to_string()?;
+    config::buffer::write_to_file()
 }
 
 pub(super) fn launch_config(buffer: Buffer, index: usize) -> Result<()> {
@@ -167,7 +167,7 @@ pub(super) fn edit_field(mut edit: Edit) -> Result<()> {
                     let choice = nvim::get_current_line()?.trim_ascii().into();
                     config::state!().tasks[edit.index].set_disp(choice);
                 }
-                config::serialize_to_buffer()?;
+                config::buffer::serialize_to_string()?;
                 edit.update_ui()
             });
             float::open_select(vec!["float", "hsplit", "vsplit"], row, col, callback)
@@ -183,7 +183,7 @@ pub(super) fn edit_field(mut edit: Edit) -> Result<()> {
 
                         let input: String = input.to_string_lossy().trim_ascii().into();
                         self::set_config_field(edit.index, &f, format!("{env_var}={input}"));
-                        config::serialize_to_buffer()?;
+                        config::buffer::serialize_to_string()?;
                         edit.update_ui()
                     });
 
@@ -202,7 +202,7 @@ pub(super) fn edit_field(mut edit: Edit) -> Result<()> {
             let f = field.to_string();
             let callback = wrap_cb_once(self::result_handler, move |input: ::nvim_oxi::String| {
                 self::set_config_field(edit.index, &f, input.to_string_lossy().trim_ascii().into());
-                config::serialize_to_buffer()?;
+                config::buffer::serialize_to_string()?;
                 edit.update_ui()
             });
             float::open_prompt(field, value.as_str(), row, col, callback)
@@ -231,7 +231,7 @@ pub(super) fn delete_field(edit: &mut Edit) -> Result<()> {
     if !self::del_config_field(edit.index, field.as_str()) {
         return Ok(());
     }
-    config::serialize_to_buffer()?;
+    config::buffer::serialize_to_string()?;
     edit.update_ui()
 }
 
@@ -246,7 +246,7 @@ pub(super) fn insert_arg(mut edit: Edit) -> Result<()> {
             let config = &mut config::state!().tasks[edit.index];
             config.insert_arg(index - 1, input.to_string_lossy().trim_ascii().into());
         }
-        config::serialize_to_buffer()?;
+        config::buffer::serialize_to_string()?;
         edit.update_ui()
     });
 

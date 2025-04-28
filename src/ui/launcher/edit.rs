@@ -7,16 +7,16 @@ use crate::utils::Result;
 use ::nvim_oxi::api::{self as nvim, Buffer, Window};
 
 #[derive(Debug, Clone)]
-pub(in crate::ui) struct Edit {
-    pub(in crate::ui) buffer: Buffer,
-    pub(in crate::ui) window: Window,
-    pub(in crate::ui) index: usize,
-    pub(in crate::ui) from_select: bool,
+pub(super) struct Edit {
+    pub(super) buffer: Buffer,
+    pub(super) window: Window,
+    pub(super) index: usize,
+    pub(super) from_select: bool,
 }
 
 impl Edit {
     pub(super) fn into_select(self) -> Result<Select> {
-        config::clear_undo_in_buffer()?;
+        config::buffer::clear_undo_history()?;
         let mut select = Select {
             buffer: self.buffer,
             window: self.window,
@@ -28,7 +28,7 @@ impl Edit {
     }
 
     pub(super) fn into_view(self) -> Result<View> {
-        config::clear_undo_in_buffer()?;
+        config::buffer::clear_undo_history()?;
         let mut view = View {
             buffer: self.buffer,
             window: self.window,

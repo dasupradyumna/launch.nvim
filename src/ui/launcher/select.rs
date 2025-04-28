@@ -7,14 +7,14 @@ use crate::utils::{nvim_set_local, Result};
 use ::nvim_oxi::api::{self as nvim, Buffer, Window};
 
 #[derive(Debug, Clone)]
-pub(in crate::ui) struct Select {
-    pub(in crate::ui) buffer: Buffer,
-    pub(in crate::ui) window: Window,
+pub(super) struct Select {
+    pub(super) buffer: Buffer,
+    pub(super) window: Window,
 }
 
 impl Select {
     pub(super) fn into_view(self) -> Result<View> {
-        config::clear_undo_in_buffer()?;
+        config::buffer::clear_undo_history()?;
         let index = index_from_cursor(&self.window)?;
         let mut view = View {
             buffer: self.buffer,
@@ -26,7 +26,7 @@ impl Select {
     }
 
     pub(super) fn into_edit(self, index: usize) -> Result<Edit> {
-        config::clear_undo_in_buffer()?;
+        config::buffer::clear_undo_history()?;
         let mut edit = Edit {
             buffer: self.buffer,
             window: self.window,

@@ -49,8 +49,8 @@ impl Launcher {
         let next = match (current, &event) {
             /*-------------------------------- OPEN-CLOSE --------------------------------*/
             (Self::Closed, Event::Open) => {
-                config::create_buffer()?;
-                config::load_configs_from_json()?;
+                config::buffer::create()?;
+                config::buffer::read_from_file()?;
 
                 let buffer = buffer::create_scratch("launcher")?;
                 let window = float::open_centered("Task Launcher", &buffer, 1, 1)?;
@@ -156,8 +156,8 @@ impl Launcher {
             /*--------------------------------- EDIT MODE --------------------------------*/
             (Self::Edit(edit), event @ (Event::Back | Event::Save)) => {
                 match event {
-                    Event::Save => config::write_buffer()?,
-                    Event::Back => config::load_configs_from_json()?,
+                    Event::Save => config::buffer::write_to_file()?,
+                    Event::Back => config::buffer::read_from_file()?,
                     _ => (),
                 }
 
