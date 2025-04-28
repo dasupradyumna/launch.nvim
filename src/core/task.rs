@@ -2,7 +2,7 @@
 
 use crate::config::{TaskConfig, TaskDisplay};
 use crate::settings::state as settings;
-use crate::utils::{buffer, float, nvim_set_local, setup_module_state, Result};
+use crate::utils::{buffer, float, nvim_set_local, setup_module_state, IndexChecked, Result};
 use ::chrono::{DateTime, Local};
 use ::nvim_oxi::api::opts::{BufDeleteOpts, ExecAutocmdsOpts, OptionOpts};
 use ::nvim_oxi::api::types::{Mode, SplitDirection, WindowConfig};
@@ -82,7 +82,7 @@ impl ActiveTask {
 
     pub(crate) fn render(index: usize) -> Result<()> {
         let mut state = self::state!();
-        let active_task = &state.active_list[index];
+        let active_task = state.active_list.get_checked(index)?;
         let display = active_task.config.disp().clone();
 
         if let Some(Some(window)) = state.windows.get(&display) {
@@ -141,7 +141,8 @@ impl ActiveTask {
     }
 
     pub(crate) fn run(index: usize) -> Result<()> {
-        let active_task = &mut self::state!().active_list[index];
+        let mut state = self::state!();
+        let active_task = state.active_list.get_mut_checked(index)?;
         nvim_set_local(&active_task.buffer, "modified", false)?;
 
         let command = active_task.config.command();

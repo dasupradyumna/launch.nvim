@@ -4,7 +4,7 @@ use super::{Edit, Launcher, Select, View};
 use crate::config;
 use crate::ui::launcher::LauncherState;
 use crate::ui::utils::{get_popup_pos, wrap_cb_once};
-use crate::utils::{float, notify, Result};
+use crate::utils::{float, notify, IndexChecked, Result};
 use ::nvim_oxi::api::{self as nvim, Buffer};
 
 #[derive(Debug)]
@@ -73,7 +73,7 @@ pub(super) fn add_config() -> Result<()> {
 pub(super) fn copy_config(index: usize) -> Result<()> {
     {
         let configs = &mut config::state!().tasks;
-        let config = configs[index].clone();
+        let config = configs.get_checked(index)?.clone();
         configs.push(config);
     }
     config::serialize_to_buffer()
@@ -95,7 +95,7 @@ pub(super) fn delete_config(index: usize) -> Result<()> {
 pub(super) fn launch_config(buffer: Buffer, index: usize) -> Result<()> {
     self::close_launcher(buffer)?;
 
-    let config = config::state!().tasks[index].clone().try_into()?;
+    let config = config::state!().tasks.get_checked(index)?.clone().try_into()?;
     ::nvim_oxi::dbg!(&config);
     crate::core::task::run(config)
 }

@@ -36,3 +36,34 @@ where
         Self::Nvim(nvim_error_variant.into())
     }
 }
+
+pub(crate) trait IndexChecked<T> {
+    fn get_checked(&self, index: usize) -> Result<&T>;
+    fn get_mut_checked(&mut self, index: usize) -> Result<&mut T>;
+}
+
+impl<T> IndexChecked<T> for Vec<T> {
+    fn get_checked(&self, index: usize) -> Result<&T> {
+        let caller = std::panic::Location::caller();
+        self.get(index).ok_or_else(|| {
+            Error::Internal(format!(
+                "{}:{}:{}: Index out of bounds for vector",
+                caller.file(),
+                caller.line(),
+                caller.column()
+            ))
+        })
+    }
+
+    fn get_mut_checked(&mut self, index: usize) -> Result<&mut T> {
+        let caller = std::panic::Location::caller();
+        self.get_mut(index).ok_or_else(|| {
+            Error::Internal(format!(
+                "{}:{}:{}: Index out of bounds for vector",
+                caller.file(),
+                caller.line(),
+                caller.column()
+            ))
+        })
+    }
+}

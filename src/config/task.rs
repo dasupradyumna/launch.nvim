@@ -175,11 +175,10 @@ impl TaskConfigJson {
     pub(crate) fn set_cmd(&mut self, cmd: String) {
         self.cmd = cmd;
     }
-    pub(crate) fn set_arg(&mut self, index: usize, arg: String) {
-        if index < self.args.len() {
-            self.args[index] = arg;
-        } else {
-            self.args.push(arg);
+    pub(crate) fn set_arg(&mut self, index: usize, new_arg: String) {
+        match self.args.get_mut(index) {
+            Some(arg) => *arg = new_arg,
+            None => self.args.push(new_arg),
         }
     }
     pub(crate) fn set_disp(&mut self, disp: TaskDisplay) {

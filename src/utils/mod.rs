@@ -5,7 +5,7 @@ pub(crate) mod float;
 mod result;
 pub(crate) mod serde;
 
-pub(crate) use result::{Error, Result};
+pub(crate) use result::{Error, IndexChecked, Result};
 
 macro_rules! setup_module_state {
 
