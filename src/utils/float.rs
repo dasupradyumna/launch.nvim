@@ -1,4 +1,6 @@
 /*----------------------------------- FLOATING WINDOW UTILITIES ----------------------------------*/
+//!
+//! This module contains utility functions related to floating window managemenet
 
 use super::{buffer, Result};
 use ::nvim_oxi::api::opts::OptionOpts;
@@ -11,6 +13,7 @@ impl super::ScopeOpts for Window {
     }
 }
 
+/// Compute the top-left row and column for a centered floating window, given its width and height
 pub(crate) fn get_centered_position(width: u32, height: u32) -> Result<(u32, u32)> {
     // Compute top-left row and column for a centered floating window
     let screen_height: u32 = nvim::get_option_value("lines", &OptionOpts::default())?;
@@ -21,6 +24,7 @@ pub(crate) fn get_centered_position(width: u32, height: u32) -> Result<(u32, u32
     Ok((row, col))
 }
 
+/// Returns a `WindowConfig` for a floating window with rounded borders
 pub(crate) fn config_builder(
     row: u32,
     col: u32,
@@ -41,6 +45,7 @@ pub(crate) fn config_builder(
     win_config
 }
 
+/// Open a floating window of the given size centered in the editor, with specified title
 pub(crate) fn open_centered(
     title: &str,
     buffer: &Buffer,
@@ -62,6 +67,7 @@ pub(crate) fn open_centered(
     Ok(window)
 }
 
+/// Open a prompt floating window, with the specified prompt text, default value and callbacks
 pub(crate) fn open_prompt(
     prompt: &str,
     default: &str,

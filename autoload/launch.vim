@@ -39,6 +39,7 @@ function! launch#disable_all_keys()
     nnoremap <buffer> <nowait> : :
 endfunction
 
+" Navigate up or down, within bounds
 function! s:navigate(up)
     let cursor = line('.')
     let bounds = b:->get('bounds', [1, line('$')]) " Set default bounds to buffer size
@@ -49,6 +50,7 @@ function! s:navigate(up)
     endif
 endfunction
 
+" Sets up navigation keymaps
 function! launch#setup_navigation()
     " Up motion
     nnoremap <buffer> <nowait> j <Cmd>call <SID>navigate(v:false)<CR>

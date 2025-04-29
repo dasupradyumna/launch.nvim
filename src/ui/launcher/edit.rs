@@ -1,4 +1,6 @@
 /*------------------------------------- LAUNCHER : EDIT MODE -------------------------------------*/
+//!
+//! This module contains the implementation for the edit mode of the configuration launcher UI.
 
 use super::{LauncherState, Select, View};
 use crate::config;
@@ -6,6 +8,7 @@ use crate::ui::utils::NAVIGATION_OFFSET;
 use crate::utils::Result;
 use ::nvim_oxi::api::{self as nvim, Buffer, Window};
 
+/// Edit mode state of the launcher UI
 #[derive(Debug, Clone)]
 pub(super) struct Edit {
     pub(super) buffer: Buffer,
@@ -15,6 +18,7 @@ pub(super) struct Edit {
 }
 
 impl Edit {
+    /// Converts the edit mode state into the select mode state
     pub(super) fn into_select(self) -> Result<Select> {
         config::buffer::clear_undo_history()?;
         let mut select = Select {
@@ -27,6 +31,7 @@ impl Edit {
         Ok(select)
     }
 
+    /// Converts the edit mode state into the view mode state
     pub(super) fn into_view(self) -> Result<View> {
         config::buffer::clear_undo_history()?;
         let mut view = View {
@@ -39,6 +44,7 @@ impl Edit {
     }
 }
 
+/// Implementation of the `LauncherState` trait for the edit mode
 impl LauncherState for Edit {
     super::setup_getters!();
 

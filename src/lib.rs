@@ -12,6 +12,9 @@ mod utils;
 
 use ::nvim_oxi::{Dictionary, Function, Object};
 
+/// Returns the neovim namespace used by the plugin
+///
+/// Initialized on first call, and reused on subsequent calls
 fn nvim_namespace() -> u32 {
     use ::nvim_oxi::api as nvim;
     use std::sync::LazyLock;
@@ -19,6 +22,17 @@ fn nvim_namespace() -> u32 {
     *INSTANCE
 }
 
+/// Main plugin entry point
+///
+/// Exposes public API as a Lua dictionary, usable in neovim
+/// Exposes private autocommand callbacks as `_impl_` dictionary (not for public use)
+///
+/// ## Examples
+///
+/// ```lua
+/// require("launch").setup()  -- Run plugin setup
+/// require("launch").open()  -- Open launcher UI
+/// ```
 #[nvim_oxi::plugin]
 fn launch() -> Dictionary {
     let task_event_callbacks = Dictionary::from_iter::<[(_, Object); 2]>([
@@ -44,7 +58,7 @@ fn launch() -> Dictionary {
 
     Dictionary::from_iter::<[(_, Object); 4]>([
         ("setup", Function::from_fn(core::setup).into()),
-        ("launch", Function::from_fn(|()| ui::launcher::open()).into()),
+        ("open", Function::from_fn(|()| ui::launcher::open()).into()),
         ("list_active_tasks", Function::from_fn(|()| ui::active_tasks::open()).into()),
         ("_impl_", _impl_.into()),
     ])

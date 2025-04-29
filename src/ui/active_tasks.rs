@@ -1,4 +1,7 @@
 /*-------------------------------------- ACTIVE TASKS VIEWER -------------------------------------*/
+//!
+//! This module contains functions related to the active tasks UI. It provides keybindings for
+//! closing the UI, opening help, relaunching and viewing an active task.
 
 use super::utils::{index_from_cursor, show_help, Float, NAVIGATION_OFFSET};
 use crate::core::task::ActiveTask;
@@ -8,12 +11,14 @@ use ::nvim_oxi::api::opts::BufDeleteOpts;
 
 setup_module_state!(ui::active_tasks, Float);
 
+/// Opens the active tasks UI, with error handling
 pub(crate) fn open() {
     if { self::state!().buffer.handle() } == 0 {
         self::result_handler(self::_open());
     }
 }
 
+/// Helper function to open the active tasks UI
 fn _open() -> Result<()> {
     let lines: Vec<_> = vec!["h : open help", ""]
         .into_iter()
@@ -50,17 +55,20 @@ fn _open() -> Result<()> {
     Ok(())
 }
 
+/// Closes the active tasks UI
 fn close() -> Result<()> {
     let float = std::mem::take(&mut *self::state!());
     float.window.close(true)?;
     Ok(float.buffer.delete(&BufDeleteOpts::builder().force(true).build())?)
 }
 
+/// Opens help for the active tasks UI
 fn open_help() -> Result<()> {
     let float = self::state!();
     show_help(&float.buffer, &float.window)
 }
 
+/// Relaunches the active task under the cursor
 fn relaunch() -> Result<()> {
     if ActiveTask::is_list_empty() {
         notify!(Warn: "No active tasks found.");
@@ -73,6 +81,7 @@ fn relaunch() -> Result<()> {
     ActiveTask::run(index)
 }
 
+/// Views the active task under the cursor
 fn view() -> Result<()> {
     if ActiveTask::is_list_empty() {
         notify!(Warn: "No active tasks found.");
@@ -84,6 +93,7 @@ fn view() -> Result<()> {
     ActiveTask::render(index)
 }
 
+/// Handles error by displaying a notification
 fn result_handler(result: Result<()>) {
     if let Err(msg) = result {
         notify!(Error: msg);

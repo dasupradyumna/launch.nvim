@@ -1,7 +1,10 @@
 /*------------------------------------ DESERIALIZATION HELPERS -----------------------------------*/
+//!
+//! This module contains items related to the serialization and deserialization of plugin structs
 
 use std::marker::PhantomData;
 
+/// Visitor for deserializing structs
 pub(crate) struct StructVisitor<T>(PhantomData<T>);
 
 impl<T> StructVisitor<T> {
@@ -19,18 +22,21 @@ macro_rules! setup_deserializable_structs {
             $( $pub2:vis $field_struct:ident: $field_struct_type:ident ;)*
         }
     ,)* ) => {
+
     use crate::utils::serde::StructVisitor;
     use ::serde::de::{Error, MapAccess, Visitor};
     use ::serde::{Deserialize, Deserializer};
 
     $(
 
+        // Struct definition
         #[derive(Debug)]
         $pub0 struct $struct_name {
             $( $pub1 $field: $field_type ,)*
             $( $pub2 $field_struct: $field_struct_type ,)*
         }
 
+        // Default implementation
         impl Default for $struct_name {
             fn default() -> Self {
                 Self {
@@ -40,6 +46,7 @@ macro_rules! setup_deserializable_structs {
             }
         }
 
+        // Deserialization support
         impl<'de> Deserialize<'de> for $struct_name {
             fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
             where
@@ -49,6 +56,7 @@ macro_rules! setup_deserializable_structs {
             }
         }
 
+        // Serde crate visitor
         impl<'de> Visitor<'de> for StructVisitor<$struct_name> {
             type Value = $struct_name;
 

@@ -1,19 +1,29 @@
 /*----------------------------------------- UI UTILITIES -----------------------------------------*/
+//!
+//! This module contains common utility functions and structs related to the plugin UI
 
 use crate::utils::{float, Result};
 use ::nvim_oxi::api::{Buffer, Window};
 use ::nvim_oxi::conversion::FromObject;
 use ::nvim_oxi::Function;
 
+/// Number of lines to offset from the top of the window for first entry
 pub(super) const NAVIGATION_OFFSET: usize = 3;
+
+/// Returns the index into the underlying item list from the current cursor position
+pub(super) fn index_from_cursor(window: &Window) -> Result<usize> {
+    Ok(window.get_cursor()?.0 - NAVIGATION_OFFSET)
+}
 
 // TODO: refactor launcher appropriately
 
+/// Represents the rendering information for a floating window
 pub(super) struct Float {
     pub(super) buffer: Buffer,
     pub(super) window: Window,
 }
 
+/// Default implementation for Float
 impl Default for Float {
     fn default() -> Self {
         Self {
@@ -23,6 +33,10 @@ impl Default for Float {
     }
 }
 
+/// Returns the position of the popup window
+///
+/// The position of the popup window is calculated based on the current cursor position if
+/// `on_cursor_row` is true, else it is on the same row as the current window
 pub(super) fn get_popup_pos(window: &Window, on_cursor_row: bool) -> Result<(u32, u32)> {
     let (row, col) = window.get_position()?;
     let offset = if on_cursor_row { window.get_cursor()?.0 as u32 - 1 } else { 0 };
@@ -33,6 +47,7 @@ pub(super) fn get_popup_pos(window: &Window, on_cursor_row: bool) -> Result<(u32
     Ok((row, col))
 }
 
+/// Opens floating help window listing keybindings in the calling UI
 pub(super) fn show_help(buffer: &Buffer, window: &Window) -> Result<()> {
     let (row, col) = get_popup_pos(window, false)?;
     let callbacks: Vec<::nvim_oxi::Array> = buffer.get_var("callbacks")?;
@@ -49,6 +64,7 @@ pub(super) fn show_help(buffer: &Buffer, window: &Window) -> Result<()> {
     float::open_help(entries, row, col)
 }
 
+/// Wraps a `Fn` closure into a `Function` object, with result handling
 pub(super) fn wrap_cb<F, T>(handler: fn(Result<()>), func: F) -> Function<T, ()>
 where
     F: Fn(T) -> Result<()> + 'static,
@@ -57,14 +73,11 @@ where
     Function::from_fn(move |arg: T| handler(func(arg)))
 }
 
+/// Wraps a `FnOnce` closure into a `Function` object, with result handling
 pub(super) fn wrap_cb_once<F, T>(handler: fn(Result<()>), func: F) -> Function<T, ()>
 where
     F: FnOnce(T) -> Result<()> + 'static,
     T: ::nvim_oxi::lua::Poppable,
 {
     Function::from_fn_once(move |arg: T| handler(func(arg)))
-}
-
-pub(super) fn index_from_cursor(window: &Window) -> Result<usize> {
-    Ok(window.get_cursor()?.0 - NAVIGATION_OFFSET)
 }

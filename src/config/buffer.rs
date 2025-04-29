@@ -1,4 +1,5 @@
 /*------------------------------------- CONFIGURATIONS BUFFER ------------------------------------*/
+//!
 //! This module contains all the functions related to managing the runtime configurations buffer.
 //! This includes creating and deleting the buffer, serializing and deserializing the runtime
 //! configurations to and from the buffer, and handling undo-redo operations in the buffer.
@@ -8,6 +9,7 @@ use ::nvim_oxi::api::{self as nvim, Buffer};
 use ::nvim_oxi::Dictionary;
 use ::serde_json::{self as json, json, Value};
 
+/// Runs an Ex-command in the runtime configurations buffer
 fn execute_command<Cmd: std::fmt::Display>(command: Cmd) -> Result<()> {
     let buffer = &super::state!().buffer;
     let command = format!("silent {command}");
@@ -16,6 +18,7 @@ fn execute_command<Cmd: std::fmt::Display>(command: Cmd) -> Result<()> {
 
 /*----------------------------- CREATION-DELETION ----------------------------*/
 
+/// Creates the runtime configurations buffer, and attaches the config file to it
 pub(crate) fn create() -> Result<()> {
     let mut config = super::state!();
     let mut buffer = nvim::create_buf(false, false)?;
@@ -25,6 +28,9 @@ pub(crate) fn create() -> Result<()> {
     Ok(())
 }
 
+/// Deletes the runtime configurations buffer
+///
+/// Also delete the config file in the standard data directory if no tasks are defined
 pub(crate) fn delete() -> Result<()> {
     let config = &mut super::state!();
     if config.tasks.is_empty() && config.filepath.is_file() {
@@ -36,6 +42,7 @@ pub(crate) fn delete() -> Result<()> {
 
 /*----------------------- SERIALIZATION-DESERIALIZATION ----------------------*/
 
+/// Serializes the runtime configurations from the current state and returns a String
 fn serialize() -> Result<String> {
     let config = super::state!();
     let contents = json!({
@@ -46,6 +53,7 @@ fn serialize() -> Result<String> {
     Ok(json::to_string_pretty(&contents)?)
 }
 
+/// Deserializes the runtime configurations from a String and updates the current state
 fn deserialize(contents: &str) -> Result<()> {
     if !contents.trim_ascii_end().is_empty() {
         let mut config = super::state!();
@@ -56,6 +64,7 @@ fn deserialize(contents: &str) -> Result<()> {
     Ok(())
 }
 
+/// Serializes the current state and updates the buffer contents
 pub(crate) fn serialize_to_string() -> Result<()> {
     let contents = self::serialize()?;
     super::state!().buffer.set_lines(.., true, contents.split('\n'))?;
@@ -63,6 +72,7 @@ pub(crate) fn serialize_to_string() -> Result<()> {
     self::execute_command("let &l:undolevels = &l:undolevels")
 }
 
+/// Deserializes the buffer contents and updates the current state
 fn deserialize_from_string() -> Result<()> {
     let contents = {
         let lines = super::state!().buffer.get_lines(.., true)?;
@@ -71,22 +81,26 @@ fn deserialize_from_string() -> Result<()> {
     self::deserialize(&contents)
 }
 
+/// Reads the config file and updates the current state
 pub(crate) fn read_from_file() -> Result<()> {
     self::execute_command("edit! | set nobuflisted")?;
     self::deserialize_from_string()
 }
 
+/// Writes the buffer contents to the config file
 pub(crate) fn write_to_file() -> Result<()> {
     self::execute_command("write")
 }
 
 /*--------------------------------- UNDO-REDO --------------------------------*/
 
+/// Returns the undotree for the runtime configurations buffer
 fn get_undotree() -> Result<Dictionary> {
     let buffer = &super::state!().buffer;
     Ok(nvim::call_function("undotree", (buffer.handle(),))?)
 }
 
+/// Redoes the last undone operation if any, and updates the current state
 pub(crate) fn redo() -> Result<bool> {
     let undotree = self::get_undotree()?;
     if undotree["seq_cur"] == undotree["seq_last"] {
@@ -98,6 +112,7 @@ pub(crate) fn redo() -> Result<bool> {
     Ok(true)
 }
 
+/// Undoes the last operation if any, and updates the current state
 pub(crate) fn undo() -> Result<bool> {
     let undotree = self::get_undotree()?;
     if unsafe { undotree["seq_cur"].as_integer_unchecked() } == 0 {
@@ -109,6 +124,7 @@ pub(crate) fn undo() -> Result<bool> {
     Ok(true)
 }
 
+/// Clears the undo history of the runtime configurations buffer
 pub(crate) fn clear_undo_history() -> Result<()> {
     self::execute_command("call launch#clear_undo_history()")
 }

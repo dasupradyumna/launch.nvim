@@ -1,4 +1,8 @@
 /*--------------------------------------- LAUNCHER ACTIONS ---------------------------------------*/
+//!
+//! This module provides the supported events and action behaviors for all launcher UI states.
+//!
+//! CHECK: can this be refactored into the modes?
 
 use super::{Edit, Launcher, Select, View};
 use crate::config;
@@ -7,6 +11,7 @@ use crate::ui::utils::{get_popup_pos, wrap_cb_once};
 use crate::utils::{float, notify, IndexChecked, Result};
 use ::nvim_oxi::api::{self as nvim, Buffer};
 
+/// Defines the supported events for the launcher UI
 #[derive(Debug)]
 pub(super) enum Event {
     Add,
@@ -25,6 +30,7 @@ pub(super) enum Event {
     View,
 }
 
+/// Handles the result of a launcher action, and closes the launcher if an error occurs
 pub(super) fn result_handler(result: Result<()>) {
     let Err(msg) = result else {
         return;
@@ -41,8 +47,20 @@ pub(super) fn result_handler(result: Result<()>) {
     }
 }
 
-/*----------------------------- ACTION FUNCTIONS -----------------------------*/
+/*------------------------------ COMMON ACTIONS ------------------------------*/
 
+/// Close the launcher UI
+///
+/// Delete the launcher and the config buffers
+pub(super) fn close_launcher(buffer: Buffer) -> Result<()> {
+    buffer.delete(&nvim::opts::BufDeleteOpts::default())?;
+    config::buffer::delete()
+}
+
+/// Redo the last undone action
+///
+/// If the action is successful, the UI is updated.
+/// Only write to the config file if `write` is set.
 pub(super) fn redo_action<LS: LauncherState>(state: &mut LS, write: bool) -> Result<()> {
     if !config::buffer::redo()? {
         return Ok(());
@@ -53,6 +71,10 @@ pub(super) fn redo_action<LS: LauncherState>(state: &mut LS, write: bool) -> Res
     state.update_ui()
 }
 
+/// Undo the last action
+///
+/// If the action is successful, the UI is updated.
+/// Only write to the config file if `write` is set.
 pub(super) fn undo_action<LS: LauncherState>(state: &mut LS, write: bool) -> Result<()> {
     if !config::buffer::undo()? {
         return Ok(());
@@ -63,6 +85,11 @@ pub(super) fn undo_action<LS: LauncherState>(state: &mut LS, write: bool) -> Res
     state.update_ui()
 }
 
+/*---------------------------- SELECT-VIEW ACTIONS ---------------------------*/
+
+/// Create a new configuration and add it to the runtime list
+///
+/// Update the config buffer after adding the new configuration
 pub(super) fn add_config() -> Result<()> {
     {
         config::state!().tasks.push(config::TaskConfigJson::default());
@@ -70,6 +97,9 @@ pub(super) fn add_config() -> Result<()> {
     config::buffer::serialize_to_string()
 }
 
+/// Copy the configuration at the given index, and add it to the runtime list
+///
+/// Update the config buffer after adding the new configuration
 pub(super) fn copy_config(index: usize) -> Result<()> {
     {
         let configs = &mut config::state!().tasks;
@@ -79,11 +109,9 @@ pub(super) fn copy_config(index: usize) -> Result<()> {
     config::buffer::serialize_to_string()
 }
 
-pub(super) fn close_launcher(buffer: Buffer) -> Result<()> {
-    buffer.delete(&nvim::opts::BufDeleteOpts::default())?;
-    config::buffer::delete()
-}
-
+/// Delete the configuration at the given index
+///
+/// Update the config buffer after deleting the configuration, and write to the config file
 pub(super) fn delete_config(index: usize) -> Result<()> {
     {
         config::state!().tasks.remove(index);
@@ -92,6 +120,7 @@ pub(super) fn delete_config(index: usize) -> Result<()> {
     config::buffer::write_to_file()
 }
 
+/// Close the launcher and launch the configuration at the given index
 pub(super) fn launch_config(buffer: Buffer, index: usize) -> Result<()> {
     self::close_launcher(buffer)?;
 
@@ -100,6 +129,9 @@ pub(super) fn launch_config(buffer: Buffer, index: usize) -> Result<()> {
     crate::core::task::run(config)
 }
 
+/*------------------------------- EDIT ACTIONS -------------------------------*/
+
+/// Get the field name from the current line, using regular expression pattern matching
 fn match_field_regex() -> Result<String> {
     let line = nvim::get_current_line()?;
     let patterns = [
@@ -115,6 +147,7 @@ fn match_field_regex() -> Result<String> {
     Ok(field)
 }
 
+/// Set the value of the field at the given index in the configuration
 fn set_config_field(index: usize, field: &str, value: String) {
     let config = &mut config::state!().tasks[index];
     match field {
@@ -130,6 +163,7 @@ fn set_config_field(index: usize, field: &str, value: String) {
     }
 }
 
+/// Get the value of the field at the given index in the configuration
 fn get_config_field(index: usize, field: &str) -> String {
     let config = &config::state!().tasks[index];
     match field {
@@ -150,6 +184,11 @@ fn get_config_field(index: usize, field: &str) -> String {
     }
 }
 
+/// Edit the field of the current configuration under the cursor
+///
+/// DISP opens up a selection out of the three options: float, hsplit, vsplit
+/// ARGS and ENV opens up a prompt to add or edit arguments or environment variables
+/// All other fields open up a prompt to edit the current value
 pub(super) fn edit_field(mut edit: Edit) -> Result<()> {
     let (row, col) = get_popup_pos(&edit.window, true)?;
     let mut field = self::match_field_regex()?;
@@ -161,6 +200,7 @@ pub(super) fn edit_field(mut edit: Edit) -> Result<()> {
 
     match field {
         "ARGS" | "ENV" | "" => Ok(()),
+        // Get user choice for display mode
         "DISP" => {
             let callback = wrap_cb_once(self::result_handler, move |()| {
                 {
@@ -172,9 +212,12 @@ pub(super) fn edit_field(mut edit: Edit) -> Result<()> {
             });
             float::open_select(vec!["float", "hsplit", "vsplit"], row, col, callback)
         },
+        // Get user input for editing or adding a new enviroment variable
         env_var if field.ends_with('=') => {
             let f = field.to_string();
+            // This callback is used to get user input for the variable name
             let callback = wrap_cb_once(self::result_handler, move |input: ::nvim_oxi::String| {
+                // This callback is used to get user input for the variable value
                 let callback =
                     wrap_cb_once(self::result_handler, move |input: ::nvim_oxi::String| {
                         let mut buffer = nvim::get_current_buf();
@@ -198,6 +241,7 @@ pub(super) fn edit_field(mut edit: Edit) -> Result<()> {
             });
             float::open_prompt("VAR", env_var.trim_end_matches('='), row, col, callback)
         },
+        // Get user input for editing fields
         _ => {
             let f = field.to_string();
             let callback = wrap_cb_once(self::result_handler, move |input: ::nvim_oxi::String| {
@@ -210,6 +254,7 @@ pub(super) fn edit_field(mut edit: Edit) -> Result<()> {
     }
 }
 
+/// Delete the field at the given index in the current configuration
 fn del_config_field(index: usize, field: &str) -> bool {
     let config = &mut config::state!().tasks[index];
     match field {
@@ -226,6 +271,7 @@ fn del_config_field(index: usize, field: &str) -> bool {
     true
 }
 
+/// Delete the field of the current configuration under the cursor
 pub(super) fn delete_field(edit: &mut Edit) -> Result<()> {
     let field = self::match_field_regex()?;
     if !self::del_config_field(edit.index, field.as_str()) {
@@ -235,6 +281,7 @@ pub(super) fn delete_field(edit: &mut Edit) -> Result<()> {
     edit.update_ui()
 }
 
+/// Add a new argument to the current configuration argument list
 pub(super) fn insert_arg(mut edit: Edit) -> Result<()> {
     let (row, col) = get_popup_pos(&edit.window, true)?;
     let field = self::match_field_regex()?;

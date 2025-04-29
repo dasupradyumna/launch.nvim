@@ -1,9 +1,12 @@
 /*---------------------------------------- PLUGIN SETTINGS ---------------------------------------*/
+//!
+//! This module contains structs and functions related to the user settings for the plugin
 
 use crate::config::{TaskDisplay, TaskDisplayFloatSize};
 use crate::utils::{notify, serde, setup_module_state};
 use ::nvim_oxi::serde::Deserializer as NvimOxiDeserializer;
 
+/// URL to the GitHub wiki for plugin settings
 const WIKI_URL: &str = "https://github.com/dasupradyumna/launch.nvim/wiki/Plugin-Settings";
 
 setup_module_state!(settings, [pub(crate)] Settings);
@@ -37,6 +40,9 @@ serde::setup_deserializable_structs! {
 }
 
 impl Settings {
+    /// Apply user specified settings to the plugin
+    ///
+    /// Uses the default settings if deserialization fails
     pub(crate) fn apply(&mut self, settings: ::nvim_oxi::Object) {
         // TODO: improve error messages when deserialization fails
         // - this can probably be done by implementing visit_* methods for a base visitor that all

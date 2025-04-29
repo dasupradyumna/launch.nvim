@@ -1,4 +1,6 @@
 /*------------------------------------- LAUNCHER : VIEW MODE -------------------------------------*/
+//!
+//! This module contains the implementation for the view mode of the configuration launcher UI.
 
 use super::{Edit, LauncherState, Select};
 use crate::config;
@@ -6,6 +8,7 @@ use crate::ui::utils::NAVIGATION_OFFSET;
 use crate::utils::Result;
 use ::nvim_oxi::api::{self as nvim, Buffer, Window};
 
+/// View mode state of the launcher UI
 #[derive(Debug, Clone)]
 pub(super) struct View {
     pub(super) buffer: Buffer,
@@ -14,6 +17,7 @@ pub(super) struct View {
 }
 
 impl View {
+    /// Converts the view mode state into the select mode state
     pub(super) fn into_select(self) -> Result<Select> {
         let mut select = Select {
             buffer: self.buffer,
@@ -25,6 +29,7 @@ impl View {
         Ok(select)
     }
 
+    /// Converts the view mode state into the edit mode state
     pub(super) fn into_edit(self, index: usize) -> Result<Edit> {
         let mut edit = Edit {
             buffer: self.buffer,
@@ -37,6 +42,7 @@ impl View {
     }
 }
 
+/// Implementation of the `LauncherState` trait for the view mode
 impl LauncherState for View {
     super::setup_getters!();
 

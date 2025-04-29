@@ -1,4 +1,6 @@
 /*------------------------------------ LAUNCHER : SELECT MODE ------------------------------------*/
+//!
+//! This module contains the implementation for the select mode of the configuration launcher UI.
 
 use super::{Edit, LauncherState, View};
 use crate::config;
@@ -6,6 +8,7 @@ use crate::ui::utils::index_from_cursor;
 use crate::utils::{nvim_set_local, Result};
 use ::nvim_oxi::api::{self as nvim, Buffer, Window};
 
+/// Select mode state of the launcher UI
 #[derive(Debug, Clone)]
 pub(super) struct Select {
     pub(super) buffer: Buffer,
@@ -13,6 +16,7 @@ pub(super) struct Select {
 }
 
 impl Select {
+    /// Converts the select mode state into the view mode state
     pub(super) fn into_view(self) -> Result<View> {
         config::buffer::clear_undo_history()?;
         let index = index_from_cursor(&self.window)?;
@@ -25,6 +29,7 @@ impl Select {
         Ok(view)
     }
 
+    /// Converts the select mode state into the edit mode state
     pub(super) fn into_edit(self, index: usize) -> Result<Edit> {
         config::buffer::clear_undo_history()?;
         let mut edit = Edit {
@@ -38,6 +43,7 @@ impl Select {
     }
 }
 
+/// Implementation of the `LauncherState` trait for the select mode
 impl LauncherState for Select {
     super::setup_getters!();
 
