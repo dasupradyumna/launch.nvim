@@ -36,7 +36,8 @@ end
 function M.substitute_variables(args)
   local ok
   for i = 1, #args do
-    ok, args[i] = pcall(string.gsub, args[i], '{@([_%a][_%w]*)}', gsub_callback)
+    -- FIX: below regex allows pure numeric variables, but validator does not check that
+    ok, args[i] = pcall(string.gsub, args[i], '{@([_%w]+)}', gsub_callback)
     if not ok then return false end
   end
 
